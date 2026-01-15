@@ -3,6 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FacturacionController;
+use App\Http\Controllers\Api\EmpresaController;
+use App\Http\Controllers\Api\OportunidadController;
+use App\Http\Controllers\Api\DocumentoController;
+use App\Http\Controllers\Api\PagoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,17 +41,40 @@ Route::prefix('facturacion')->group(function () {
 // Rutas adicionales para futuras implementaciones
 Route::prefix('v1')->group(function () {
     // Empresas
-    // Route::apiResource('empresas', EmpresaController::class);
+    Route::get('empresas', [EmpresaController::class, 'index']);
+    Route::post('empresas', [EmpresaController::class, 'store']);
+    Route::get('empresas/{id}', [EmpresaController::class, 'show']);
+    Route::put('empresas/{id}', [EmpresaController::class, 'update']);
+    Route::delete('empresas/{id}', [EmpresaController::class, 'destroy']);
+    Route::patch('empresas/{id}/toggle-activo', [EmpresaController::class, 'toggleActivo']);
+    Route::patch('empresas/{id}/cambiar-modo', [EmpresaController::class, 'cambiarModo']);
     
     // Oportunidades
-    // Route::apiResource('oportunidades', OportunidadController::class);
+    Route::get('oportunidades', [OportunidadController::class, 'index']);
+    Route::post('oportunidades', [OportunidadController::class, 'store']);
+    Route::get('oportunidades/{id}', [OportunidadController::class, 'show']);
+    Route::put('oportunidades/{id}', [OportunidadController::class, 'update']);
+    Route::delete('oportunidades/{id}', [OportunidadController::class, 'destroy']);
+    Route::patch('oportunidades/{id}/estado', [OportunidadController::class, 'cambiarEstado']);
+    Route::get('oportunidades/estadisticas/general', [OportunidadController::class, 'estadisticas']);
     
     // Documentos
-    // Route::apiResource('documentos', DocumentoController::class);
+    Route::get('documentos', [DocumentoController::class, 'index']);
+    Route::post('documentos', [DocumentoController::class, 'store']);
+    Route::get('documentos/{id}', [DocumentoController::class, 'show']);
+    Route::put('documentos/{id}', [DocumentoController::class, 'update']);
+    Route::delete('documentos/{id}', [DocumentoController::class, 'destroy']);
+    Route::get('documentos/{id}/descargar', [DocumentoController::class, 'descargar']);
+    Route::get('documentos/{id}/url', [DocumentoController::class, 'getUrl']);
+    Route::get('documentos/oportunidad/{oportunidadId}', [DocumentoController::class, 'porOportunidad']);
     
     // Pagos
-    // Route::apiResource('pagos', PagoController::class);
-    
-    // Catálogos SUNAT
-    // Route::get('catalogos/{tipo}', [CatalogoSunatController::class, 'index']);
+    Route::get('pagos', [PagoController::class, 'index']);
+    Route::post('pagos', [PagoController::class, 'store']);
+    Route::get('pagos/{id}', [PagoController::class, 'show']);
+    Route::put('pagos/{id}', [PagoController::class, 'update']);
+    Route::delete('pagos/{id}', [PagoController::class, 'destroy']);
+    Route::get('pagos/{id}/comprobante', [PagoController::class, 'descargarComprobante']);
+    Route::get('pagos/oportunidad/{oportunidadId}', [PagoController::class, 'porOportunidad']);
+    Route::get('pagos/estadisticas/general', [PagoController::class, 'estadisticas']);
 });
