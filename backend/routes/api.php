@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\EmpresaController;
 use App\Http\Controllers\Api\OportunidadController;
 use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\PagoController;
+use App\Http\Controllers\Api\CatalogoSunatController;
+use App\Http\Controllers\Api\AlertaController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,4 +80,22 @@ Route::prefix('v1')->group(function () {
     Route::get('pagos/{id}/comprobante', [PagoController::class, 'descargarComprobante']);
     Route::get('pagos/oportunidad/{oportunidadId}', [PagoController::class, 'porOportunidad']);
     Route::get('pagos/estadisticas/general', [PagoController::class, 'estadisticas']);
+    
+    // Catálogos SUNAT
+    Route::get('catalogos', [CatalogoSunatController::class, 'catalogos']);
+    Route::get('catalogos/lista', [CatalogoSunatController::class, 'index']);
+    Route::get('catalogos/{catalogo}', [CatalogoSunatController::class, 'show']);
+    
+    // Alertas
+    Route::get('alertas', [AlertaController::class, 'index']);
+    Route::patch('alertas/{id}/leida', [AlertaController::class, 'marcarLeida']);
+    Route::post('alertas/marcar-todas-leidas', [AlertaController::class, 'marcarTodasLeidas']);
+    Route::delete('alertas/{id}', [AlertaController::class, 'destroy']);
+    Route::post('alertas/verificar-sla', [AlertaController::class, 'verificarSla']);
+    Route::get('alertas/no-leidas', [AlertaController::class, 'noLeidas']);
+    
+    // Dashboard
+    Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard/tv', [DashboardController::class, 'tv']);
+    Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
 });
