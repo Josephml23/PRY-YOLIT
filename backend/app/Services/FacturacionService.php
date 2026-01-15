@@ -10,6 +10,7 @@ use CodersFree\LaravelGreenter\Facades\GreenterReport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class FacturacionService
 {
@@ -118,7 +119,7 @@ class FacturacionService
         return Comprobante::create([
             'empresa_id' => $data['empresa_id'],
             'oportunidad_id' => $data['oportunidad_id'] ?? null,
-            'usuario_id' => auth()->id() ?? $data['usuario_id'],
+            'usuario_id' => Auth::id() ?? $data['usuario_id'] ?? null,
             'tipo_doc' => $data['tipo_doc'] ?? $data['tipoDoc'],
             'serie' => $data['serie'],
             'correlativo' => $data['correlativo'],
