@@ -143,14 +143,14 @@ class FacturacionService
             'fecha_emision' => $data['fechaEmision'] ?? now(),
             'fecha_vencimiento' => $data['fecVencimiento'] ?? null,
             'forma_pago' => $data['formaPago']['tipo'] ?? 'Contado',
-            'cuotas' => isset($data['formaPago']['cuotas']) ? $data['formaPago']['cuotas'] : null,
+            'cuotas' => isset($data['formaPago']['cuotas']) ? json_encode($data['formaPago']['cuotas']) : null,
             // Para notas de crédito/débito
             'tipo_doc_relacionado' => $data['tipDocAfectado'] ?? null,
-            'serie_relacionado' => isset($data['numDocfectado']) ? explode('-', $data['numDocfectado'])[0] : null,
-            'correlativo_relacionado' => isset($data['numDocfectado']) ? explode('-', $data['numDocfectado'])[1] : null,
+            'serie_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[0] : null,
+            'correlativo_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[1] : null,
             'motivo' => $data['desMotivo'] ?? null,
             'estado_sunat' => 'pendiente',
-            'raw_request' => $data,
+            'raw_request' => json_encode($data),
         ]);
     }
 
