@@ -13,11 +13,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seeders principales
+        $this->call([
+            CatalogosSunatSeeder::class,
+        ]);
 
+        // Usuario administrador por defecto
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Administrador',
+            'email' => 'admin@facturacion.pe',
+            'password' => bcrypt('password'),
+            'rol' => 'admin',
+            'activo' => true,
+        ]);
+
+        // Usuario operador de prueba
+        User::factory()->create([
+            'name' => 'Operador',
+            'email' => 'operador@facturacion.pe',
+            'password' => bcrypt('password'),
+            'rol' => 'operador',
+            'activo' => true,
         ]);
     }
 }
