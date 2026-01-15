@@ -203,7 +203,11 @@ Este proyecto es privado y propietario.
 
 ## 👥 Autor
 
-Diego Mejía - [@diegomejiam](https://github.com/diegomejiam)
+**George Guerra Pacheco**  
+📧 george.guerra@tecsup.edu.pe  
+🎓 Tecsup
+
+Desarrollado como parte del proyecto de Plataforma Operativa y Comercial con Facturación Electrónica integrada con SUNAT (Perú).
 
 ---
 
