@@ -1,0 +1,44 @@
+# Laravel
+/vendor
+/node_modules
+/.phpunit.cache
+/public/hot
+/public/storage
+/storage/*.key
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# Certificates and credentials
+/public/certs/*.pem
+!/public/certs/.gitkeep
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Storage
+/storage/app/sunat/*
+!/storage/app/sunat/.gitkeep
+/storage/app/docs/*
+!/storage/app/docs/.gitkeep
+
+# MinIO
+/minio-data
+
+# Build
+/public/build
+/public/mix-manifest.json
