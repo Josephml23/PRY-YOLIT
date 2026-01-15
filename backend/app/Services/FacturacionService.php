@@ -88,9 +88,9 @@ class FacturacionService
                 'success' => true,
                 'comprobante' => $comprobante,
                 'cdr_response' => $response->getCdrResponse(),
-                'xml_url' => Storage::disk('public')->url($xmlPath),
-                'cdr_url' => Storage::disk('public')->url($cdrPath),
-                'pdf_url' => Storage::disk('public')->url($pdfPath),
+                'xml_url' => asset('storage/' . $xmlPath),
+                'cdr_url' => asset('storage/' . $cdrPath),
+                'pdf_url' => asset('storage/' . $pdfPath),
             ];
 
         } catch (Exception $e) {
