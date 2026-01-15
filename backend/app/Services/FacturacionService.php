@@ -158,7 +158,7 @@ class FacturacionService
         return Comprobante::create([
             'empresa_id' => $empresa->id,
             'oportunidad_id' => $data['oportunidad_id'] ?? null,
-            'usuario_id' => auth()->id() ?? $data['usuario_id'] ?? null,
+            'usuario_id' => $data['usuario_id'] ?? null,
             'tipo_doc' => $data['tipoDoc'],
             'serie' => $data['serie'],
             'correlativo' => $data['correlativo'],
