@@ -99,12 +99,22 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        $data['tipo_doc'] = '01'; // Factura
+        try {
+            $data = $request->all();
+            $data['tipoDoc'] = '01'; // Factura
 
-        $resultado = $this->facturacionService->emitirComprobante($data);
+            // Llamar al servicio (enfoque simplificado del tutorial)
+            $resultado = $this->facturacionService->emitirComprobante($data, 'invoice');
 
-        return response()->json($resultado, $resultado['success'] ? 200 : 500);
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
     }
 
     /**
@@ -121,12 +131,21 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        $data['tipo_doc'] = '03'; // Boleta
+        try {
+            $data = $request->all();
+            $data['tipoDoc'] = '03'; // Boleta
 
-        $resultado = $this->facturacionService->emitirComprobante($data);
+            $resultado = $this->facturacionService->emitirComprobante($data, 'invoice');
 
-        return response()->json($resultado, $resultado['success'] ? 200 : 500);
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
     }
 
     /**
@@ -143,12 +162,21 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        $data['tipo_doc'] = '07'; // Nota de Crédito
+        try {
+            $data = $request->all();
+            $data['tipoDoc'] = '07'; // Nota de Crédito
 
-        $resultado = $this->facturacionService->emitirComprobante($data);
+            $resultado = $this->facturacionService->emitirComprobante($data, 'note');
 
-        return response()->json($resultado, $resultado['success'] ? 200 : 500);
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
     }
 
     /**
@@ -165,12 +193,21 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        $data['tipo_doc'] = '08'; // Nota de Débito
+        try {
+            $data = $request->all();
+            $data['tipoDoc'] = '08'; // Nota de Débito
 
-        $resultado = $this->facturacionService->emitirComprobante($data);
+            $resultado = $this->facturacionService->emitirComprobante($data, 'note');
 
-        return response()->json($resultado, $resultado['success'] ? 200 : 500);
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
     }
 
     /**
@@ -310,5 +347,24 @@ class FacturacionController extends Controller
         ];
 
         return response()->json($estadisticas);
+    }
+
+    /**
+     * Generar HTML de un comprobante (NUEVO - Según tutorial)
+     */
+    public function descargarHtml(string $id)
+    {
+        try {
+            $html = $this->facturacionService->generarHtml($id);
+            
+            return response($html, 200)
+                ->header('Content-Type', 'text/html');
+                
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

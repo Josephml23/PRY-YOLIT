@@ -34,6 +34,7 @@ Route::prefix('facturacion')->group(function () {
     Route::get('/descargar/xml/{id}', [FacturacionController::class, 'descargarXml']);
     Route::get('/descargar/cdr/{id}', [FacturacionController::class, 'descargarCdr']);
     Route::get('/descargar/pdf/{id}', [FacturacionController::class, 'descargarPdf']);
+    Route::get('/descargar/html/{id}', [FacturacionController::class, 'descargarHtml']); // NUEVO
     Route::post('/enviar-email/{id}', [FacturacionController::class, 'enviarEmail']);
     
     // Estadísticas y reportes

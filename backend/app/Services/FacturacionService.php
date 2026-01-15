@@ -10,17 +10,23 @@ use CodersFree\LaravelGreenter\Facades\GreenterReport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
+use Exception;
 
+/**
+ * Servicio de facturación electrónica usando laravel-greenter
+ * Basado en el tutorial oficial de CodersFree
+ */
 class FacturacionService
 {
     /**
-     * Emitir un comprobante electrónico
+     * Emitir un comprobante electrónico (ENFOQUE SIMPLIFICADO DEL TUTORIAL)
      *
-     * @param array $data
+     * @param array $data Data del comprobante en formato Greenter
+     * @param string $tipoComprobante 'invoice', 'note', 'despatch', etc.
      * @return array
+     * @throws Exception
      */
-    public function emitirComprobante(array $data)
+    public function emitirComprobante(array $data, string $tipoComprobante = 'invoice')
     {
         DB::beginTransaction();
 
@@ -28,362 +34,289 @@ class FacturacionService
             // 1. Validar empresa
             $empresa = Empresa::findOrFail($data['empresa_id']);
             
-            // 2. Generar serie y correlativo si no se proporcionan
+            // 2. Configurar credenciales dinámicas de la empresa
+            $this->configurarEmpresa($empresa);
+            
+            // 3. Generar serie y correlativo automáticamente si no vienen
             if (empty($data['serie'])) {
-                $data['serie'] = $this->generarSerie($data['tipo_doc'], $empresa->id);
+                $data['serie'] = $this->generarSerie($data['tipoDoc'] ?? '01', $empresa->id);
             }
             
             if (empty($data['correlativo'])) {
-                $data['correlativo'] = $this->generarCorrelativo($data['tipo_doc'], $data['serie'], $empresa->id);
+                $data['correlativo'] = $this->generarCorrelativo($data['tipoDoc'] ?? '01', $data['serie'], $empresa->id);
             }
 
-            // 3. Crear registro en base de datos
-            $comprobante = $this->crearComprobante($data);
+            // 4. ENVIAR A SUNAT (UNA SOLA LÍNEA - COMO EN EL TUTORIAL)
+            $response = Greenter::sent($tipoComprobante, $data);
 
-            // 4. Crear ítems del comprobante
+            // 5. Verificar si SUNAT aceptó el comprobante
+            if (!$response->isSuccess()) {
+                throw new Exception($response->getError()->getMessage(), $response->getError()->getCode());
+            }
+
+            // 6. Obtener el documento generado y su nombre
+            $document = $response->getDocument();
+            $name = $document->getName();
+
+            // 7. Almacenar XML y CDR (COMO EN EL TUTORIAL)
+            $xmlPath = "sunat/xml/{$name}.xml";
+            $cdrPath = "sunat/cdr/{$name}.zip";
+            
+            Storage::disk('public')->put($xmlPath, $response->getXml());
+            Storage::disk('public')->put($cdrPath, $response->getCdr());
+
+            // 8. Generar PDF usando GreenterReport
+            $pdf = GreenterReport::generatePdf($document);
+            $pdfPath = "sunat/pdf/{$name}.pdf";
+            Storage::disk('public')->put($pdfPath, $pdf);
+
+            // 9. Guardar comprobante en base de datos
+            $comprobante = $this->guardarComprobante($data, $empresa, $response, [
+                'xml_path' => $xmlPath,
+                'cdr_path' => $cdrPath,
+                'pdf_path' => $pdfPath,
+            ]);
+
+            // 10. Guardar items si existen
             if (!empty($data['details'])) {
-                $this->crearItems($comprobante, $data['details']);
+                $this->guardarItems($comprobante, $data['details']);
             }
-
-            // 5. Preparar data para Greenter
-            $greenterData = $this->prepararDataGreenter($comprobante, $data);
-
-            // 6. Configurar empresa emisora dinámicamente
-            $greenterConfig = $this->configurarEmpresaGreenter($empresa);
-
-            // 7. Determinar el tipo de documento para envío
-            $tipoEnvio = $this->determinarTipoEnvio($data['tipo_doc']);
-
-            // 8. Enviar a SUNAT
-            $response = Greenter::setCompany($greenterConfig)->send($tipoEnvio, $greenterData);
-
-            // 9. Procesar respuesta
-            $resultado = $this->procesarRespuesta($response, $comprobante);
 
             DB::commit();
 
             return [
                 'success' => true,
-                'comprobante' => $comprobante->fresh(),
-                'response' => $resultado,
+                'comprobante' => $comprobante,
+                'cdr_response' => $response->getCdrResponse(),
+                'xml_url' => Storage::disk('public')->url($xmlPath),
+                'cdr_url' => Storage::disk('public')->url($cdrPath),
+                'pdf_url' => Storage::disk('public')->url($pdfPath),
             ];
 
-        } catch (\Throwable $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             
             Log::error('Error al emitir comprobante', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'code' => $e->getCode(),
                 'data' => $data,
             ]);
 
-            // Actualizar estado si el comprobante fue creado
-            if (isset($comprobante)) {
-                $comprobante->update([
-                    'estado_sunat' => 'rechazado',
-                    'mensaje_sunat' => $e->getMessage(),
-                ]);
-            }
-
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ];
+            throw $e;
         }
     }
 
     /**
-     * Determinar el tipo de envío según el tipo de documento
+     * Generar representación HTML de un comprobante
      */
-    private function determinarTipoEnvio(string $tipoDoc): string
+    public function generarHtml($comprobanteId): string
     {
-        $tipos = [
-            '01' => 'invoice',  // Factura
-            '03' => 'invoice',  // Boleta
-            '07' => 'note',     // Nota de Crédito
-            '08' => 'note',     // Nota de Débito
-            '09' => 'despatch', // Guía de Remisión
-            '20' => 'retention',// Retención
-            '40' => 'perception',// Percepción
-        ];
-
-        return $tipos[$tipoDoc] ?? 'invoice';
+        $comprobante = Comprobante::with('items')->findOrFail($comprobanteId);
+        
+        // Reconstruir data desde comprobante
+        $data = $this->reconstruirDataDesdeComprobante($comprobante);
+        
+        // Configurar empresa
+        $this->configurarEmpresa($comprobante->empresa);
+        
+        // Generar documento nuevamente y obtener HTML
+        $response = Greenter::sent('invoice', $data);
+        $document = $response->getDocument();
+        
+        return GreenterReport::generateHtml($document);
     }
 
     /**
-     * Crear el registro del comprobante en la base de datos
+     * Configurar empresa emisora dinámicamente
      */
-    private function crearComprobante(array $data): Comprobante
+    private function configurarEmpresa(Empresa $empresa): void
     {
-        return Comprobante::create([
-            'empresa_id' => $data['empresa_id'],
-            'oportunidad_id' => $data['oportunidad_id'] ?? null,
-            'usuario_id' => Auth::id() ?? $data['usuario_id'] ?? null,
-            'tipo_doc' => $data['tipo_doc'] ?? $data['tipoDoc'],
-            'serie' => $data['serie'],
-            'correlativo' => $data['correlativo'],
-            'cliente_tipo_doc' => $data['client']['tipoDoc'],
-            'cliente_num_doc' => $data['client']['numDoc'],
-            'cliente_razon_social' => $data['client']['rznSocial'],
-            'cliente_direccion' => $data['client']['address'] ?? null,
-            'cliente_email' => $data['client']['email'] ?? null,
-            'moneda' => $data['tipoMoneda'] ?? 'PEN',
-            'mto_oper_gravadas' => $data['mtoOperGravadas'] ?? 0,
-            'mto_oper_exoneradas' => $data['mtoOperExoneradas'] ?? 0,
-            'mto_oper_inafectas' => $data['mtoOperInafectas'] ?? 0,
-            'mto_oper_exportacion' => $data['mtoOperExportacion'] ?? 0,
-            'mto_oper_gratuitas' => $data['mtoOperGratuitas'] ?? 0,
-            'mto_igv' => $data['mtoIGV'] ?? 0,
-            'mto_isc' => $data['mtoISC'] ?? 0,
-            'total_impuestos' => $data['totalImpuestos'] ?? 0,
-            'valor_venta' => $data['valorVenta'] ?? 0,
-            'sub_total' => $data['subTotal'] ?? 0,
-            'redondeo' => $data['redondeo'] ?? 0,
-            'mto_imp_venta' => $data['mtoImpVenta'],
-            'fecha_emision' => $data['fechaEmision'] ?? now(),
-            'fecha_vencimiento' => $data['fecVencimiento'] ?? null,
-            'forma_pago' => $data['formaPago']['tipo'] ?? 'Contado',
-            'cuotas' => isset($data['formaPago']['cuotas']) ? json_encode($data['formaPago']['cuotas']) : null,
-            // Para notas de crédito/débito
-            'tipo_doc_relacionado' => $data['tipDocAfectado'] ?? null,
-            'serie_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[0] : null,
-            'correlativo_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[1] : null,
-            'motivo' => $data['desMotivo'] ?? null,
-            'estado_sunat' => 'pendiente',
-            'raw_request' => json_encode($data),
+        // Obtener RUC principal o el primero disponible
+        $rucData = $empresa->ruc_data[0] ?? null;
+        
+        if (!$rucData) {
+            throw new Exception('Empresa no tiene RUC configurado');
+        }
+
+        // Configurar las variables de entorno dinámicamente
+        config([
+            'greenter.company.ruc' => $rucData['ruc'],
+            'greenter.company.razonSocial' => $empresa->razon_social,
+            'greenter.company.nombreComercial' => $empresa->nombre_comercial ?? $empresa->razon_social,
+            'greenter.company.address.direccion' => $empresa->direccion ?? '',
+            'greenter.company.clave_sol.user' => $rucData['usuario_sol'],
+            'greenter.company.clave_sol.password' => $rucData['clave_sol'],
+            'greenter.mode' => $empresa->modo_produccion ? 'prod' : 'beta',
         ]);
     }
 
     /**
-     * Crear los ítems del comprobante
+     * Guardar comprobante en base de datos
      */
-    private function crearItems(Comprobante $comprobante, array $details): void
+    private function guardarComprobante(array $data, Empresa $empresa, $response, array $paths): Comprobante
+    {
+        return Comprobante::create([
+            'empresa_id' => $empresa->id,
+            'oportunidad_id' => $data['oportunidad_id'] ?? null,
+            'usuario_id' => auth()->id() ?? $data['usuario_id'] ?? null,
+            'tipo_doc' => $data['tipoDoc'],
+            'serie' => $data['serie'],
+            'correlativo' => $data['correlativo'],
+            
+            // Datos del cliente
+            'cliente_tipo_doc' => $data['client']['tipoDoc'],
+            'cliente_num_doc' => $data['client']['numDoc'],
+            'cliente_razon_social' => $data['client']['rznSocial'],
+            'cliente_direccion' => $data['client']['address']['direccion'] ?? null,
+            'cliente_email' => $data['client']['email'] ?? null,
+            
+            // Montos
+            'moneda' => $data['tipoMoneda'] ?? 'PEN',
+            'mto_oper_gravadas' => $data['mtoOperGravadas'] ?? 0,
+            'mto_oper_exoneradas' => $data['mtoOperExoneradas'] ?? 0,
+            'mto_oper_inafectas' => $data['mtoOperInafectas'] ?? 0,
+            'mto_igv' => $data['mtoIGV'] ?? 0,
+            'total_impuestos' => $data['totalImpuestos'] ?? 0,
+            'mto_imp_venta' => $data['mtoImpVenta'],
+            
+            // Fechas
+            'fecha_emision' => $data['fechaEmision'] ?? now(),
+            'fecha_vencimiento' => $data['fecVencimiento'] ?? null,
+            
+            // Forma de pago
+            'forma_pago' => $data['formaPago']['tipo'] ?? 'Contado',
+            'cuotas' => isset($data['formaPago']['cuotas']) ? json_encode($data['formaPago']['cuotas']) : null,
+            
+            // Respuesta SUNAT
+            'estado_sunat' => 'aceptado',
+            'codigo_sunat' => $response->getCdrResponse()->getCode(),
+            'mensaje_sunat' => $response->getCdrResponse()->getDescription(),
+            'hash_cpe' => $response->getDocument()->getHash(),
+            
+            // Archivos
+            'xml_path' => $paths['xml_path'],
+            'cdr_path' => $paths['cdr_path'],
+            'pdf_path' => $paths['pdf_path'],
+            
+            // Notas de crédito/débito
+            'tipo_doc_relacionado' => $data['tipDocAfectado'] ?? null,
+            'serie_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[0] : null,
+            'correlativo_relacionado' => isset($data['numDocAfectado']) ? explode('-', $data['numDocAfectado'])[1] : null,
+            'motivo' => $data['desMotivo'] ?? null,
+        ]);
+    }
+
+    /**
+     * Guardar items del comprobante
+     */
+    private function guardarItems(Comprobante $comprobante, array $details): void
     {
         foreach ($details as $index => $item) {
             ComprobanteItem::create([
                 'comprobante_id' => $comprobante->id,
                 'item' => $index + 1,
-                'codigo_producto' => $item['codProducto'] ?? null,
+                'cod_producto' => $item['codProducto'] ?? null,
                 'descripcion' => $item['descripcion'],
                 'unidad' => $item['unidad'] ?? 'NIU',
                 'cantidad' => $item['cantidad'],
                 'mto_valor_unitario' => $item['mtoValorUnitario'],
-                'mto_precio_unitario' => $item['mtoPrecioUnitario'] ?? $item['mtoValorUnitario'],
                 'mto_valor_venta' => $item['mtoValorVenta'],
-                'mto_base_igv' => $item['mtoBaseIgv'] ?? 0,
+                'mto_base_igv' => $item['mtoBaseIgv'] ?? $item['mtoValorVenta'],
                 'porcentaje_igv' => $item['porcentajeIgv'] ?? 18,
-                'igv' => $item['igv'] ?? 0,
-                'tip_afe_igv' => $item['tipAfeIgv'] ?? '10',
-                'isc' => $item['isc'] ?? 0,
-                'tip_sis_isc' => $item['tipSisIsc'] ?? null,
-                'total_impuestos' => $item['totalImpuestos'] ?? 0,
-                'descuento' => $item['descuento'] ?? 0,
+                'igv' => $item['igv'],
+                'tipo_afectacion_igv' => $item['tipAfeIgv'] ?? '10',
+                'total_impuestos' => $item['totalImpuestos'] ?? $item['igv'],
+                'mto_precio_unitario' => $item['mtoPrecioUnitario'] ?? $item['mtoValorUnitario'],
             ]);
         }
     }
 
     /**
-     * Preparar data en el formato requerido por Greenter
-     */
-    private function prepararDataGreenter(Comprobante $comprobante, array $data): array
-    {
-        $greenterData = [
-            'ublVersion' => $data['ublVersion'] ?? '2.1',
-            'tipoOperacion' => $data['tipoOperacion'] ?? '0101',
-            'tipoDoc' => $comprobante->tipo_doc,
-            'serie' => $comprobante->serie,
-            'correlativo' => $comprobante->correlativo,
-            'fechaEmision' => $comprobante->fecha_emision,
-            'tipoMoneda' => $comprobante->moneda,
-            'client' => [
-                'tipoDoc' => $comprobante->cliente_tipo_doc,
-                'numDoc' => $comprobante->cliente_num_doc,
-                'rznSocial' => $comprobante->cliente_razon_social,
-            ],
-        ];
-
-        // Agregar dirección del cliente si existe
-        if ($comprobante->cliente_direccion) {
-            $greenterData['client']['address'] = $comprobante->cliente_direccion;
-        }
-
-        // Para Facturas y Boletas (01, 03)
-        if (in_array($comprobante->tipo_doc, ['01', '03'])) {
-            $greenterData = array_merge($greenterData, [
-                'formaPago' => [
-                    'tipo' => $comprobante->forma_pago,
-                ],
-                'mtoOperGravadas' => (float) $comprobante->mto_oper_gravadas,
-                'mtoOperExoneradas' => (float) $comprobante->mto_oper_exoneradas,
-                'mtoOperInafectas' => (float) $comprobante->mto_oper_inafectas,
-                'mtoOperGratuitas' => (float) $comprobante->mto_oper_gratuitas,
-                'mtoIGV' => (float) $comprobante->mto_igv,
-                'totalImpuestos' => (float) $comprobante->total_impuestos,
-                'valorVenta' => (float) $comprobante->valor_venta,
-                'subTotal' => (float) $comprobante->sub_total,
-                'mtoImpVenta' => (float) $comprobante->mto_imp_venta,
-            ]);
-
-            // Agregar cuotas si es a crédito
-            if ($comprobante->forma_pago === 'Credito' && $comprobante->cuotas) {
-                $greenterData['formaPago']['cuotas'] = $comprobante->cuotas;
-            }
-
-            // Agregar fecha de vencimiento si existe
-            if ($comprobante->fecha_vencimiento) {
-                $greenterData['fecVencimiento'] = $comprobante->fecha_vencimiento;
-            }
-        }
-
-        // Para Notas de Crédito y Débito (07, 08)
-        if (in_array($comprobante->tipo_doc, ['07', '08'])) {
-            $greenterData = array_merge($greenterData, [
-                'tipDocAfectado' => $comprobante->tipo_doc_relacionado,
-                'numDocfectado' => "{$comprobante->serie_relacionado}-{$comprobante->correlativo_relacionado}",
-                'codMotivo' => $data['codMotivo'] ?? '01',
-                'desMotivo' => $comprobante->motivo,
-                'mtoOperGravadas' => (float) $comprobante->mto_oper_gravadas,
-                'mtoOperExoneradas' => (float) $comprobante->mto_oper_exoneradas,
-                'mtoOperInafectas' => (float) $comprobante->mto_oper_inafectas,
-                'mtoIGV' => (float) $comprobante->mto_igv,
-                'totalImpuestos' => (float) $comprobante->total_impuestos,
-                'mtoImpVenta' => (float) $comprobante->mto_imp_venta,
-            ]);
-
-            // Agregar guías relacionadas si existen
-            if (isset($data['guias']) && !empty($data['guias'])) {
-                $greenterData['guias'] = $data['guias'];
-            }
-        }
-
-        // Agregar detalles
-        $greenterData['details'] = $data['details'];
-
-        // Agregar leyendas
-        $greenterData['legends'] = $data['legends'] ?? [
-            [
-                'code' => '1000',
-                'value' => $this->numeroALetras($comprobante->mto_imp_venta, $comprobante->moneda),
-            ],
-        ];
-
-        return $greenterData;
-    }
-
-    /**
-     * Configurar empresa para Greenter de manera dinámica
-     */
-    private function configurarEmpresaGreenter(Empresa $empresa): array
-    {
-        return [
-            'ruc' => $empresa->ruc,
-            'razonSocial' => $empresa->razon_social,
-            'nombreComercial' => $empresa->nombre_comercial ?? $empresa->razon_social,
-            'address' => [
-                'ubigeo' => $empresa->ubigeo,
-                'departamento' => $empresa->departamento,
-                'provincia' => $empresa->provincia,
-                'distrito' => $empresa->distrito,
-                'direccion' => $empresa->direccion,
-            ],
-            'certificate' => $empresa->certificado_path ? storage_path($empresa->certificado_path) : public_path('certs/certificate.pem'),
-            'clave_sol' => [
-                'user' => $empresa->sol_user,
-                'password' => $empresa->sol_password,
-            ],
-        ];
-    }
-
-    /**
-     * Procesar la respuesta de SUNAT y almacenar archivos
-     */
-    private function procesarRespuesta($response, Comprobante $comprobante): array
-    {
-        $document = $response->getDocument();
-        $name = $document->getName();
-
-        // Almacenar XML
-        $xmlPath = "sunat/xml/{$name}.xml";
-        Storage::put($xmlPath, $response->getXml());
-
-        // Almacenar CDR
-        $cdrPath = "sunat/cdr/{$name}.zip";
-        Storage::put($cdrPath, $response->getCdrZip());
-
-        // Generar y almacenar PDF
-        $pdf = GreenterReport::generatePdf($document);
-        $pdfPath = "sunat/pdf/{$name}.pdf";
-        Storage::put($pdfPath, $pdf);
-
-        // Leer respuesta CDR
-        $cdrResponse = $response->readCdr();
-
-        // Actualizar comprobante
-        $comprobante->update([
-            'estado_sunat' => 'aceptado',
-            'codigo_sunat' => $cdrResponse['code'] ?? null,
-            'mensaje_sunat' => $cdrResponse['description'] ?? 'Aceptado',
-            'hash_cpe' => $response->getDocument()->getHash() ?? null,
-            'xml_path' => $xmlPath,
-            'cdr_path' => $cdrPath,
-            'pdf_path' => $pdfPath,
-            'raw_response' => $cdrResponse,
-        ]);
-
-        return [
-            'cdrResponse' => $cdrResponse,
-            'xml' => Storage::url($xmlPath),
-            'cdr' => Storage::url($cdrPath),
-            'pdf' => Storage::url($pdfPath),
-        ];
-    }
-
-    /**
-     * Generar serie automática
+     * Generar serie para un tipo de documento
      */
     private function generarSerie(string $tipoDoc, int $empresaId): string
     {
         $prefijos = [
-            '01' => 'F',  // Factura
-            '03' => 'B',  // Boleta
-            '07' => 'FC', // Nota de Crédito
-            '08' => 'FD', // Nota de Débito
+            '01' => 'F',    // Factura
+            '03' => 'B',    // Boleta
+            '07' => 'FC',   // Nota de Crédito
+            '08' => 'FD',   // Nota de Débito
+            '09' => 'T',    // Guía de Remisión
         ];
 
         $prefijo = $prefijos[$tipoDoc] ?? 'F';
         
-        return $prefijo . '001';
+        // Obtener último correlativo de serie
+        $ultimaSerie = Comprobante::where('empresa_id', $empresaId)
+            ->where('tipo_doc', $tipoDoc)
+            ->where('serie', 'like', "{$prefijo}%")
+            ->orderBy('serie', 'desc')
+            ->value('serie');
+
+        if ($ultimaSerie) {
+            $numero = (int) substr($ultimaSerie, strlen($prefijo)) + 1;
+        } else {
+            $numero = 1;
+        }
+
+        return $prefijo . str_pad($numero, 3, '0', STR_PAD_LEFT);
     }
 
     /**
-     * Generar correlativo automático
+     * Generar correlativo para una serie
      */
-    private function generarCorrelativo(string $tipoDoc, string $serie, int $empresaId): string
+    private function generarCorrelativo(string $tipoDoc, string $serie, int $empresaId): int
     {
-        $ultimo = Comprobante::where('empresa_id', $empresaId)
+        $ultimoCorrelativo = Comprobante::where('empresa_id', $empresaId)
             ->where('tipo_doc', $tipoDoc)
             ->where('serie', $serie)
-            ->orderBy('correlativo', 'desc')
-            ->first();
+            ->max('correlativo');
 
-        $numero = $ultimo ? (int) $ultimo->correlativo + 1 : 1;
-
-        return str_pad($numero, 8, '0', STR_PAD_LEFT);
+        return ($ultimoCorrelativo ?? 0) + 1;
     }
 
     /**
-     * Convertir número a letras
+     * Reconstruir data desde comprobante guardado (para regenerar HTML/PDF)
      */
-    private function numeroALetras(float $numero, string $moneda): string
+    private function reconstruirDataDesdeComprobante(Comprobante $comprobante): array
     {
-        // Implementación básica - se puede mejorar con una librería
-        $monedaTexto = $moneda === 'USD' ? 'DÓLARES AMERICANOS' : 'SOLES';
-        $entero = (int) $numero;
-        $decimal = round(($numero - $entero) * 100);
-
-        // Aquí deberías implementar la conversión completa de números a letras
-        // Por ahora retornamos un formato simplificado
-        return strtoupper("SON {$entero} CON {$decimal}/100 {$monedaTexto}");
+        return [
+            'tipoDoc' => $comprobante->tipo_doc,
+            'serie' => $comprobante->serie,
+            'correlativo' => $comprobante->correlativo,
+            'fechaEmision' => $comprobante->fecha_emision->format('Y-m-d'),
+            'tipoMoneda' => $comprobante->moneda,
+            
+            'client' => [
+                'tipoDoc' => $comprobante->cliente_tipo_doc,
+                'numDoc' => $comprobante->cliente_num_doc,
+                'rznSocial' => $comprobante->cliente_razon_social,
+                'address' => [
+                    'direccion' => $comprobante->cliente_direccion ?? '-',
+                ],
+            ],
+            
+            'mtoOperGravadas' => $comprobante->mto_oper_gravadas,
+            'mtoIGV' => $comprobante->mto_igv,
+            'totalImpuestos' => $comprobante->total_impuestos,
+            'mtoImpVenta' => $comprobante->mto_imp_venta,
+            
+            'details' => $comprobante->items->map(function ($item) {
+                return [
+                    'codProducto' => $item->cod_producto,
+                    'unidad' => $item->unidad,
+                    'descripcion' => $item->descripcion,
+                    'cantidad' => $item->cantidad,
+                    'mtoValorUnitario' => $item->mto_valor_unitario,
+                    'mtoValorVenta' => $item->mto_valor_venta,
+                    'mtoBaseIgv' => $item->mto_base_igv,
+                    'porcentajeIgv' => $item->porcentaje_igv,
+                    'igv' => $item->igv,
+                    'tipAfeIgv' => $item->tipo_afectacion_igv,
+                    'totalImpuestos' => $item->total_impuestos,
+                    'mtoPrecioUnitario' => $item->mto_precio_unitario,
+                ];
+            })->toArray(),
+        ];
     }
 }
