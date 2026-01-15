@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('tipo_doc', 2); // 01: Factura, 03: Boleta, 07: NC, 08: ND
             $table->string('serie', 4);
             $table->string('correlativo', 8);
-            $table->string('numero_completo', 15)->virtualAs("CONCAT(serie, '-', correlativo)");
+            $table->string('numero_completo', 15)->nullable()->storedAs("serie || '-' || correlativo");
             
             // Cliente
             $table->string('cliente_tipo_doc', 1); // 6: RUC, 1: DNI, 0: Otros
