@@ -29,28 +29,36 @@ Sistema integral de gestión comercial y facturación electrónica integrado con
 ### Backend
 - **PHP** >= 8.1
 - **Laravel** 11.x
-- **PostgreSQL** 15+
-- **Greenter** (Laravel Greenter)
+- **PostgreSQL** 15+ (via Docker)
+- **Greenter** (Laravel Greenter v1.0.3)
+- **WKHTMLtoPDF** (generación de PDFs)
 
 ### Frontend
 - **React** 18+
 - **shadcn/ui** + TailwindCSS
 - **Vite**
 
+### Infraestructura Docker
+- **PostgreSQL** 15-alpine (puerto 5432)
+- **MinIO** (puertos 9000 API, 9001 Console)
+- **Docker Compose** para orquestación
+
 ### Storage
-- **MinIO** (S3 compatible)
+- **MinIO** (S3 compatible) para XML/PDF/CDR
 
 ## 📋 Requisitos Previos
 
+- **Docker Desktop** (para PostgreSQL + MinIO)
+- **WKHTMLtoPDF** ([descargar](https://wkhtmltopdf.org/downloads.html))
 - PHP >= 8.1 con extensiones:
   - soap
   - openssl
   - pgsql
   - pdo_pgsql
+  - zip
 - Composer
 - Node.js >= 18
-- PostgreSQL >= 15
-- MinIO
+- **Docker Desktop** (requerido para PostgreSQL + MinIO)
 - wkhtmltopdf (para PDFs)
 
 ## ⚙️ Instalación
@@ -62,54 +70,121 @@ git clone https://github.com/diegomejiam/Nubofact-Web-y-Facturador.git
 cd Nubofact-Web-y-Facturador
 ```
 
-### 2. Instalar dependencias del backend
+### 2. **Iniciar servicios Docker**
 
 ```bash
+# Levantar PostgreSQL + MinIO
+docker-compose up -d
+
+# Verificar que estén corriendo
+docker ps
+```
+
+**Servicios disponibles:**
+- PostgreSQL: `localhost:5432`
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001` (minio/minio123)
+
+### 3. Instalar dependencias del backend
+
+```bash
+cd backend
 composer install
 ```
 
-### 3. Configurar variables de entorno
+### 4. Configurar variables de entorno
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Editar `.env` con tus configuraciones:
+Editar `backend/.env` con las configuraciones Docker:
 
 ```env
+# Base de datos PostgreSQL (Docker)
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=facturacion_db
+DB_DATABASE=plataforma_facturacion
 DB_USERNAME=postgres
-DB_PASSWORD=
+DB_PASSWORD=postgres123
 
-# MinIO
+# MinIO S3 Storage (Docker)
 FILESYSTEM_DISK=minio
 MINIO_ENDPOINT=http://localhost:9000
-MINIO_KEY=minioadmin
-MINIO_SECRET=minioadmin
+MINIO_KEY=minio
+MINIO_SECRET=minio123
 MINIO_BUCKET=facturacion
+MINIO_USE_PATH_STYLE_ENDPOINT=true
 
-# SUNAT (Producción)
+# Greenter (Facturación SUNAT)
 GREENTER_MODE=beta
-GREENTER_RUC=
-GREENTER_USER_SOL=
-GREENTER_PASSWORD_SOL=
+GREENTER_COMPANY_RUC=20000000001
+GREENTER_COMPANY_NAME="MI EMPRESA SAC"
+GREENTER_SOL_USER=MODDATOS
+GREENTER_SOL_PASS=MODDATOS
+GREENTER_PDF_BIN_PATH="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"
 ```
 
-### 4. Configurar base de datos
+### 5. Configurar base de datos
 
 ```bash
+# Ejecutar migraciones
 php artisan migrate
-php artisan db:seed
+
+# Poblar catálogos SUNAT
+php artisan db:seed --class=CatalogosSunatSeeder
 ```
 
-### 5. Publicar assets de Greenter
+### 6. Crear enlace simbólico para storage
 
 ```bash
-php artisan vendor:publish --tag=greenter-laravel
+php artisan storage:link
+```
+
+### 7. Iniciar servidor de desarrollo
+
+```bash
+# Backend Laravel
+php artisan serve
+# Disponible en: http://127.0.0.1:8000
+
+# Verificar API
+curl http://127.0.0.1:8000/api/facturacion/comprobantes
+```
+
+## 🐳 Gestión de Docker
+
+### Comandos útiles
+
+```bash
+# Iniciar servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar servicios
+docker-compose down
+
+# Reiniciar servicios
+docker-compose restart
+
+# Eliminar datos (CUIDADO: borra la BD)
+docker-compose down -v
+```
+
+### Acceso a contenedores
+
+```bash
+# PostgreSQL
+docker exec -it facturacion_postgres psql -U postgres -d plataforma_facturacion
+
+# MinIO (navegador)
+# http://localhost:9001
+# Usuario: minio
+# Contraseña: minio123
 ```
 
 ### 6. Instalar dependencias del frontend
