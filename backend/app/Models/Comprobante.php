@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Comprobante extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'comprobantes';
+
+    protected $fillable = [
+        'empresa_id',
+        'oportunidad_id',
+        'usuario_id',
+        'tipo_doc',
+        'serie',
+        'correlativo',
+        'cliente_tipo_doc',
+        'cliente_num_doc',
+        'cliente_razon_social',
+        'cliente_direccion',
+        'cliente_email',
+        'moneda',
+        'mto_oper_gravadas',
+        'mto_oper_exoneradas',
+        'mto_oper_inafectas',
+        'mto_oper_exportacion',
+        'mto_oper_gratuitas',
+        'mto_igv',
+        'mto_isc',
+        'total_impuestos',
+        'valor_venta',
+        'sub_total',
+        'redondeo',
+        'mto_imp_venta',
+        'tiene_detraccion',
+        'detraccion_monto',
+        'detraccion_porcentaje',
+        'fecha_emision',
+        'fecha_vencimiento',
+        'estado_sunat',
+        'codigo_sunat',
+        'mensaje_sunat',
+        'hash_cpe',
+        'xml_path',
+        'cdr_path',
+        'pdf_path',
+        'raw_request',
+        'raw_response',
+        'tipo_doc_relacionado',
+        'serie_relacionado',
+        'correlativo_relacionado',
+        'motivo',
+        'forma_pago',
+        'cuotas',
+        'metadata',
+        'observaciones',
+    ];
+
+    protected $casts = [
+        'mto_oper_gravadas' => 'decimal:2',
+        'mto_oper_exoneradas' => 'decimal:2',
+        'mto_oper_inafectas' => 'decimal:2',
+        'mto_oper_exportacion' => 'decimal:2',
+        'mto_oper_gratuitas' => 'decimal:2',
+        'mto_igv' => 'decimal:2',
+        'mto_isc' => 'decimal:2',
+        'total_impuestos' => 'decimal:2',
+        'valor_venta' => 'decimal:2',
+        'sub_total' => 'decimal:2',
+        'redondeo' => 'decimal:2',
+        'mto_imp_venta' => 'decimal:2',
+        'detraccion_monto' => 'decimal:2',
+        'detraccion_porcentaje' => 'decimal:2',
+        'tiene_detraccion' => 'boolean',
+        'fecha_emision' => 'datetime',
+        'fecha_vencimiento' => 'date',
+        'raw_request' => 'array',
+        'raw_response' => 'array',
+        'cuotas' => 'array',
+        'metadata' => 'array',
+    ];
+
+    /**
+     * Relaciones
+     */
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
+    }
+
+    public function oportunidad()
+    {
+        return $this->belongsTo(Oportunidad::class);
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(ComprobanteItem::class);
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
+    }
+
+    /**
+     * Scopes
+     */
+    public function scopeAceptados($query)
+    {
+        return $query->where('estado_sunat', 'aceptado');
+    }
+
+    public function scopeRechazados($query)
+    {
+        return $query->where('estado_sunat', 'rechazado');
+    }
+
+    public function scopePendientes($query)
+    {
+        return $query->where('estado_sunat', 'pendiente');
+    }
+
+    public function scopeFacturas($query)
+    {
+        return $query->where('tipo_doc', '01');
+    }
+
+    public function scopeBoletas($query)
+    {
+        return $query->where('tipo_doc', '03');
+    }
+
+    public function scopeNotasCredito($query)
+    {
+        return $query->where('tipo_doc', '07');
+    }
+
+    public function scopeNotasDebito($query)
+    {
+        return $query->where('tipo_doc', '08');
+    }
+
+    /**
+     * Accessors
+     */
+    public function getNumeroCompletoAttribute()
+    {
+        return "{$this->serie}-{$this->correlativo}";
+    }
+
+    public function getTipoDocumentoNombreAttribute()
+    {
+        $tipos = [
+            '01' => 'Factura',
+            '03' => 'Boleta de Venta',
+            '07' => 'Nota de Crédito',
+            '08' => 'Nota de Débito',
+        ];
+
+        return $tipos[$this->tipo_doc] ?? 'Desconocido';
+    }
+
+    public function getEstadoSunatBadgeAttribute()
+    {
+        $badges = [
+            'aceptado' => ['class' => 'success', 'text' => 'Aceptado'],
+            'rechazado' => ['class' => 'danger', 'text' => 'Rechazado'],
+            'pendiente' => ['class' => 'warning', 'text' => 'Pendiente'],
+            'baja' => ['class' => 'secondary', 'text' => 'Anulado'],
+        ];
+
+        return $badges[$this->estado_sunat] ?? ['class' => 'secondary', 'text' => 'Desconocido'];
+    }
+}
