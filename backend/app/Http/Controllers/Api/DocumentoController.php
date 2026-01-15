@@ -184,7 +184,7 @@ class DocumentoController extends Controller
     }
 
     /**
-     * Obtener URL de descarga temporal
+     * Obtener URL de descarga
      */
     public function getUrl(int $id): JsonResponse
     {
@@ -197,16 +197,12 @@ class DocumentoController extends Controller
             ], 404);
         }
 
-        // Generar URL temporal (válida por 1 hora)
-        $url = Storage::disk('minio')->temporaryUrl(
-            $documento->storage_path,
-            now()->addHour()
-        );
+        // Generar URL del endpoint de descarga
+        $url = route('documentos.descargar', ['id' => $id]);
 
         return response()->json([
             'success' => true,
-            'url' => $url,
-            'expires_at' => now()->addHour()->toIso8601String()
+            'url' => $url
         ]);
     }
 
