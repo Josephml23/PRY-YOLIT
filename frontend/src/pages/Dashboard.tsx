@@ -116,16 +116,18 @@ export default function Dashboard() {
                   <XAxis 
                     dataKey="mes" 
                     stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
+                    fontSize={14}
                     tickLine={false}
                     axisLine={false}
+                    style={{ fontSize: '14px' }}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
+                    fontSize={14}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value) => `${value / 1000}k`}
+                    style={{ fontSize: '14px' }}
                   />
                   <ChartTooltip 
                     content={<ChartTooltipContent />}
@@ -181,7 +183,11 @@ export default function Dashboard() {
                     cx="50%"
                     cy="50%"
                     outerRadius="65%"
-                    label={(entry) => entry.tipo}
+                    label={{
+                      fill: 'hsl(var(--foreground))',
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
                     labelLine={false}
                   >
                     {tiposComprobantes.map((entry) => (
@@ -190,8 +196,9 @@ export default function Dashboard() {
                   </Pie>
                   <Legend 
                     verticalAlign="bottom" 
-                    height={36}
+                    height={40}
                     iconType="circle"
+                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -238,7 +245,11 @@ export default function Dashboard() {
                     cy="50%"
                     innerRadius="40%"
                     outerRadius="65%"
-                    label={(entry) => entry.estado}
+                    label={{
+                      fill: 'hsl(var(--foreground))',
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
                     labelLine={false}
                   >
                     {estadosSunat.map((entry) => (
@@ -247,8 +258,9 @@ export default function Dashboard() {
                   </Pie>
                   <Legend 
                     verticalAlign="bottom" 
-                    height={36}
+                    height={40}
                     iconType="circle"
+                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
