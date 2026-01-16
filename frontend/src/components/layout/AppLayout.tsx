@@ -1,0 +1,108 @@
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { 
+  Home, 
+  Building2, 
+  FileText, 
+  Receipt, 
+  FolderOpen, 
+  CreditCard,
+  Settings,
+  LogOut
+} from 'lucide-react';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+
+const menuItems = [
+  { title: 'Dashboard', icon: Home, url: '/' },
+  { title: 'Empresas', icon: Building2, url: '/empresas' },
+  { title: 'Oportunidades', icon: FileText, url: '/oportunidades' },
+  { title: 'Facturación', icon: Receipt, url: '/facturacion' },
+  { title: 'Documentos', icon: FolderOpen, url: '/documentos' },
+  { title: 'Pagos', icon: CreditCard, url: '/pagos' },
+];
+
+export function AppLayout() {
+  const location = useLocation();
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <Sidebar>
+          <SidebarContent>
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-bold">Facturación SUNAT</h2>
+              <p className="text-sm text-muted-foreground">Sistema de Facturación Electrónica</p>
+            </div>
+            
+            <SidebarGroup>
+              <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton 
+                        asChild
+                        isActive={location.pathname === item.url}
+                      >
+                        <Link to={item.url}>
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="/configuracion">
+                        <Settings className="w-4 h-4" />
+                        <span>Configuración</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton>
+                      <LogOut className="w-4 h-4" />
+                      <span>Cerrar Sesión</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+
+        <main className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+            <SidebarTrigger />
+            <div className="flex-1">
+              <h1 className="text-2xl font-semibold">
+                {menuItems.find(item => item.url === location.pathname)?.title || 'Plataforma de Facturación'}
+              </h1>
+            </div>
+          </header>
+          
+          <div className="p-6">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+}
