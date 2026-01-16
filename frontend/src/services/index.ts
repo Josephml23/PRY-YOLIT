@@ -46,9 +46,49 @@ export interface Comprobante {
   updated_at: string;
 }
 
+export interface EmitirComprobanteRequest {
+  empresa_id: number;
+  usuario_id?: number;
+  ublVersion: string;
+  tipoOperacion: string;
+  tipoDoc: string;
+  serie?: string;
+  correlativo?: number;
+  fechaEmision: string;
+  tipoMoneda: string;
+  client: {
+    tipoDoc: string;
+    numDoc: string;
+    rznSocial: string;
+    address?: {
+      direccion: string;
+    };
+  };
+  mtoOperGravadas?: number;
+  mtoOperExoneradas?: number;
+  mtoOperInafectas?: number;
+  mtoIGV?: number;
+  totalImpuestos?: number;
+  mtoImpVenta: number;
+  details: Array<{
+    codProducto: string;
+    unidad: string;
+    descripcion: string;
+    cantidad: number;
+    mtoValorUnitario: number;
+    mtoValorVenta: number;
+    mtoBaseIgv: number;
+    porcentajeIgv: number;
+    igv: number;
+    tipAfeIgv: string;
+    totalImpuestos: number;
+    mtoPrecioUnitario: number;
+  }>;
+}
+
 export const facturacionService = {
-  emitir: (data: any) => api.post('/facturacion/emitir', data),
-  getAll: (params?: any) => api.get<Comprobante[]>('/facturacion', { params }),
+  emitir: (data: EmitirComprobanteRequest) => api.post('/facturacion/emitir', data),
+  getAll: (params?: Record<string, unknown>) => api.get<Comprobante[]>('/facturacion', { params }),
   getById: (id: number) => api.get<Comprobante>(`/facturacion/${id}`),
   descargarXml: (id: number) => api.get(`/facturacion/descargar/xml/${id}`, { responseType: 'blob' }),
   descargarCdr: (id: number) => api.get(`/facturacion/descargar/cdr/${id}`, { responseType: 'blob' }),
@@ -73,7 +113,7 @@ export interface Oportunidad {
 }
 
 export const oportunidadesService = {
-  getAll: (params?: any) => api.get<Oportunidad[]>('/oportunidades', { params }),
+  getAll: (params?: Record<string, unknown>) => api.get<Oportunidad[]>('/oportunidades', { params }),
   getById: (id: number) => api.get<Oportunidad>(`/oportunidades/${id}`),
   create: (data: Partial<Oportunidad>) => api.post<Oportunidad>('/oportunidades', data),
   update: (id: number, data: Partial<Oportunidad>) => api.put<Oportunidad>(`/oportunidades/${id}`, data),
@@ -95,7 +135,7 @@ export interface Pago {
 }
 
 export const pagosService = {
-  getAll: (params?: any) => api.get<Pago[]>('/pagos', { params }),
+  getAll: (params?: Record<string, unknown>) => api.get<Pago[]>('/pagos', { params }),
   getById: (id: number) => api.get<Pago>(`/pagos/${id}`),
   create: (data: Partial<Pago>) => api.post<Pago>('/pagos', data),
   update: (id: number, data: Partial<Pago>) => api.put<Pago>(`/pagos/${id}`, data),
