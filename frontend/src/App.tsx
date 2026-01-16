@@ -3,9 +3,9 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
+import Empresas from '@/pages/Empresas';
 
 // Páginas temporales
-const EmpresasPage = () => <div>Empresas - En desarrollo</div>;
 const OportunidadesPage = () => <div>Oportunidades - En desarrollo</div>;
 const FacturacionPage = () => <div>Facturación - En desarrollo</div>;
 const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
@@ -18,7 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="empresas" element={<EmpresasPage />} />
+            <Route path="empresas" element={<Empresas />} />
             <Route path="oportunidades" element={<OportunidadesPage />} />
             <Route path="facturacion" element={<FacturacionPage />} />
             <Route path="documentos" element={<DocumentosPage />} />
