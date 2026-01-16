@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Receipt, TrendingUp, Clock, CheckCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 
 // Data para gráficos
 const facturacionMensual = [
@@ -90,7 +90,7 @@ export default function Dashboard() {
 
       {/* Gráficos principales */}
       <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
           <CardHeader>
             <CardTitle>Facturación Mensual</CardTitle>
             <CardDescription>
@@ -105,46 +105,44 @@ export default function Dashboard() {
                   color: "hsl(var(--chart-1))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
+              className="aspect-4/3 w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={facturacionMensual}
-                  margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis 
-                    dataKey="mes" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={14}
-                    tickLine={false}
-                    axisLine={false}
-                    style={{ fontSize: '14px' }}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={14}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value / 1000}k`}
-                    style={{ fontSize: '14px' }}
-                  />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
-                  />
-                  <Bar 
-                    dataKey="monto" 
-                    fill="var(--color-monto)" 
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <BarChart 
+                data={facturacionMensual}
+                margin={{ top: 5, right: 5, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="mes" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={14}
+                  tickLine={false}
+                  axisLine={false}
+                  style={{ fontSize: '14px' }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={14}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${value / 1000}k`}
+                  style={{ fontSize: '14px' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
+                />
+                <Bar 
+                  dataKey="monto" 
+                  fill="var(--color-monto)" 
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
           <CardHeader>
             <CardTitle>Tipos de Comprobantes</CardTitle>
             <CardDescription>
@@ -171,37 +169,29 @@ export default function Dashboard() {
                   color: "hsl(var(--chart-4))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
+              className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={tiposComprobantes}
-                    dataKey="cantidad"
-                    nameKey="tipo"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="65%"
-                    label={{
-                      fill: 'hsl(var(--foreground))',
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                    labelLine={false}
-                  >
-                    {tiposComprobantes.map((entry) => (
-                      <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
-                    ))}
-                  </Pie>
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={40}
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Pie
+                  data={tiposComprobantes}
+                  dataKey="cantidad"
+                  nameKey="tipo"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="65%"
+                >
+                  {tiposComprobantes.map((entry) => (
+                    <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
+                  ))}
+                </Pie>
+                <Legend 
+                  verticalAlign="top" 
+                  height={40}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
+                />
+              </PieChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -209,7 +199,7 @@ export default function Dashboard() {
 
       {/* Segunda fila de gráficos */}
       <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
           <CardHeader>
             <CardTitle>Estados SUNAT</CardTitle>
             <CardDescription>
@@ -232,38 +222,36 @@ export default function Dashboard() {
                   color: "hsl(var(--chart-5))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
+              className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={estadosSunat}
-                    dataKey="cantidad"
-                    nameKey="estado"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="40%"
-                    outerRadius="65%"
-                    label={{
-                      fill: 'hsl(var(--foreground))',
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                    labelLine={false}
-                  >
-                    {estadosSunat.map((entry) => (
-                      <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
-                    ))}
-                  </Pie>
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={40}
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Pie
+                  data={estadosSunat}
+                  dataKey="cantidad"
+                  nameKey="estado"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="40%"
+                  outerRadius="65%"
+                  label={{
+                    fill: 'hsl(var(--foreground))',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                  labelLine={false}
+                >
+                  {estadosSunat.map((entry) => (
+                    <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
+                  ))}
+                </Pie>
+                <Legend 
+                  verticalAlign="top" 
+                  height={40}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
+                />
+              </PieChart>
             </ChartContainer>
           </CardContent>
         </Card>
