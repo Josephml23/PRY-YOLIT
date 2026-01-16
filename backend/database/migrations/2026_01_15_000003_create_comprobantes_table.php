@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('empresa_id')->constrained('empresas')->onDelete('cascade');
             $table->foreignId('oportunidad_id')->nullable()->constrained('oportunidades')->onDelete('set null');
-            $table->foreignId('usuario_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('usuario_id')->nullable()->constrained('users')->onDelete('set null');
             
             // Tipo de comprobante
             $table->string('tipo_doc', 2); // 01: Factura, 03: Boleta, 07: NC, 08: ND

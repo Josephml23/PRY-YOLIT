@@ -47,37 +47,33 @@ class FacturacionService
             }
 
             // 4. ENVIAR A SUNAT (UNA SOLA LÍNEA - COMO EN EL TUTORIAL)
-            $response = Greenter::sent($tipoComprobante, $data);
+            // Si hay error, el paquete lanza automáticamente GreenterException
+            $response = Greenter::send($tipoComprobante, $data);
 
-            // 5. Verificar si SUNAT aceptó el comprobante
-            if (!$response->isSuccess()) {
-                throw new Exception($response->getError()->getMessage(), $response->getError()->getCode());
-            }
-
-            // 6. Obtener el documento generado y su nombre
+            // 5. Obtener el documento generado y su nombre
             $document = $response->getDocument();
             $name = $document->getName();
 
-            // 7. Almacenar XML y CDR (COMO EN EL TUTORIAL)
+            // 6. Almacenar XML y CDR (COMO EN EL TUTORIAL)
             $xmlPath = "sunat/xml/{$name}.xml";
             $cdrPath = "sunat/cdr/{$name}.zip";
             
             Storage::disk('public')->put($xmlPath, $response->getXml());
-            Storage::disk('public')->put($cdrPath, $response->getCdr());
+            Storage::disk('public')->put($cdrPath, $response->getCdrZip());
 
-            // 8. Generar PDF usando GreenterReport
+            // 7. Generar PDF usando GreenterReport
             $pdf = GreenterReport::generatePdf($document);
             $pdfPath = "sunat/pdf/{$name}.pdf";
             Storage::disk('public')->put($pdfPath, $pdf);
 
-            // 9. Guardar comprobante en base de datos
+            // 8. Guardar comprobante en base de datos
             $comprobante = $this->guardarComprobante($data, $empresa, $response, [
                 'xml_path' => $xmlPath,
                 'cdr_path' => $cdrPath,
                 'pdf_path' => $pdfPath,
             ]);
 
-            // 10. Guardar items si existen
+            // 9. Guardar items si existen
             if (!empty($data['details'])) {
                 $this->guardarItems($comprobante, $data['details']);
             }
@@ -120,7 +116,7 @@ class FacturacionService
         $this->configurarEmpresa($comprobante->empresa);
         
         // Generar documento nuevamente y obtener HTML
-        $response = Greenter::sent('invoice', $data);
+        $response = Greenter::send('invoice', $data);
         $document = $response->getDocument();
         
         return GreenterReport::generateHtml($document);
@@ -131,22 +127,19 @@ class FacturacionService
      */
     private function configurarEmpresa(Empresa $empresa): void
     {
-        // Obtener RUC principal o el primero disponible
-        $rucData = $empresa->ruc_data[0] ?? null;
-        
-        if (!$rucData) {
-            throw new Exception('Empresa no tiene RUC configurado');
-        }
-
         // Configurar las variables de entorno dinámicamente
         config([
-            'greenter.company.ruc' => $rucData['ruc'],
+            'greenter.company.ruc' => $empresa->ruc,
             'greenter.company.razonSocial' => $empresa->razon_social,
             'greenter.company.nombreComercial' => $empresa->nombre_comercial ?? $empresa->razon_social,
-            'greenter.company.address.direccion' => $empresa->direccion ?? '',
-            'greenter.company.clave_sol.user' => $rucData['usuario_sol'],
-            'greenter.company.clave_sol.password' => $rucData['clave_sol'],
-            'greenter.mode' => $empresa->modo_produccion ? 'prod' : 'beta',
+            'greenter.company.address.ubigeo' => $empresa->ubigeo,
+            'greenter.company.address.departamento' => $empresa->departamento,
+            'greenter.company.address.provincia' => $empresa->provincia,
+            'greenter.company.address.distrito' => $empresa->distrito,
+            'greenter.company.address.direccion' => $empresa->direccion,
+            'greenter.company.clave_sol.user' => $empresa->sol_user,
+            'greenter.company.clave_sol.password' => $empresa->sol_password,
+            'greenter.mode' => $empresa->modo ?? 'beta',
         ]);
     }
 
@@ -191,7 +184,7 @@ class FacturacionService
             'estado_sunat' => 'aceptado',
             'codigo_sunat' => $response->getCdrResponse()->getCode(),
             'mensaje_sunat' => $response->getCdrResponse()->getDescription(),
-            'hash_cpe' => $response->getDocument()->getHash(),
+            'hash_cpe' => $response->getHash(),
             
             // Archivos
             'xml_path' => $paths['xml_path'],
