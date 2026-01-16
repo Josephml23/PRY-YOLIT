@@ -4,10 +4,10 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Empresas from '@/pages/Empresas';
+import Facturacion from '@/pages/Facturacion';
 
 // Páginas temporales
 const OportunidadesPage = () => <div>Oportunidades - En desarrollo</div>;
-const FacturacionPage = () => <div>Facturación - En desarrollo</div>;
 const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
 const PagosPage = () => <div>Pagos - En desarrollo</div>;
 
@@ -20,7 +20,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="empresas" element={<Empresas />} />
             <Route path="oportunidades" element={<OportunidadesPage />} />
-            <Route path="facturacion" element={<FacturacionPage />} />
+            <Route path="facturacion" element={<Facturacion />} />
             <Route path="documentos" element={<DocumentosPage />} />
             <Route path="pagos" element={<PagosPage />} />
           </Route>

@@ -57,41 +57,59 @@ export interface EmpresaFormData {
   activo: boolean;
 }
 
-export interface Factura {
+export interface ComprobanteEmitido {
   id: number;
   empresa_id: number;
-  tipo_comprobante: string;
+  tipo_doc: string;
   serie: string;
   correlativo: string;
   cliente_tipo_doc: string;
-  cliente_numero_doc: string;
+  cliente_num_doc: string;
   cliente_razon_social: string;
   moneda: string;
-  total: number;
+  mto_imp_venta: number;
   estado_sunat: string;
   mensaje_sunat?: string;
   xml_path?: string;
   cdr_path?: string;
   pdf_path?: string;
-  created_at: string;
+  fecha_emision: string;
 }
 
-export interface FacturaFormData {
+export interface ClientePayload {
+  tipoDoc: string;
+  numDoc: string;
+  rznSocial: string;
+  address?: {
+    direccion?: string;
+  };
+  email?: string;
+}
+
+export interface DetalleItemPayload {
+  descripcion: string;
+  cantidad: number;
+  mtoValorUnitario: number;
+}
+
+export interface EmisionFacturaPayload {
   empresa_id: number;
-  tipo_comprobante: string;
-  serie: string;
-  cliente_tipo_doc: string;
-  cliente_numero_doc: string;
-  cliente_razon_social: string;
-  cliente_direccion: string;
-  moneda: string;
-  items: Array<{
-    descripcion: string;
-    cantidad: number;
-    unidad: string;
-    precio_unitario: number;
-    codigo_producto?: string;
-  }>;
+  tipoMoneda: 'PEN' | 'USD' | 'EUR';
+  client: ClientePayload;
+  details: DetalleItemPayload[];
+  mtoImpVenta: number;
+}
+
+export interface EmisionResponse {
+  success: boolean;
+  comprobante: ComprobanteEmitido;
+  cdr_response: {
+    code: string;
+    description: string;
+  };
+  xml_url?: string;
+  cdr_url?: string;
+  pdf_url?: string;
 }
 
 export interface Comprobante {
@@ -144,20 +162,14 @@ export const api = {
       apiClient.patch<ApiResponse<Empresa>>(`/v1/empresas/${id}/cambiar-modo`),
   },
 
-  // Facturas
-  facturas: {
-    emitir: (data: FacturaFormData) => apiClient.post<Factura>('/facturas/emitir', data),
-    listar: (params?: Record<string, unknown>) => apiClient.get<Factura[]>('/facturas', { params }),
-    obtener: (id: number) => apiClient.get<Factura>(`/facturas/${id}`),
-    descargarXML: (id: number) => apiClient.get(`/facturas/${id}/xml`, { responseType: 'blob' }),
-    descargarCDR: (id: number) => apiClient.get(`/facturas/${id}/cdr`, { responseType: 'blob' }),
-    descargarPDF: (id: number) => apiClient.get(`/facturas/${id}/pdf`, { responseType: 'blob' }),
-  },
-
-  // Comprobantes
-  comprobantes: {
-    listar: (params?: Record<string, unknown>) => apiClient.get<Comprobante[]>('/comprobantes', { params }),
-    obtener: (id: number) => apiClient.get<Comprobante>(`/comprobantes/${id}`),
+  // Facturación electrónica
+  facturacion: {
+    emitirFactura: (data: EmisionFacturaPayload) =>
+      apiClient.post<EmisionResponse>('/facturacion/emitir/factura', data),
+    emitirBoleta: (data: EmisionFacturaPayload) =>
+      apiClient.post<EmisionResponse>('/facturacion/emitir/boleta', data),
+    listarComprobantes: (params?: Record<string, unknown>) =>
+      apiClient.get<PaginatedResponse<ComprobanteEmitido>>('/facturacion/comprobantes', { params }),
   },
 
   // Oportunidades
