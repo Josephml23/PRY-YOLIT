@@ -14,16 +14,16 @@ const facturacionMensual = [
 ];
 
 const tiposComprobantes = [
-  { tipo: 'Facturas', cantidad: 450, fill: 'hsl(var(--chart-1))' },
-  { tipo: 'Boletas', cantidad: 320, fill: 'hsl(var(--chart-2))' },
-  { tipo: 'NC', cantidad: 80, fill: 'hsl(var(--chart-3))' },
-  { tipo: 'ND', cantidad: 50, fill: 'hsl(var(--chart-4))' },
+  { tipo: 'Facturas', cantidad: 450, fill: '#2563eb' },
+  { tipo: 'Boletas', cantidad: 320, fill: '#7c3aed' },
+  { tipo: 'NC', cantidad: 80, fill: '#db2777' },
+  { tipo: 'ND', cantidad: 50, fill: '#ea580c' },
 ];
 
 const estadosSunat = [
-  { estado: 'Aceptado', cantidad: 850, fill: 'hsl(var(--chart-1))' },
-  { estado: 'Observado', cantidad: 30, fill: 'hsl(var(--chart-3))' },
-  { estado: 'Rechazado', cantidad: 20, fill: 'hsl(var(--chart-5))' },
+  { estado: 'Aceptado', cantidad: 850, fill: '#10b981' },
+  { estado: 'Observado', cantidad: 30, fill: '#f59e0b' },
+  { estado: 'Rechazado', cantidad: 20, fill: '#ef4444' },
 ];
 
 export default function Dashboard() {
@@ -102,7 +102,7 @@ export default function Dashboard() {
               config={{
                 monto: {
                   label: "Monto",
-                  color: "hsl(var(--chart-1))",
+                  color: "#2563eb",
                 },
               }}
               className="h-[300px]"
@@ -113,7 +113,7 @@ export default function Dashboard() {
                   <XAxis dataKey="mes" className="text-xs" />
                   <YAxis className="text-xs" />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="monto" fill="hsl(var(--chart-1))" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="monto" fill="#2563eb" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
