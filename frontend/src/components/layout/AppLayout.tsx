@@ -21,6 +21,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const menuItems = [
   { title: 'Dashboard', icon: Home, url: '/' },
@@ -36,11 +37,13 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar>
+      <div className="flex min-h-screen w-full bg-background">
+        <Sidebar className="border-r">
           <SidebarContent>
             <div className="p-4 border-b">
-              <h2 className="text-xl font-bold">Facturación SUNAT</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Facturación SUNAT
+              </h2>
               <p className="text-sm text-muted-foreground">Sistema de Facturación Electrónica</p>
             </div>
             
@@ -89,13 +92,14 @@ export function AppLayout() {
         </Sidebar>
 
         <main className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
             <SidebarTrigger />
             <div className="flex-1">
               <h1 className="text-2xl font-semibold">
                 {menuItems.find(item => item.url === location.pathname)?.title || 'Plataforma de Facturación'}
               </h1>
             </div>
+            <ThemeToggle />
           </header>
           
           <div className="p-6">
