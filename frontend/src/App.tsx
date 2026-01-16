@@ -5,9 +5,9 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Empresas from '@/pages/Empresas';
 import Facturacion from '@/pages/Facturacion';
+import Oportunidades from '@/pages/Oportunidades';
 
 // Páginas temporales
-const OportunidadesPage = () => <div>Oportunidades - En desarrollo</div>;
 const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
 const PagosPage = () => <div>Pagos - En desarrollo</div>;
 
@@ -19,7 +19,7 @@ function App() {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="empresas" element={<Empresas />} />
-            <Route path="oportunidades" element={<OportunidadesPage />} />
+            <Route path="oportunidades" element={<Oportunidades />} />
             <Route path="facturacion" element={<Facturacion />} />
             <Route path="documentos" element={<DocumentosPage />} />
             <Route path="pagos" element={<PagosPage />} />

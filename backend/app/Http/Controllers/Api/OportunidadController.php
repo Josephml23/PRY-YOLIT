@@ -70,7 +70,7 @@ class OportunidadController extends Controller
             'area' => 'required|string|max:100',
             'tipo_operacion' => 'required|string|max:100',
             'estado' => 'required|in:nuevo,en_proceso,enviado,observado,ganado,perdido,cancelado',
-            'responsable_id' => 'required|exists:users,id',
+            'responsable_id' => 'nullable|exists:users,id',
             'cliente_nombre' => 'required|string|max:255',
             'cliente_ruc' => 'nullable|string|max:11',
             'descripcion' => 'nullable|string',
@@ -88,7 +88,12 @@ class OportunidadController extends Controller
             ], 422);
         }
 
-        $oportunidad = Oportunidad::create($validator->validated());
+        $data = $validator->validated();
+
+        // Mapear cliente_nombre al campo obligatorio "titulo"
+        $data['titulo'] = $data['cliente_nombre'];
+
+        $oportunidad = Oportunidad::create($data);
 
         return response()->json([
             'success' => true,
@@ -128,7 +133,7 @@ class OportunidadController extends Controller
             'area' => 'sometimes|string|max:100',
             'tipo_operacion' => 'sometimes|string|max:100',
             'estado' => 'sometimes|in:nuevo,en_proceso,enviado,observado,ganado,perdido,cancelado',
-            'responsable_id' => 'sometimes|exists:users,id',
+            'responsable_id' => 'sometimes|nullable|exists:users,id',
             'cliente_nombre' => 'sometimes|string|max:255',
             'cliente_ruc' => 'nullable|string|max:11',
             'descripcion' => 'nullable|string',
@@ -146,7 +151,14 @@ class OportunidadController extends Controller
             ], 422);
         }
 
-        $oportunidad->update($validator->validated());
+        $data = $validator->validated();
+
+        // Si se envía cliente_nombre en la actualización, sincronizarlo con "titulo"
+        if (array_key_exists('cliente_nombre', $data)) {
+            $data['titulo'] = $data['cliente_nombre'];
+        }
+
+        $oportunidad->update($data);
 
         return response()->json([
             'success' => true,

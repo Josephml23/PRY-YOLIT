@@ -127,25 +127,50 @@ export interface Comprobante {
   fecha: string;
 }
 
+export type EstadoOportunidad =
+  | 'nuevo'
+  | 'en_proceso'
+  | 'enviado'
+  | 'observado'
+  | 'ganado'
+  | 'perdido'
+  | 'cancelado';
+
 export interface Oportunidad {
   id: number;
   empresa_id: number;
-  nombre: string;
-  descripcion?: string;
-  estado: string;
-  responsable?: string;
+  area: string;
+  tipo_operacion: string;
+  estado: EstadoOportunidad;
+  responsable_id: number | null;
+  cliente_nombre: string;
+  cliente_ruc?: string | null;
+  descripcion?: string | null;
+  monto_estimado?: number | null;
   fecha_inicio: string;
-  fecha_vencimiento?: string;
+  fecha_vencimiento?: string | null;
+  probabilidad?: number | null;
+  notas?: string | null;
+  empresa?: {
+    id: number;
+    razon_social: string;
+  };
+  responsable?: {
+    id: number;
+    name: string;
+  };
   created_at: string;
+  updated_at: string;
 }
 
 export interface Documento {
   id: number;
-  oportunidad_id: number;
+  oportunidad_id: number | null;
   tipo: string;
-  nombre: string;
-  ruta: string;
+  storage_path: string;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
+  updated_at: string;
 }
 
 // Servicios de API
@@ -177,20 +202,37 @@ export const api = {
 
   // Oportunidades
   oportunidades: {
-    listar: (params?: Record<string, unknown>) => apiClient.get<Oportunidad[]>('/oportunidades', { params }),
-    obtener: (id: number) => apiClient.get<Oportunidad>(`/oportunidades/${id}`),
-    crear: (data: Partial<Oportunidad>) => apiClient.post<Oportunidad>('/oportunidades', data),
-    actualizar: (id: number, data: Partial<Oportunidad>) => apiClient.put<Oportunidad>(`/oportunidades/${id}`, data),
-    eliminar: (id: number) => apiClient.delete(`/oportunidades/${id}`),
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<PaginatedResponse<Oportunidad>>('/v1/oportunidades', { params }),
+    obtener: (id: number) => apiClient.get<ApiResponse<Oportunidad>>(`/v1/oportunidades/${id}`),
+    crear: (data: Partial<Oportunidad>) =>
+      apiClient.post<ApiResponse<Oportunidad>>('/v1/oportunidades', data),
+    actualizar: (id: number, data: Partial<Oportunidad>) =>
+      apiClient.put<ApiResponse<Oportunidad>>(`/v1/oportunidades/${id}`, data),
+    eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/oportunidades/${id}`),
+    cambiarEstado: (id: number, data: { estado: EstadoOportunidad; notas?: string }) =>
+      apiClient.patch<ApiResponse<Oportunidad>>(`/v1/oportunidades/${id}/estado`, data),
+    estadisticas: (params?: Record<string, unknown>) =>
+      apiClient.get<ApiResponse<{ total: number; por_estado: Record<string, number>; monto_total: number; monto_ganado: number; vencidas: number }>>(
+        '/v1/oportunidades/estadisticas/general',
+        { params },
+      ),
   },
 
   // Documentos
   documentos: {
-    listar: (oportunidadId: number) => apiClient.get<Documento[]>(`/oportunidades/${oportunidadId}/documentos`),
-    subir: (oportunidadId: number, formData: FormData) => 
-      apiClient.post<Documento>(`/oportunidades/${oportunidadId}/documentos`, formData, {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<PaginatedResponse<Documento>>('/v1/documentos', { params }),
+    obtener: (id: number) => apiClient.get<ApiResponse<Documento>>(`/v1/documentos/${id}`),
+    subir: (formData: FormData) =>
+      apiClient.post<ApiResponse<Documento>>('/v1/documentos', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
-    eliminar: (id: number) => apiClient.delete(`/documentos/${id}`),
+    actualizar: (id: number, formData: FormData) =>
+      apiClient.post<ApiResponse<Documento>>(`/v1/documentos/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/documentos/${id}`),
+    descargar: (id: number) => apiClient.get(`/v1/documentos/${id}/descargar`, { responseType: 'blob' }),
   },
 };

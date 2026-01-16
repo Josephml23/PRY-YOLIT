@@ -259,8 +259,9 @@ class FacturacionController extends Controller
         }
 
         $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.xml';
+        $path = Storage::disk('public')->path($comprobante->xml_path);
 
-        return Storage::disk('public')->download($comprobante->xml_path, $fileName);
+        return response()->download($path, $fileName);
     }
 
     /**
@@ -278,8 +279,9 @@ class FacturacionController extends Controller
         }
 
         $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.zip';
+        $path = Storage::disk('public')->path($comprobante->cdr_path);
 
-        return Storage::disk('public')->download($comprobante->cdr_path, $fileName);
+        return response()->download($path, $fileName);
     }
 
     /**
@@ -297,8 +299,9 @@ class FacturacionController extends Controller
         }
 
         $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
+        $path = Storage::disk('public')->path($comprobante->pdf_path);
 
-        return Storage::disk('public')->download($comprobante->pdf_path, $fileName);
+        return response()->download($path, $fileName);
     }
 
     /**
