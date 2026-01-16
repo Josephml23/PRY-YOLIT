@@ -14,16 +14,16 @@ const facturacionMensual = [
 ];
 
 const tiposComprobantes = [
-  { tipo: 'Facturas', cantidad: 450, fill: 'hsl(var(--chart-1))' },
-  { tipo: 'Boletas', cantidad: 320, fill: 'hsl(var(--chart-2))' },
-  { tipo: 'NC', cantidad: 80, fill: 'hsl(var(--chart-3))' },
-  { tipo: 'ND', cantidad: 50, fill: 'hsl(var(--chart-4))' },
+  { tipo: 'Facturas', cantidad: 450 },
+  { tipo: 'Boletas', cantidad: 320 },
+  { tipo: 'NC', cantidad: 80 },
+  { tipo: 'ND', cantidad: 50 },
 ];
 
 const estadosSunat = [
-  { estado: 'Aceptado', cantidad: 850, fill: 'hsl(var(--chart-2))' },
-  { estado: 'Observado', cantidad: 30, fill: 'hsl(var(--chart-3))' },
-  { estado: 'Rechazado', cantidad: 20, fill: 'hsl(var(--chart-5))' },
+  { estado: 'Aceptado', cantidad: 850 },
+  { estado: 'Observado', cantidad: 30 },
+  { estado: 'Rechazado', cantidad: 20 },
 ];
 
 export default function Dashboard() {
@@ -97,23 +97,45 @@ export default function Dashboard() {
               Ingresos de los últimos 6 meses
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             <ChartContainer
               config={{
                 monto: {
-                  label: "Monto",
+                  label: "Monto (S/)",
                   color: "hsl(var(--chart-1))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={facturacionMensual}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="mes" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="monto" fill="hsl(var(--chart-1))" radius={[8, 8, 0, 0]} />
+                <BarChart 
+                  data={facturacionMensual}
+                  margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="mes" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${value / 1000}k`}
+                  />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
+                  />
+                  <Bar 
+                    dataKey="monto" 
+                    fill="var(--color-monto)" 
+                    radius={[8, 8, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -127,17 +149,30 @@ export default function Dashboard() {
               Distribución por tipo de documento
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             <ChartContainer
               config={{
-                cantidad: {
-                  label: "Cantidad",
+                Facturas: {
+                  label: "Facturas",
+                  color: "hsl(var(--chart-1))",
+                },
+                Boletas: {
+                  label: "Boletas",
+                  color: "hsl(var(--chart-2))",
+                },
+                NC: {
+                  label: "Notas de Crédito",
+                  color: "hsl(var(--chart-3))",
+                },
+                ND: {
+                  label: "Notas de Débito",
+                  color: "hsl(var(--chart-4))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={tiposComprobantes}
@@ -145,14 +180,19 @@ export default function Dashboard() {
                     nameKey="tipo"
                     cx="50%"
                     cy="50%"
-                    outerRadius="70%"
-                    label
+                    outerRadius="65%"
+                    label={(entry) => entry.tipo}
+                    labelLine={false}
                   >
-                    {tiposComprobantes.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    {tiposComprobantes.map((entry) => (
+                      <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
                     ))}
                   </Pie>
-                  <Legend />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -169,17 +209,26 @@ export default function Dashboard() {
               Respuestas de validación SUNAT
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             <ChartContainer
               config={{
-                cantidad: {
-                  label: "Cantidad",
+                Aceptado: {
+                  label: "Aceptado",
+                  color: "hsl(var(--chart-2))",
+                },
+                Observado: {
+                  label: "Observado",
+                  color: "hsl(var(--chart-4))",
+                },
+                Rechazado: {
+                  label: "Rechazado",
+                  color: "hsl(var(--chart-5))",
                 },
               }}
-              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5 w-full"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={estadosSunat}
@@ -187,15 +236,20 @@ export default function Dashboard() {
                     nameKey="estado"
                     cx="50%"
                     cy="50%"
-                    innerRadius="45%"
-                    outerRadius="70%"
-                    label
+                    innerRadius="40%"
+                    outerRadius="65%"
+                    label={(entry) => entry.estado}
+                    labelLine={false}
                   >
-                    {estadosSunat.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    {estadosSunat.map((entry) => (
+                      <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
                     ))}
                   </Pie>
-                  <Legend />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
