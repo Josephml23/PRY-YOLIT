@@ -41,7 +41,7 @@ export function AppLayout() {
         <Sidebar className="border-r">
           <SidebarContent>
             <div className="p-4 border-b">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Facturación SUNAT
               </h2>
               <p className="text-sm text-muted-foreground">Sistema de Facturación Electrónica</p>
@@ -92,7 +92,7 @@ export function AppLayout() {
         </Sidebar>
 
         <main className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-6">
             <SidebarTrigger />
             <div className="flex-1">
               <h1 className="text-2xl font-semibold">
