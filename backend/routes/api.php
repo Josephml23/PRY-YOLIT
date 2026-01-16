@@ -28,6 +28,10 @@ Route::prefix('facturacion')->group(function () {
     Route::post('/emitir/boleta', [FacturacionController::class, 'emitirBoleta']);
     Route::post('/emitir/nota-credito', [FacturacionController::class, 'emitirNotaCredito']);
     Route::post('/emitir/nota-debito', [FacturacionController::class, 'emitirNotaDebito']);
+    Route::post('/emitir/resumen', [FacturacionController::class, 'emitirResumen']);
+    Route::post('/emitir/comunicacion-baja', [FacturacionController::class, 'emitirComunicacionBaja']);
+    Route::post('/emitir/retencion', [FacturacionController::class, 'emitirRetencion']);
+    Route::post('/emitir/percepcion', [FacturacionController::class, 'emitirPercepcion']);
     
     // Consultas SUNAT
     Route::get('/consultar/{id}', [FacturacionController::class, 'consultarTicket']);

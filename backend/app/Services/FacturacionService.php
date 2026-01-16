@@ -312,4 +312,176 @@ class FacturacionService
             })->toArray(),
         ];
     }
+
+    /**
+     * Enviar resumen diario de boletas/notas (RC)
+     * No registra información en la tabla de comprobantes, solo almacena XML/CDR.
+     */
+    public function enviarResumen(array $data): array
+    {
+        try {
+            $empresa = Empresa::findOrFail($data['empresa_id']);
+
+            $this->configurarEmpresa($empresa);
+
+            unset($data['empresa_id']);
+
+            $response = Greenter::send('summary', $data);
+
+            $document = $response->getDocument();
+            $name = $document->getName();
+
+            $xmlPath = "sunat/xml/{$name}.xml";
+            $cdrPath = "sunat/cdr/{$name}.zip";
+
+            Storage::disk('public')->put($xmlPath, $response->getXml());
+            Storage::disk('public')->put($cdrPath, $response->getCdrZip());
+
+            return [
+                'success' => true,
+                'tipo' => 'summary',
+                'nombre' => $name,
+                'cdr_response' => $response->getCdrResponse(),
+                'xml_url' => asset('storage/' . $xmlPath),
+                'cdr_url' => asset('storage/' . $cdrPath),
+            ];
+        } catch (Exception $e) {
+            Log::error('Error al enviar resumen diario', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'data' => $data,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Enviar comunicación de baja (RA)
+     * No registra información en la tabla de comprobantes, solo almacena XML/CDR.
+     */
+    public function comunicarBaja(array $data): array
+    {
+        try {
+            $empresa = Empresa::findOrFail($data['empresa_id']);
+
+            $this->configurarEmpresa($empresa);
+
+            unset($data['empresa_id']);
+
+            $response = Greenter::send('voided', $data);
+
+            $document = $response->getDocument();
+            $name = $document->getName();
+
+            $xmlPath = "sunat/xml/{$name}.xml";
+            $cdrPath = "sunat/cdr/{$name}.zip";
+
+            Storage::disk('public')->put($xmlPath, $response->getXml());
+            Storage::disk('public')->put($cdrPath, $response->getCdrZip());
+
+            return [
+                'success' => true,
+                'tipo' => 'voided',
+                'nombre' => $name,
+                'cdr_response' => $response->getCdrResponse(),
+                'xml_url' => asset('storage/' . $xmlPath),
+                'cdr_url' => asset('storage/' . $cdrPath),
+            ];
+        } catch (Exception $e) {
+            Log::error('Error al enviar comunicacion de baja', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'data' => $data,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Emitir comprobante de retención
+     * No registra información en la tabla de comprobantes, solo almacena XML/CDR.
+     */
+    public function emitirRetencion(array $data): array
+    {
+        try {
+            $empresa = Empresa::findOrFail($data['empresa_id']);
+
+            $this->configurarEmpresa($empresa);
+
+            unset($data['empresa_id']);
+
+            $response = Greenter::send('retention', $data);
+
+            $document = $response->getDocument();
+            $name = $document->getName();
+
+            $xmlPath = "sunat/xml/{$name}.xml";
+            $cdrPath = "sunat/cdr/{$name}.zip";
+
+            Storage::disk('public')->put($xmlPath, $response->getXml());
+            Storage::disk('public')->put($cdrPath, $response->getCdrZip());
+
+            return [
+                'success' => true,
+                'tipo' => 'retention',
+                'nombre' => $name,
+                'cdr_response' => $response->getCdrResponse(),
+                'xml_url' => asset('storage/' . $xmlPath),
+                'cdr_url' => asset('storage/' . $cdrPath),
+            ];
+        } catch (Exception $e) {
+            Log::error('Error al emitir comprobante de retencion', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'data' => $data,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Emitir comprobante de percepción
+     * No registra información en la tabla de comprobantes, solo almacena XML/CDR.
+     */
+    public function emitirPercepcion(array $data): array
+    {
+        try {
+            $empresa = Empresa::findOrFail($data['empresa_id']);
+
+            $this->configurarEmpresa($empresa);
+
+            unset($data['empresa_id']);
+
+            $response = Greenter::send('perception', $data);
+
+            $document = $response->getDocument();
+            $name = $document->getName();
+
+            $xmlPath = "sunat/xml/{$name}.xml";
+            $cdrPath = "sunat/cdr/{$name}.zip";
+
+            Storage::disk('public')->put($xmlPath, $response->getXml());
+            Storage::disk('public')->put($cdrPath, $response->getCdrZip());
+
+            return [
+                'success' => true,
+                'tipo' => 'perception',
+                'nombre' => $name,
+                'cdr_response' => $response->getCdrResponse(),
+                'xml_url' => asset('storage/' . $xmlPath),
+                'cdr_url' => asset('storage/' . $cdrPath),
+            ];
+        } catch (Exception $e) {
+            Log::error('Error al emitir comprobante de percepcion', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'data' => $data,
+            ]);
+
+            throw $e;
+        }
+    }
 }

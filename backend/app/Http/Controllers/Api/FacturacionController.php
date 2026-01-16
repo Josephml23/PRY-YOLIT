@@ -212,6 +212,126 @@ class FacturacionController extends Controller
     }
 
     /**
+     * Enviar resumen diario (RC)
+     */
+    public function emitirResumen(Request $request): JsonResponse
+    {
+        $validator = $this->validarResumen($request);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $data = $request->all();
+
+            $resultado = $this->facturacionService->enviarResumen($data);
+
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Enviar comunicación de baja (RA)
+     */
+    public function emitirComunicacionBaja(Request $request): JsonResponse
+    {
+        $validator = $this->validarComunicacionBaja($request);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $data = $request->all();
+
+            $resultado = $this->facturacionService->comunicarBaja($data);
+
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Emitir comprobante de retención
+     */
+    public function emitirRetencion(Request $request): JsonResponse
+    {
+        $validator = $this->validarRetencion($request);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $data = $request->all();
+
+            $resultado = $this->facturacionService->emitirRetencion($data);
+
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Emitir comprobante de percepción
+     */
+    public function emitirPercepcion(Request $request): JsonResponse
+    {
+        $validator = $this->validarPercepcion($request);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $data = $request->all();
+
+            $resultado = $this->facturacionService->emitirPercepcion($data);
+
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ], 500);
+        }
+    }
+
+    /**
      * Obtener siguiente correlativo
      */
     public function siguienteCorrelativo(Request $request): JsonResponse
@@ -377,6 +497,66 @@ class FacturacionController extends Controller
             'client.rznSocial' => 'required|string|max:255',
             'details' => 'required|array|min:1',
             'mtoImpVenta' => 'required|numeric',
+        ]);
+    }
+
+    /**
+     * Validación para resumen diario (RC)
+     */
+    private function validarResumen(Request $request)
+    {
+        return Validator::make($request->all(), [
+            'empresa_id' => 'required|exists:empresas,id',
+            'fecGeneracion' => 'required|date',
+            'fecResumen' => 'required|date',
+            'correlativo' => 'required|string',
+            'details' => 'required|array|min:1',
+        ]);
+    }
+
+    /**
+     * Validación para comunicación de baja (RA)
+     */
+    private function validarComunicacionBaja(Request $request)
+    {
+        return Validator::make($request->all(), [
+            'empresa_id' => 'required|exists:empresas,id',
+            'fecGeneracion' => 'required|date',
+            'fecComunicacion' => 'required|date',
+            'correlativo' => 'required|string',
+            'details' => 'required|array|min:1',
+        ]);
+    }
+
+    /**
+     * Validación para comprobante de retención
+     */
+    private function validarRetencion(Request $request)
+    {
+        return Validator::make($request->all(), [
+            'empresa_id' => 'required|exists:empresas,id',
+            'serie' => 'required|string',
+            'correlativo' => 'required|string',
+            'fechaEmision' => 'required|date',
+            'regimen' => 'required|string',
+            'tasa' => 'required|numeric',
+            'details' => 'required|array|min:1',
+        ]);
+    }
+
+    /**
+     * Validación para comprobante de percepción
+     */
+    private function validarPercepcion(Request $request)
+    {
+        return Validator::make($request->all(), [
+            'empresa_id' => 'required|exists:empresas,id',
+            'serie' => 'required|string',
+            'correlativo' => 'required|string',
+            'fechaEmision' => 'required|date',
+            'regimen' => 'required|string',
+            'tasa' => 'required|numeric',
+            'details' => 'required|array|min:1',
         ]);
     }
 

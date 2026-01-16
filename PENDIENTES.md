@@ -1,8 +1,8 @@
 # 📋 PENDIENTES - Plataforma de Facturación Electrónica
 
-**Fecha de actualización:** 15 de enero de 2026  
+**Fecha de actualización:** 16 de enero de 2026  
 **Estado Backend:** ✅ 100% Completado y **REFACTORIZADO según tutorial**  
-**Estado Frontend:** ⏳ 0% - Por iniciar
+**Estado Frontend:** 🟡 ~50% - En desarrollo (Dashboard, Empresas, Facturación, Oportunidades)
 
 ---
 
@@ -103,6 +103,11 @@ Ver archivo: [INSTRUCCIONES_WKHTMLTOPDF.md](INSTRUCCIONES_WKHTMLTOPDF.md)
 - [ ] Descargar XML/CDR/PDF de comprobantes
 - [ ] Consulta de estado de ticket SUNAT
 - [ ] Envío de comprobante por email
+ - [ ] Otros comprobantes SUNAT (según anexo D y carpeta `examples/`)
+   - [ ] Resumen diario RC (backend ✔️, frontend pendiente)
+   - [ ] Comunicación de baja RA (backend ✔️, frontend pendiente)
+   - [ ] Retención (backend ✔️, frontend pendiente)
+   - [ ] Percepción (backend ✔️, frontend pendiente)
 
 ##### 🟡 **Dashboard Principal**
 - [ ] Gráfico de facturación del mes (Chart.js o Recharts)
@@ -231,7 +236,7 @@ Ver archivo: [INSTRUCCIONES_WKHTMLTOPDF.md](INSTRUCCIONES_WKHTMLTOPDF.md)
 |--------|------------|-----------|--------|
 | **Backend API** | 55 rutas | Autenticación | ✅ 95% |
 | **Greenter (Tutorial)** | Instalado | Refactorizar | ⚠️ 40% |
-| **Frontend React** | - | Todo | ❌ 0% |
+| **Frontend React** | Dashboard, Empresas, Facturación, Oportunidades | Documentos, Pagos, SLA, Auth, extras | 🟡 50% |
 | **Docker** | PostgreSQL + MinIO | Laravel + Frontend | 🟡 60% |
 | **Testing** | - | Backend + Frontend | ❌ 0% |
 | **Docs** | README básico | Completo | 🟡 30% |
