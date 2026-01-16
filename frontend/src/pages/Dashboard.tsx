@@ -28,9 +28,9 @@ const estadosSunat = [
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
       {/* Tarjetas de estadísticas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Facturado (Mes)</CardTitle>
@@ -89,7 +89,7 @@ export default function Dashboard() {
       </div>
 
       {/* Gráficos principales */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Facturación Mensual</CardTitle>
@@ -105,7 +105,7 @@ export default function Dashboard() {
                   color: "hsl(var(--chart-1))",
                 },
               }}
-              className="h-75"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={facturacionMensual}>
@@ -134,7 +134,7 @@ export default function Dashboard() {
                   label: "Cantidad",
                 },
               }}
-              className="h-75"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -145,7 +145,7 @@ export default function Dashboard() {
                     nameKey="tipo"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius="70%"
                     label
                   >
                     {tiposComprobantes.map((entry, index) => (
@@ -161,7 +161,7 @@ export default function Dashboard() {
       </div>
 
       {/* Segunda fila de gráficos */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Estados SUNAT</CardTitle>
@@ -176,7 +176,7 @@ export default function Dashboard() {
                   label: "Cantidad",
                 },
               }}
-              className="h-75"
+              className="h-75 sm:h-87.5 lg:h-100 xl:h-112.5"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -187,8 +187,8 @@ export default function Dashboard() {
                     nameKey="estado"
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius="45%"
+                    outerRadius="70%"
                     label
                   >
                     {estadosSunat.map((entry, index) => (
@@ -210,19 +210,19 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
               {[
                 { numero: 'F001-00123', cliente: 'EMPRESA CLIENTE SAC', monto: 118.00, estado: 'Aceptado' },
                 { numero: 'B001-00456', cliente: 'Juan Pérez', monto: 85.00, estado: 'Aceptado' },
                 { numero: 'F001-00124', cliente: 'INVERSIONES XYZ SAC', monto: 2500.00, estado: 'Aceptado' },
                 { numero: 'NC01-00012', cliente: 'ABC CORP', monto: 150.00, estado: 'Observado' },
               ].map((doc, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                  <div className="space-y-1">
+                <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2">
+                  <div className="space-y-1 flex-1">
                     <p className="text-sm font-medium leading-none">{doc.numero}</p>
-                    <p className="text-sm text-muted-foreground">{doc.cliente}</p>
+                    <p className="text-sm text-muted-foreground truncate">{doc.cliente}</p>
                   </div>
-                  <div className="text-right space-y-1">
+                  <div className="text-left sm:text-right space-y-1 shrink-0">
                     <p className="text-sm font-medium">S/ {doc.monto.toFixed(2)}</p>
                     <p className={`text-xs font-medium ${
                       doc.estado === 'Aceptado' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'

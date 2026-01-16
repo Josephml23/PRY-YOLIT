@@ -92,17 +92,17 @@ export function AppLayout() {
         </Sidebar>
 
         <main className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-6">
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-4 md:px-6 lg:px-8">
             <SidebarTrigger />
             <div className="flex-1">
-              <h1 className="text-2xl font-semibold">
+              <h1 className="text-lg md:text-xl lg:text-2xl font-semibold truncate">
                 {menuItems.find(item => item.url === location.pathname)?.title || 'Plataforma de Facturación'}
               </h1>
             </div>
             <ThemeToggle />
           </header>
           
-          <div className="p-6">
+          <div className="p-0 max-w-500 mx-auto w-full">
             <Outlet />
           </div>
         </main>
