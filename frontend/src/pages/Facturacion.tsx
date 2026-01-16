@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Send } from 'lucide-react';
+import { Plus, Trash2, Send, FileText, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { api, type Empresa, type EmisionFacturaPayload } from '@/lib/api';
+import { api, apiBaseUrl, type Empresa, type EmisionFacturaPayload, type ComprobanteEmitido } from '@/lib/api';
 
 interface ItemForm {
   descripcion: string;
@@ -19,6 +19,14 @@ export default function Facturacion() {
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loadingEmpresas, setLoadingEmpresas] = useState(true);
+
+  const [comprobantes, setComprobantes] = useState<ComprobanteEmitido[]>([]);
+  const [loadingComprobantes, setLoadingComprobantes] = useState(true);
+  const [pagina, setPagina] = useState(1);
+  const [ultimaPagina, setUltimaPagina] = useState(1);
+  const [filtroEmpresaListado, setFiltroEmpresaListado] = useState<string>('all');
+  const [filtroEstado, setFiltroEstado] = useState<string>('all');
+  const [filtroNumero, setFiltroNumero] = useState('');
 
   const [empresaId, setEmpresaId] = useState<string>('');
   const [tipoComprobante, setTipoComprobante] = useState<'factura' | 'boleta'>('factura');
@@ -55,6 +63,37 @@ export default function Facturacion() {
 
     cargarEmpresas();
   }, [toast]);
+
+  const cargarComprobantes = async (page = 1) => {
+    try {
+      setLoadingComprobantes(true);
+
+      const response = await api.facturacion.listarComprobantes({
+        page,
+        per_page: 10,
+        empresa_id: filtroEmpresaListado === 'all' ? undefined : filtroEmpresaListado,
+        estado_sunat: filtroEstado === 'all' ? undefined : filtroEstado,
+        numero: filtroNumero || undefined,
+      });
+
+      setComprobantes(response.data.data);
+      setPagina(response.data.current_page);
+      setUltimaPagina(response.data.last_page);
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los comprobantes',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingComprobantes(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarComprobantes(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Ajustar tipo de documento permitido según tipo de comprobante
@@ -157,7 +196,7 @@ export default function Facturacion() {
         const comp = response.data.comprobante;
         toast({
           title: 'Comprobante emitido',
-          description: `Número ${comp.serie}-${comp.correlativo} por S/ ${comp.mto_imp_venta.toFixed(2)}`,
+          description: `Número ${comp.serie}-${comp.correlativo} por S/ ${Number(comp.mto_imp_venta ?? 0).toFixed(2)}`,
         });
       } else {
         toast({
@@ -193,6 +232,12 @@ export default function Facturacion() {
     } finally {
       setEnviando(false);
     }
+  };
+
+  const abrirDescarga = (id: number, tipo: 'xml' | 'cdr' | 'pdf') => {
+    if (!apiBaseUrl) return;
+    const url = `${apiBaseUrl}/facturacion/descargar/${tipo}/${id}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -414,6 +459,204 @@ export default function Facturacion() {
               </div>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Comprobantes emitidos</CardTitle>
+          <CardDescription>
+            Lista de comprobantes enviados a SUNAT con sus estados y accesos a XML, CDR y PDF.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="space-y-1">
+              <Label>Empresa</Label>
+              <Select
+                value={filtroEmpresaListado}
+                onValueChange={setFiltroEmpresaListado}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {empresas.map((e) => (
+                    <SelectItem key={e.id} value={String(e.id)}>
+                      {e.razon_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Estado SUNAT</Label>
+              <Select
+                value={filtroEstado}
+                onValueChange={setFiltroEstado}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="aceptado">Aceptado</SelectItem>
+                  <SelectItem value="rechazado">Rechazado</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <Label>Número o cliente</Label>
+              <Input
+                placeholder="Buscar por número (F001-000001) o cliente"
+                value={filtroNumero}
+                onChange={(e) => setFiltroNumero(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => cargarComprobantes(1)}
+              disabled={loadingComprobantes}
+            >
+              Actualizar lista
+            </Button>
+          </div>
+
+          {loadingComprobantes ? (
+            <div className="py-6 text-center text-muted-foreground">
+              Cargando comprobantes...
+            </div>
+          ) : comprobantes.length === 0 ? (
+            <div className="py-6 text-center text-muted-foreground">
+              No se encontraron comprobantes con los filtros seleccionados.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs text-muted-foreground">
+                    <th className="py-2 pr-4">Fecha</th>
+                    <th className="py-2 pr-4">Comprobante</th>
+                    <th className="py-2 pr-4">Cliente</th>
+                    <th className="py-2 pr-4 text-right">Total</th>
+                    <th className="py-2 pr-4">Estado SUNAT</th>
+                    <th className="py-2 pr-0 text-right">Archivos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comprobantes.map((c) => (
+                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
+                      <td className="py-2 pr-4 whitespace-nowrap">
+                        {new Date(c.fecha_emision).toLocaleDateString()}
+                      </td>
+                      <td className="py-2 pr-4 whitespace-nowrap">
+                        <div className="font-mono text-xs">
+                          {c.serie}-{c.correlativo}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {c.tipo_doc === '01' ? 'Factura' : c.tipo_doc === '03' ? 'Boleta' : c.tipo_doc}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4 max-w-55">
+                        <div className="truncate" title={c.cliente_razon_social}>
+                          {c.cliente_razon_social}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {c.cliente_num_doc}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4 text-right font-mono">
+                        {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                        {Number(c.mto_imp_venta ?? 0).toFixed(2)}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            c.estado_sunat === 'aceptado'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                              : c.estado_sunat === 'rechazado'
+                              ? 'bg-red-500/10 text-red-600 dark:text-red-300'
+                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                          }`}
+                        >
+                          {c.estado_sunat}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-0 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            disabled={!c.xml_path}
+                            onClick={() => abrirDescarga(c.id, 'xml')}
+                            title="Descargar XML"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            disabled={!c.cdr_path}
+                            onClick={() => abrirDescarga(c.id, 'cdr')}
+                            title="Descargar CDR"
+                          >
+                            <FileDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            disabled={!c.pdf_path}
+                            onClick={() => abrirDescarga(c.id, 'pdf')}
+                            title="Descargar PDF"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-3 text-xs text-muted-foreground">
+            <div>
+              Página {pagina} de {ultimaPagina}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pagina <= 1 || loadingComprobantes}
+                onClick={() => cargarComprobantes(pagina - 1)}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pagina >= ultimaPagina || loadingComprobantes}
+                onClick={() => cargarComprobantes(pagina + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

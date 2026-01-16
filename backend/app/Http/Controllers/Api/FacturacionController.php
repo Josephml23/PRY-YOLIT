@@ -9,6 +9,7 @@ use App\Models\Empresa;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class FacturacionController extends Controller
 {
@@ -241,6 +242,63 @@ class FacturacionController extends Controller
             'correlativo' => str_pad($siguiente, 8, '0', STR_PAD_LEFT),
             'numero_completo' => $request->serie . '-' . str_pad($siguiente, 8, '0', STR_PAD_LEFT),
         ]);
+    }
+
+    /**
+     * Descargar XML de un comprobante
+     */
+    public function descargarXml(string $id)
+    {
+        $comprobante = Comprobante::findOrFail($id);
+
+        if (!$comprobante->xml_path || !Storage::disk('public')->exists($comprobante->xml_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo XML no disponible.',
+            ], 404);
+        }
+
+        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.xml';
+
+        return Storage::disk('public')->download($comprobante->xml_path, $fileName);
+    }
+
+    /**
+     * Descargar CDR de un comprobante
+     */
+    public function descargarCdr(string $id)
+    {
+        $comprobante = Comprobante::findOrFail($id);
+
+        if (!$comprobante->cdr_path || !Storage::disk('public')->exists($comprobante->cdr_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo CDR no disponible.',
+            ], 404);
+        }
+
+        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.zip';
+
+        return Storage::disk('public')->download($comprobante->cdr_path, $fileName);
+    }
+
+    /**
+     * Descargar PDF de un comprobante
+     */
+    public function descargarPdf(string $id)
+    {
+        $comprobante = Comprobante::findOrFail($id);
+
+        if (!$comprobante->pdf_path || !Storage::disk('public')->exists($comprobante->pdf_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo PDF no disponible.',
+            ], 404);
+        }
+
+        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
+
+        return Storage::disk('public')->download($comprobante->pdf_path, $fileName);
     }
 
     /**

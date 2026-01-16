@@ -1,5 +1,8 @@
 import apiClient from '../services/api';
 
+// Utilidades
+export const apiBaseUrl = (apiClient.defaults.baseURL ?? '').replace(/\/$/, '');
+
 // Tipos genéricos de respuestas API
 export interface PaginatedResponse<T> {
   data: T[];
