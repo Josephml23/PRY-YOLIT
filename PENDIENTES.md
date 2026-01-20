@@ -2,7 +2,7 @@
 
 **Fecha de actualización:** 20 de enero de 2026  
 **Estado Backend:** ✅ 100% Completado con **INTEGRACIÓN NUBEFACT**  
-**Estado Frontend:** � 25% - Emisión de facturas implementada
+**Estado Frontend:** 🟢 60% - Comprobantes electrónicos básicos completados
 
 ---
 
@@ -66,12 +66,78 @@ e76073b - feat(nubefact): agregar comando artisan nubefact:sync para sincronizac
 
 ## 🎯 SIGUIENTE FASE: FRONTEND
 
-### 📋 Tareas Inmediatas
+### ✅ COMPROBANTES BÁSICOS COMPLETADOS (20/01/2026)
 
-#### 1️⃣ **Inicialización Frontend React + TypeScript**
-- [ ] Formulario de emisión de **Notas de Débito** (08)
+**Implementaciones completas:**
+
+✅ **Facturas Electrónicas (01)**
+- Formulario completo con validación zod
+- Cálculo automático de IGV y totales
+- Soporte multi-item con tipos de IGV
+- Emisión a NubeFact API
+- Descarga de PDF
+
+✅ **Boletas de Venta (03)**
+- Formulario con validaciones especiales
+- Validación condicional: documento requerido si >= S/ 700
+- Opción "Sin Documento" para montos menores
+- Cálculo automático de totales
+- Emisión a NubeFact API
+
+✅ **Notas de Crédito (07)**
+- Búsqueda de documento original (factura/boleta)
+- Carga automática de datos del documento
+- Catálogo 09 completo: 11 tipos de motivos
+- Validación de totales vs documento original
+- Items heredados del documento
+
+✅ **Notas de Débito (08)**
+- Búsqueda de documento original
+- Catálogo 10: 5 tipos de motivos
+- Items como cargos adicionales
+- Cálculo de intereses/penalidades
+- Emisión a NubeFact API
+
+✅ **Lista de Comprobantes**
+- Tabla con todos los comprobantes
+- Filtros por tipo, estado, fecha
+- Consulta de estado SUNAT
+- Descarga de PDF/XML/CDR
+- Anulación de comprobantes
+
+✅ **Componentes UI creados:**
+- Textarea component (shadcn/ui compatible)
+- Forms con react-hook-form + zod
+- Select components con tipos dinámicos
+- Toast notifications (sonner)
+
+✅ **Servicio NubeFact mejorado:**
+- Interfaces TypeScript completas
+- Arrays _SELECT para dropdowns
+- Constantes tipadas
+- Manejo de errores mejorado
+
+**Commits realizados:**
+```
+09b52f7 - feat(frontend): implementar Notas de Crédito electrónicas
+0ea8c29 - fix(frontend): corregir warnings TypeScript en Textarea
+38ef3e5 - feat(frontend): implementar Notas de Débito electrónicas
+```
+
+---
+
+### 📋 Tareas Pendientes
+
+#### 1️⃣ **Guías de Remisión Electrónicas**
+- [ ] Formulario GRE Remitente (09) - Transporte público
+- [ ] Formulario GRE Remitente (09) - Transporte privado
+- [ ] Formulario GRE Transportista (31)
+- [ ] Gestión de transportistas (RUC, placa, conductor)
+- [ ] Puntos de partida y llegada (ubigeo)
+- [ ] Items y peso total de mercancía
+
+#### 2️⃣ **Funcionalidades Adicionales**
 - [ ] Tabla de comprobantes emitidos con filtros
-- [ ] Descargar XML/CDR/PDF de comprobantes
 - [ ] Consulta de estado de ticket SUNAT
 - [ ] Envío de comprobante por email
  - [ ] Otros comprobantes SUNAT (según anexo D y carpeta `examples/`)
