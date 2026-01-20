@@ -59,6 +59,25 @@ class Comprobante extends Model
         'cuotas',
         'metadata',
         'observaciones',
+        // Campos NubeFact
+        'nubefact_enlace',
+        'nubefact_aceptada_por_sunat',
+        'nubefact_sunat_ticket',
+        'nubefact_pdf_url',
+        'nubefact_xml_url',
+        'nubefact_cdr_url',
+        'nubefact_cadena_qr',
+        'nubefact_codigo_hash',
+        'nubefact_codigo_barras',
+        'nubefact_pdf_base64',
+        'nubefact_xml_base64',
+        'nubefact_cdr_base64',
+        'nubefact_response_json',
+        'nubefact_enviado_at',
+        'nubefact_consultado_at',
+        'anulado',
+        'anulado_at',
+        'motivo_anulacion',
     ];
 
     protected $casts = [
@@ -83,6 +102,12 @@ class Comprobante extends Model
         'raw_response' => 'array',
         'cuotas' => 'array',
         'metadata' => 'array',
+        // Casts NubeFact
+        'nubefact_aceptada_por_sunat' => 'boolean',
+        'nubefact_enviado_at' => 'datetime',
+        'nubefact_consultado_at' => 'datetime',
+        'anulado' => 'boolean',
+        'anulado_at' => 'datetime',
     ];
 
     /**

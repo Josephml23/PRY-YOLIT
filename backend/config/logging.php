@@ -82,6 +82,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'nubefact' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/nubefact.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
         'papertrail' => [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),
