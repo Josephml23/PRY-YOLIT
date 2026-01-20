@@ -115,9 +115,9 @@ class DashboardController extends Controller
     private function estadisticasAlertas(): array
     {
         return [
-            'total_no_leidas' => Alerta::where('leida', false)->count(),
+            'total_no_leidas' => Alerta::where('leido', false)->count(),
             'por_prioridad' => Alerta::selectRaw('prioridad, count(*) as cantidad')
-                ->where('leida', false)
+                ->where('leido', false)
                 ->groupBy('prioridad')
                 ->get()
                 ->pluck('cantidad', 'prioridad'),

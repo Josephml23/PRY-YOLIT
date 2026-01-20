@@ -11,4 +11,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Aumentamos ligeramente el límite y dividimos vendors en chunks separados
+    chunkSizeWarningLimit: 1000, // KB
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'charts-vendor': ['recharts'],
+          'icons-vendor': ['lucide-react'],
+        },
+      },
+    },
+  },
 })

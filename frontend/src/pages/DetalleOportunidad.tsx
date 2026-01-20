@@ -79,12 +79,12 @@ export default function DetalleOportunidad() {
       const oportunidadRes = await api.get(`/v1/oportunidades/${id}`);
       setOportunidad(oportunidadRes.data.data);
 
-      // Cargar documentos
-      const documentosRes = await api.get(`/v1/oportunidades/${id}/documentos`);
+      // Cargar documentos de la oportunidad
+      const documentosRes = await api.get(`/v1/documentos/oportunidad/${id}`);
       setDocumentos(Array.isArray(documentosRes.data) ? documentosRes.data : documentosRes.data.data || []);
 
-      // Cargar pagos
-      const pagosRes = await api.get(`/v1/oportunidades/${id}/pagos`);
+      // Cargar pagos de la oportunidad
+      const pagosRes = await api.get(`/v1/pagos/oportunidad/${id}`);
       setPagos(Array.isArray(pagosRes.data) ? pagosRes.data : pagosRes.data.data || []);
 
     } catch (error) {
@@ -102,7 +102,7 @@ export default function DetalleOportunidad() {
 
   const handleDocumentosChange = () => {
     if (!id) return;
-    api.get(`/v1/oportunidades/${id}/documentos`)
+    api.get(`/v1/documentos/oportunidad/${id}`)
       .then((res) => {
         setDocumentos(Array.isArray(res.data) ? res.data : res.data.data || []);
       })
@@ -113,7 +113,7 @@ export default function DetalleOportunidad() {
 
   const handlePagosChange = () => {
     if (!id) return;
-    api.get(`/v1/oportunidades/${id}/pagos`)
+    api.get(`/v1/pagos/oportunidad/${id}`)
       .then((res) => {
         setPagos(Array.isArray(res.data) ? res.data : res.data.data || []);
       })

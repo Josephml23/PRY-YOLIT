@@ -90,7 +90,7 @@ export default function GestionDocumentos({
 
   const handleDescargar = async (documento: Documento) => {
     try {
-      const response = await api.get(`/v1/documentos/${documento.id}/download`, {
+      const response = await api.get(`/v1/documentos/${documento.id}/descargar`, {
         responseType: 'blob',
       });
 

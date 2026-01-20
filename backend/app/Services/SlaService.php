@@ -82,7 +82,7 @@ class SlaService
             if (in_array($slaInfo['estado'], ['proximo_vencer', 'vencido'])) {
                 $alertaExistente = Alerta::where('oportunidad_id', $oportunidad->id)
                     ->where('tipo', 'sla')
-                    ->where('leida', false)
+                    ->where('leido', false)
                     ->first();
 
                 if (!$alertaExistente) {
@@ -96,7 +96,7 @@ class SlaService
                         'prioridad' => $slaInfo['estado'] === 'vencido' ? 'alta' : 'media',
                         'titulo' => 'Alerta SLA',
                         'mensaje' => $mensaje,
-                        'leida' => false,
+                        'leido' => false,
                     ]);
 
                     $alertasCreadas++;

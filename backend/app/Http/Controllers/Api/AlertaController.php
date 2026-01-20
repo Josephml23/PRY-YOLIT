@@ -34,7 +34,7 @@ class AlertaController extends Controller
         }
 
         if ($request->has('leida')) {
-            $query->where('leida', $request->leida);
+            $query->where('leido', $request->leida);
         }
 
         $query->orderBy('created_at', 'desc');
@@ -50,7 +50,7 @@ class AlertaController extends Controller
     public function marcarLeida(int $id): JsonResponse
     {
         $alerta = Alerta::findOrFail($id);
-        $alerta->leida = true;
+        $alerta->leido = true;
         $alerta->save();
 
         return response()->json([
@@ -64,7 +64,7 @@ class AlertaController extends Controller
      */
     public function marcarTodasLeidas(): JsonResponse
     {
-        Alerta::where('leida', false)->update(['leida' => true]);
+        Alerta::where('leido', false)->update(['leido' => true]);
 
         return response()->json([
             'success' => true,
@@ -105,7 +105,7 @@ class AlertaController extends Controller
      */
     public function noLeidas(): JsonResponse
     {
-        $count = Alerta::where('leida', false)->count();
+        $count = Alerta::where('leido', false)->count();
 
         return response()->json([
             'success' => true,

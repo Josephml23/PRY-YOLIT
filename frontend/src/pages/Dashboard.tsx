@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Receipt, TrendingUp, CheckCircle, Building2 } from 'lucide-react';
+import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import api from '@/services/api';
@@ -23,6 +23,18 @@ interface Empresa {
   nombre_comercial: string;
 }
 
+interface SlaResumen {
+  total: number;
+  en_plazo: number;
+  proximo_vencer: number;
+  vencidos: number;
+}
+
+interface AlertasResumen {
+  total_no_leidas: number;
+  por_prioridad: Record<string, number>;
+}
+
 export default function Dashboard() {
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -33,15 +45,28 @@ export default function Dashboard() {
     tasaAceptacion: 0,
   });
 
+  const [slaResumen, setSlaResumen] = useState<SlaResumen>({
+    total: 0,
+    en_plazo: 0,
+    proximo_vencer: 0,
+    vencidos: 0,
+  });
+
+  const [alertasResumen, setAlertasResumen] = useState<AlertasResumen>({
+    total_no_leidas: 0,
+    por_prioridad: {},
+  });
+
   useEffect(() => {
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
     try {
-      const [comprobantesRes, empresasRes] = await Promise.all([
+      const [comprobantesRes, empresasRes, dashboardRes] = await Promise.all([
         api.get('/facturacion/comprobantes'),
-        api.get('/v1/empresas')
+        api.get('/v1/empresas'),
+        api.get('/v1/dashboard'),
       ]);
 
       const comprobantesData = Array.isArray(comprobantesRes.data) 
@@ -63,6 +88,23 @@ export default function Dashboard() {
         totalFacturado,
         totalComprobantes: comprobantesData.length,
         tasaAceptacion,
+      });
+
+      // SLA y alertas desde el endpoint de dashboard
+      const dashboardData = dashboardRes.data?.data || dashboardRes.data || {};
+      const sla = dashboardData.sla || {};
+      const alertas = dashboardData.alertas || {};
+
+      setSlaResumen({
+        total: sla.total ?? 0,
+        en_plazo: sla.en_plazo ?? 0,
+        proximo_vencer: sla.proximo_vencer ?? 0,
+        vencidos: sla.vencidos ?? 0,
+      });
+
+      setAlertasResumen({
+        total_no_leidas: alertas.total_no_leidas ?? 0,
+        por_prioridad: alertas.por_prioridad ?? {},
       });
     } catch (error) {
       console.error('Error al cargar datos:', error);
@@ -171,6 +213,94 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">
               Comprobantes aceptados por SUNAT
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* SLA y Alertas */}
+      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                SLA de Oportunidades
+              </CardTitle>
+              <CardDescription>
+                Estado de las oportunidades con SLA configurado
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {slaResumen.total === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay oportunidades con SLA configurado aún.
+              </p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">En plazo</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    {slaResumen.en_plazo}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Próximos a vencer</span>
+                  <span className="font-medium text-amber-600 dark:text-amber-400">
+                    {slaResumen.proximo_vencer}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Vencidos</span>
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    {slaResumen.vencidos}
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Total con SLA: {slaResumen.total}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Bell className="h-4 w-4 text-sky-500" />
+                Alertas
+              </CardTitle>
+              <CardDescription>
+                Alertas pendientes por prioridad
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {alertasResumen.total_no_leidas === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay alertas pendientes.
+              </p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Total no leídas</span>
+                  <span className="font-medium">
+                    {alertasResumen.total_no_leidas}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1 text-xs">
+                  {Object.keys(alertasResumen.por_prioridad).map((prioridad) => (
+                    <div key={prioridad} className="flex items-center justify-between">
+                      <span className="capitalize text-muted-foreground">{prioridad}</span>
+                      <span className="font-medium">
+                        {alertasResumen.por_prioridad[prioridad]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
