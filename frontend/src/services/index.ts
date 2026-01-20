@@ -1,5 +1,7 @@
 import api from './api';
 
+export * from './nubefact';
+
 export interface Empresa {
   id: number;
   ruc: string;

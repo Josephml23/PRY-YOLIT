@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Empresas from '@/pages/Empresas';
 import Facturacion from '@/pages/Facturacion';
+import FacturacionNubefact from '@/pages/FacturacionNubefact';
 import Oportunidades from '@/pages/Oportunidades';
 
 // Páginas temporales
@@ -21,6 +22,7 @@ function App() {
             <Route path="empresas" element={<Empresas />} />
             <Route path="oportunidades" element={<Oportunidades />} />
             <Route path="facturacion" element={<Facturacion />} />
+            <Route path="facturacion-nubefact" element={<FacturacionNubefact />} />
             <Route path="documentos" element={<DocumentosPage />} />
             <Route path="pagos" element={<PagosPage />} />
           </Route>
