@@ -140,12 +140,13 @@ class DashboardController extends Controller
             ->get(['id', 'empresa_id', 'tipo_doc', 'serie', 'correlativo', 'cliente_razon_social', 'mto_imp_venta', 'estado_sunat', 'created_at']);
 
         // Oportunidades próximas a vencer
+        // No existe columna cliente_nombre en la tabla; usamos titulo como identificador visible
         $proximasVencer = Oportunidad::where('fecha_vencimiento', '>', now())
             ->where('fecha_vencimiento', '<=', now()->addDays(7))
             ->whereNotIn('estado', ['ganado', 'perdido', 'cancelado'])
             ->orderBy('fecha_vencimiento')
             ->limit(5)
-            ->get(['id', 'cliente_nombre', 'estado', 'fecha_vencimiento', 'monto_estimado']);
+            ->get(['id', 'titulo', 'estado', 'fecha_vencimiento', 'monto_estimado']);
 
         return response()->json([
             'success' => true,

@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
+import DashboardTv from '@/pages/DashboardTv';
 import Empresas from '@/pages/Empresas';
 import Facturacion from '@/pages/Facturacion';
 import FacturacionNubefact from '@/pages/FacturacionNubefact';
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="dashboard-tv" element={<DashboardTv />} />
             <Route path="empresas" element={<Empresas />} />
             <Route path="oportunidades" element={<Oportunidades />} />
             <Route path="oportunidades/:id" element={<DetalleOportunidad />} />

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
@@ -149,7 +151,7 @@ export default function Dashboard() {
             Resumen general de facturación electrónica
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="text-sm text-muted-foreground">
             Actualizado: {new Date().toLocaleDateString('es-PE', { 
               day: '2-digit', 
@@ -159,6 +161,11 @@ export default function Dashboard() {
               minute: '2-digit'
             })}
           </div>
+          <Link to="/dashboard-tv" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="gap-2">
+              <span>Modo TV</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
