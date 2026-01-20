@@ -8,24 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { emitirComprobante, consultarComprobante, TIPOS_DOCUMENTO_SELECT, TIPOS_IGV_SELECT, MONEDAS_SELECT, UNIDADES_MEDIDA_SELECT } from '@/services/nubefact';
 
-// Catálogo 09 - Tipos de Nota de Crédito
-const TIPOS_NOTA_CREDITO = [
-  { value: '01', label: '01 - Anulación de la operación' },
-  { value: '02', label: '02 - Anulación por error en el RUC' },
-  { value: '03', label: '03 - Corrección por error en la descripción' },
-  { value: '04', label: '04 - Descuento global' },
-  { value: '05', label: '05 - Descuento por ítem' },
-  { value: '06', label: '06 - Devolución total' },
-  { value: '07', label: '07 - Devolución por ítem' },
-  { value: '08', label: '08 - Bonificación' },
-  { value: '09', label: '09 - Disminución en el valor' },
-  { value: '10', label: '10 - Otros conceptos' },
+// Catálogo 10 - Tipos de Nota de Débito
+const TIPOS_NOTA_DEBITO = [
+  { value: '01', label: '01 - Intereses por mora' },
+  { value: '02', label: '02 - Aumento en el valor' },
+  { value: '03', label: '03 - Penalidades/otros conceptos' },
+  { value: '10', label: '10 - Ajustes de operaciones de exportación' },
   { value: '11', label: '11 - Ajustes afectos al IVAP' },
-  { value: '12', label: '12 - Ajustes de operaciones de exportación' },
-  { value: '13', label: '13 - Ajustes montos y/o fechas de pago' },
 ];
 
 const itemSchema = z.object({
@@ -42,18 +35,18 @@ const itemSchema = z.object({
   codigo_producto_sunat: z.string().optional(),
 });
 
-const notaCreditoSchema = z.object({
+const notaDebitoSchema = z.object({
   // Documento que se modifica
   documento_que_se_modifica_tipo: z.string().min(1, 'Tipo de documento requerido'),
   documento_que_se_modifica_serie: z.string().min(1, 'Serie requerida'),
   documento_que_se_modifica_numero: z.string().min(1, 'Número requerido'),
-  tipo_de_nota_de_credito: z.string().min(1, 'Tipo de NC requerido'),
+  tipo_de_nota_de_debito: z.string().min(1, 'Tipo de ND requerido'),
   
-  // Serie y número de la NC
+  // Serie y número de la ND
   serie: z.string().min(1, 'Serie requerida'),
   numero: z.string().min(1, 'Número requerido'),
   
-  // Cliente (heredados del documento original, pero editables)
+  // Cliente
   cliente_tipo_de_documento: z.string().min(1, 'Tipo documento requerido'),
   cliente_numero_de_documento: z.string().min(1, 'Número documento requerido'),
   cliente_denominacion: z.string().min(1, 'Razón social requerida'),
@@ -69,19 +62,19 @@ const notaCreditoSchema = z.object({
   items: z.array(itemSchema).min(1, 'Debe agregar al menos un item'),
 });
 
-type NotaCreditoFormData = z.infer<typeof notaCreditoSchema>;
+type NotaDebitoFormData = z.infer<typeof notaDebitoSchema>;
 
-export default function EmitirNotaCredito() {
+export default function EmitirNotaDebito() {
   const [isLoading, setIsLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [buscandoDocumento, setBuscandoDocumento] = useState(false);
 
-  const { register, control, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<NotaCreditoFormData>({
-    resolver: zodResolver(notaCreditoSchema),
+  const { register, control, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<NotaDebitoFormData>({
+    resolver: zodResolver(notaDebitoSchema),
     defaultValues: {
       documento_que_se_modifica_tipo: '1', // Factura por defecto
-      tipo_de_nota_de_credito: '01',
-      serie: 'FC01', // Serie para NC de factura
+      tipo_de_nota_de_debito: '01',
+      serie: 'FD01', // Serie para ND de factura
       numero: '1',
       cliente_tipo_de_documento: '6',
       fecha_de_emision: new Date().toISOString().split('T')[0],
@@ -163,11 +156,10 @@ export default function EmitirNotaCredito() {
   // Actualizar serie según tipo de documento
   const handleTipoDocChange = (value: string) => {
     setValue('documento_que_se_modifica_tipo', value);
-    // Actualizar serie sugerida
     if (value === '1') {
-      setValue('serie', 'FC01'); // NC de Factura
+      setValue('serie', 'FD01'); // ND de Factura
     } else if (value === '2') {
-      setValue('serie', 'BC01'); // NC de Boleta
+      setValue('serie', 'BD01'); // ND de Boleta
     }
   };
 
@@ -239,7 +231,7 @@ export default function EmitirNotaCredito() {
     };
   };
 
-  const onSubmit = async (data: NotaCreditoFormData) => {
+  const onSubmit = async (data: NotaDebitoFormData) => {
     setIsLoading(true);
     setPdfUrl('');
 
@@ -249,7 +241,7 @@ export default function EmitirNotaCredito() {
       const payload = {
         empresa_id: 1, // TODO: Obtener de contexto/estado global
         operacion: 'generar_comprobante' as const,
-        tipo_de_comprobante: 3, // Nota de Crédito
+        tipo_de_comprobante: 4, // Nota de Débito
         serie: data.serie,
         numero: parseInt(data.numero),
         sunat_transaction: 1,
@@ -274,7 +266,7 @@ export default function EmitirNotaCredito() {
         documento_que_se_modifica_tipo: data.documento_que_se_modifica_tipo,
         documento_que_se_modifica_serie: data.documento_que_se_modifica_serie,
         documento_que_se_modifica_numero: data.documento_que_se_modifica_numero,
-        tipo_de_nota_de_credito: data.tipo_de_nota_de_credito,
+        tipo_de_nota_de_debito: data.tipo_de_nota_de_debito,
         observaciones: data.observaciones || '',
         enviar_automaticamente_a_la_sunat: true,
         items: data.items.map(item => ({
@@ -299,7 +291,7 @@ export default function EmitirNotaCredito() {
         return;
       }
 
-      toast.success(`Nota de Crédito ${data.serie}-${data.numero} emitida correctamente`);
+      toast.success(`Nota de Débito ${data.serie}-${data.numero} emitida correctamente`);
 
       if (response.enlace_del_pdf) {
         setPdfUrl(response.enlace_del_pdf);
@@ -308,7 +300,7 @@ export default function EmitirNotaCredito() {
       // Limpiar formulario
       reset();
     } catch (error) {
-      toast.error('Error al emitir la nota de crédito');
+      toast.error('Error al emitir la nota de débito');
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -319,7 +311,7 @@ export default function EmitirNotaCredito() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Emitir Nota de Crédito Electrónica</CardTitle>
+          <CardTitle>Emitir Nota de Débito Electrónica</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -384,40 +376,40 @@ export default function EmitirNotaCredito() {
               </div>
 
               <div>
-                <Label htmlFor="tipo_de_nota_de_credito">Motivo de Nota de Crédito</Label>
+                <Label htmlFor="tipo_de_nota_de_debito">Motivo de Nota de Débito</Label>
                 <Select
-                  value={watch('tipo_de_nota_de_credito')}
-                  onValueChange={(value) => setValue('tipo_de_nota_de_credito', value)}
+                  value={watch('tipo_de_nota_de_debito')}
+                  onValueChange={(value) => setValue('tipo_de_nota_de_debito', value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIPOS_NOTA_CREDITO.map(tipo => (
+                    {TIPOS_NOTA_DEBITO.map(tipo => (
                       <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.tipo_de_nota_de_credito && (
-                  <p className="text-sm text-red-500">{errors.tipo_de_nota_de_credito.message}</p>
+                {errors.tipo_de_nota_de_debito && (
+                  <p className="text-sm text-red-500">{errors.tipo_de_nota_de_debito.message}</p>
                 )}
               </div>
             </div>
 
-            {/* Datos de la NC */}
+            {/* Datos de la ND */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="serie">Serie NC</Label>
+                <Label htmlFor="serie">Serie ND</Label>
                 <Input
                   id="serie"
                   {...register('serie')}
-                  placeholder="FC01"
+                  placeholder="FD01"
                 />
                 {errors.serie && <p className="text-sm text-red-500">{errors.serie.message}</p>}
               </div>
 
               <div>
-                <Label htmlFor="numero">Número NC</Label>
+                <Label htmlFor="numero">Número ND</Label>
                 <Input
                   id="numero"
                   {...register('numero')}
@@ -510,13 +502,13 @@ export default function EmitirNotaCredito() {
             {/* Items */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold">Items</h3>
+                <h3 className="font-semibold">Items (Cargos Adicionales)</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => append({
-                    codigo: 'PROD001',
+                    codigo: 'CARGO001',
                     descripcion: '',
                     unidad_de_medida: 'NIU',
                     cantidad: '1',
@@ -538,7 +530,7 @@ export default function EmitirNotaCredito() {
                         <Label>Descripción</Label>
                         <Input
                           {...register(`items.${index}.descripcion`)}
-                          placeholder="Descripción del producto/servicio"
+                          placeholder="Descripción del cargo"
                           onBlur={() => calcularItem(index)}
                         />
                         {errors.items?.[index]?.descripcion && (
@@ -610,7 +602,7 @@ export default function EmitirNotaCredito() {
                         <Label>Código</Label>
                         <Input
                           {...register(`items.${index}.codigo`)}
-                          placeholder="PROD001"
+                          placeholder="CARGO001"
                         />
                       </div>
 
@@ -666,12 +658,11 @@ export default function EmitirNotaCredito() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="observaciones">Observaciones</Label>
-                <textarea
+                <Textarea
                   id="observaciones"
                   {...register('observaciones')}
                   placeholder="Observaciones adicionales"
                   rows={4}
-                  className="border rounded-md px-3 py-2 w-full text-sm"
                 />
               </div>
 
@@ -709,7 +700,7 @@ export default function EmitirNotaCredito() {
 
             {/* Botón submit */}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Emitiendo...' : 'Emitir Nota de Crédito'}
+              {isLoading ? 'Emitiendo...' : 'Emitir Nota de Débito'}
             </Button>
           </form>
         </CardContent>
@@ -719,7 +710,7 @@ export default function EmitirNotaCredito() {
       {pdfUrl && (
         <Card>
           <CardHeader>
-            <CardTitle>Nota de Crédito Emitida</CardTitle>
+            <CardTitle>Nota de Débito Emitida</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
