@@ -1,5 +1,5 @@
 # 📘 Requerimientos del Proyecto  
-**MVP – Plataforma Operativa y Comercial con Facturación Electrónica (Greenter + SUNAT)**
+**MVP – Plataforma Operativa y Comercial con Facturación Electrónica (NubeFact + SUNAT)**
 
 ---
 
@@ -8,9 +8,9 @@
 Desarrollar una plataforma que permita:
 
 - Gestionar la operación comercial (oportunidades, documentos, pagos, SLA).
-- Emitir comprobantes electrónicos directamente a SUNAT usando **Greenter**.
-- Centralizar la información operativa y tributaria.
-- Visualizar el estado del negocio mediante dashboards modernos.
+- Emitir comprobantes electrónicos a SUNAT usando **NubeFact API (JSON V1)**.
+- Centralizar la información operativa y tributaria en una sola vista.
+- Visualizar el estado del negocio mediante dashboards web y TV.
 - Servir como base para futuras automatizaciones (OCR, IA, bots, integraciones).
 
 ---
@@ -28,14 +28,21 @@ Desarrollar una plataforma que permita:
   - Boletas electrónicas (03)
   - Notas de crédito (07)
   - Notas de débito (08)
-- Envío directo a SUNAT vía **Greenter**.
+  - Guías de Remisión Electrónica – GRE Remitente (09) y, opcionalmente, Transportista (31)
+- Envío a SUNAT vía **NubeFact API JSON V1**.
 - Recepción y almacenamiento de:
   - XML firmado
   - CDR (ZIP)
   - Respuesta SUNAT (aceptado / rechazado / observado)
-- Generación de:
-  - Representación impresa HTML
-  - Representación PDF (wkhtmltopdf)
+  - Hash y cadena para QR
+  - Enlaces a recursos generados por NubeFact (PDF, XML, CDR)
+- Descarga desde la plataforma de:
+  - PDF de cada comprobante (representación impresa oficial NubeFact)
+  - XML del comprobante
+  - CDR de respuesta SUNAT
+- Visualización en frontend de:
+  - Listado de comprobantes emitidos con filtros (tipo, serie, estado, fechas)
+  - Estado SUNAT y detalle de cada comprobante
 
 #### Reglas
 
@@ -56,11 +63,12 @@ Desarrollar una plataforma que permita:
   - RUC
   - Razón social
   - Dirección fiscal
-  - Certificado digital
-  - Usuario SOL
+  - Datos de contacto
+  - Credenciales y parámetros de integración NubeFact (URL base, token, modo demo/producción)
 - Emisión dinámica:
 
-Greenter::setCompany([...])->send(...)
+  - Selección de empresa activa en la interfaz
+  - Uso automático del token/URL de la empresa activa en todos los llamados a NubeFact
 
 
 #### Reglas
@@ -76,13 +84,16 @@ Greenter::setCompany([...])->send(...)
 
 #### Funcionalidades
 
-- Registro de oportunidades:
+- Registro y seguimiento de oportunidades:
   - Empresa emisora
   - Área responsable
   - Tipo de operación
   - Estado
   - Responsable
   - Fechas de inicio y vencimiento
+  - Monto estimado y probabilidad (opcional)
+- Vista de listado y detalle por oportunidad.
+- Asociación de documentos, pagos y comprobantes electrónicos a cada oportunidad.
 
 #### Estados mínimos
 
@@ -105,11 +116,17 @@ Greenter::setCompany([...])->send(...)
   - Contratos
   - Conformidades
   - Entregables
-  - Pagos
+  - Soportes de pago
 - Almacenamiento centralizado en **MinIO**:
   - Clasificación por tipo
   - Asociación a oportunidad
   - Historial de versiones básico
+- Funcionalidades de frontend:
+  - Carga de archivos (drag & drop o selector)
+  - Lista de documentos por oportunidad
+  - Vista global de documentos
+  - Descarga de documentos almacenados en MinIO
+  - Acceso a PDFs de comprobantes electrónicos relacionados (vía enlaces NubeFact)
 
 ---
 
@@ -120,12 +137,18 @@ Greenter::setCompany([...])->send(...)
 - Registro manual de pagos:
   - Fecha
   - Monto
+  - Moneda
   - Medio de pago
   - Número de operación
+  - Banco y referencia (opcional)
   - Archivo adjunto (imagen o PDF)
 - Asociación:
   - A oportunidad
-  - A comprobante
+  - A comprobante electrónico
+- Vistas de frontend:
+  - Lista de pagos por oportunidad
+  - Vista global de pagos con filtros (fechas, medio, empresa)
+  - Descarga de comprobante de pago adjunto
 
 ---
 
@@ -143,9 +166,11 @@ Greenter::setCompany([...])->send(...)
     - 🟢 En plazo
     - 🟡 Próximo a vencer
     - 🔴 Vencido
-- Alertas internas:
-  - Notificación dentro del sistema
-  - (fase futura: email / WhatsApp)
+- Alertas internas en la interfaz:
+  - Listados de oportunidades vencidas o próximas a vencer
+  - Resaltado visual en dashboards y vistas de detalle
+- (Fase posterior al MVP):
+  - Notificaciones por email / WhatsApp
 
 ---
 
@@ -155,32 +180,33 @@ Greenter::setCompany([...])->send(...)
 
 - Oportunidades activas  
 - Ganadas vs perdidas  
-- Ventas por empresa  
+- Ventas por empresa y por período  
+- Comprobantes emitidos recientes (con estado SUNAT)  
 - Documentos pendientes  
-- SLA vencidos  
+- SLA próximos a vencer y vencidos  
 
 #### Dashboard TV
 
-- Vista solo lectura  
+- Vista solo lectura optimizada para pantallas grandes  
 - KPIs:
   - Ventas del mes  
   - Embudo comercial  
   - Alertas críticas  
+  - Oportunidades clave  
+- Auto-refresh para uso en monitoreo continuo
 
 ---
 
 ## 3. 🏗 Arquitectura del Sistema
 
-[ Frontend React + shadcn/ui ]
-|
-[ Laravel API ]
-|
-[ PostgreSQL ]
-|
-[ MinIO Storage ]
-|
-[ Servicio FE - Greenter ]
-|
+[ Frontend React + shadcn/ui ]  
+│  
+[ Laravel API (Módulos Operativos + NubefactClient) ]  
+│  
+[ PostgreSQL │ MinIO Storage ]  
+│  
+[ NubeFact API JSON V1 ]  
+│  
 [ SUNAT ]
 
 
@@ -239,9 +265,11 @@ Greenter::setCompany([...])->send(...)
 - total  
 - moneda  
 - estado_sunat  
-- xml_path  
-- cdr_path  
-- pdf_path  
+- xml_path / enlace_xml  
+- cdr_path / enlace_cdr  
+- pdf_url / enlace_pdf  
+- cadena_qr  
+- hash  
 - raw_request  
 - raw_response  
 
@@ -272,23 +300,21 @@ Greenter::setCompany([...])->send(...)
 
 ## 5. 🔄 Flujo de Emisión Electrónica
 
-1. Usuario registra la operación.  
+1. Usuario registra la operación y selecciona empresa emisora.  
 2. Sistema valida:
-   - Campos obligatorios.
-   - Catálogos SUNAT.  
-3. Se construye el objeto de emisión.  
-4. Se ejecuta:
-$response = Greenter::send('invoice', $data);
-
-
-5. Se almacena:
-   - XML  
-   - CDR  
-6. Se genera:
-   - HTML  
-   - PDF  
-7. Se registra la respuesta SUNAT.  
-8. Se muestra el resultado al usuario.
+  - Campos obligatorios.
+  - Catálogos SUNAT.  
+  - Series y numeración de comprobante.  
+3. Se construye el payload JSON según especificación de NubeFact.  
+4. El backend ejecuta la llamada a **NubeFact API** vía `NubefactClient`.  
+5. NubeFact procesa el comprobante y lo envía a SUNAT.  
+6. El sistema almacena:
+  - XML (o enlace al XML)  
+  - CDR (o enlace al CDR)  
+  - Enlaces al PDF oficial  
+  - Respuesta SUNAT y metadatos (hash, QR, códigos)  
+7. Se actualiza el registro de comprobante en la base de datos.  
+8. El frontend muestra el resultado al usuario y habilita botones de descarga de **PDF / XML / CDR**.
 
 ---
 
@@ -318,14 +344,15 @@ $response = Greenter::send('invoice', $data);
 
 - PHP ≥ 8.1  
 - Laravel ≥ 11  
-- Paquete:
-  - `codersfree/laravel-greenter`
+- Integración externa:
+  - Cliente HTTP para **NubeFact API JSON V1** (Guzzle + servicio `NubefactClient`)
 
 ---
 
 ### 7.2 Extensiones PHP
 
-- soap  
+- curl  
+- json  
 - openssl  
 
 ---
@@ -358,15 +385,17 @@ $response = Greenter::send('invoice', $data);
 
 #### Desarrollo
 
-- XAMPP (PHP + PostgreSQL)  
-- MinIO local  
+- Docker para servicios de base de datos y storage:
+  - PostgreSQL (contendor dedicado)
+  - MinIO (S3 compatible)  
+- Laravel ejecutándose localmente (`php artisan serve`).
 
 #### Producción
 
-- Docker  
-- Nginx  
-- PHP-FPM  
-- MinIO independiente  
+- Docker / orquestador (según entorno).  
+- Nginx + PHP-FPM para backend Laravel.  
+- PostgreSQL administrado o en contenedor dedicado.  
+- MinIO u otro servicio S3 compatible para storage.  
 
 ---
 
@@ -374,19 +403,20 @@ $response = Greenter::send('invoice', $data);
 
 - OCR automático de documentos.  
 - Conciliación bancaria.  
-- Bots de emisión.  
+- Bots de emisión y recordatorios automáticos.  
 - IA:
   - Clasificación de oportunidades.  
   - Detección de riesgos comerciales.  
 - Plataforma SaaS multi-tenant.  
+- Portal de cliente para descarga de comprobantes.  
 
 ---
 
-## 9. ✅ Estado del Proyecto
+## 9. ✅ Estado del Proyecto (MVP)
 
-- 🟢 Enunciado definido  
-- 🟢 Stack definido (Laravel + Greenter + React + shadcn)  
-- 🟢 Requerimientos base listos  
-- 🟡 Inicio de desarrollo del core  
+- 🟢 Núcleo tributario NubeFact implementado (Facturas, Boletas, Notas, GRE, descargas PDF/XML/CDR).  
+- 🟢 Módulos operativos básicos listos (Empresas, Oportunidades, Documentos, Pagos, SLA).  
+- 🟢 Dashboards Web y TV conectados a datos reales.  
+- 🟡 Pendientes técnicos: exportación a Excel, importador histórico desde NubeFact, autenticación y tests E2E.  
 
 ---
