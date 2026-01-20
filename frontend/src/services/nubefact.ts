@@ -71,9 +71,12 @@ export interface EmitirComprobanteRequest {
 }
 
 export interface ComprobanteResponse {
-  errors: boolean;
+  errors?: string | boolean;
+  serie?: string;
+  numero?: number;
   sunat_status?: string;
   enlace?: string;
+  enlace_del_pdf?: string;
   aceptada_por_sunat?: boolean;
   sunat_description?: string;
   sunat_note?: string;
@@ -90,6 +93,7 @@ export interface ComprobanteResponse {
 }
 
 export interface ConsultarComprobanteResponse {
+  errors?: string | boolean;
   enlace?: string;
   aceptada_por_sunat?: boolean;
   sunat_description?: string;
@@ -104,6 +108,20 @@ export interface ConsultarComprobanteResponse {
   pdf_url?: string;
   xml_url?: string;
   cdr_url?: string;
+  cliente_tipo_de_documento?: number;
+  cliente_numero_de_documento?: string;
+  cliente_denominacion?: string;
+  cliente_direccion?: string;
+  cliente_email?: string;
+  items?: Array<{
+    codigo?: string;
+    descripcion?: string;
+    unidad_de_medida?: string;
+    cantidad?: number;
+    valor_unitario?: number;
+    tipo_de_igv?: number;
+    codigo_producto_sunat?: string;
+  }>;
 }
 
 export interface AnularComprobanteRequest {
@@ -204,14 +222,12 @@ export const TIPOS_DOCUMENTO = {
 } as const;
 
 export const TIPOS_IGV = {
-  GRAVADO_OPERACION_ONEROSA: '10',
-  GRAVADO_RETIRO: '11',
-  GRAVADO_RETIRO_PREMIO: '12',
-  GRAVADO_BONIFICACIONES: '13',
-  GRAVADO_RETIRO_PROMOCION: '14',
-  EXONERADO: '20',
-  INAFECTO: '30',
-  GRATUITO: '31',
+  GRAVADO_OPERACION_ONEROSA: '1',
+  EXONERADO: '2',
+  INAFECTO: '3',
+  GRAVADO_RETIRO: '9',
+  EXONERADO_RETIRO: '10',
+  INAFECTO_RETIRO: '11',
 } as const;
 
 export const MONEDAS = {
@@ -233,3 +249,41 @@ export const UNIDADES_MEDIDA = {
   DAY: 'DAY', // Día
   HUR: 'HUR', // Hora
 } as const;
+
+// Arrays para selects
+export const TIPOS_DOCUMENTO_SELECT = [
+  { value: '1', label: '1 - DNI' },
+  { value: '6', label: '6 - RUC' },
+  { value: '4', label: '4 - Carnet de Extranjería' },
+  { value: '7', label: '7 - Pasaporte' },
+  { value: '-', label: 'Sin Documento' },
+];
+
+export const TIPOS_IGV_SELECT = [
+  { value: '1', label: '1 - Gravado - Operación Onerosa' },
+  { value: '2', label: '2 - Exonerado - Operación Onerosa' },
+  { value: '3', label: '3 - Inafecto - Operación Onerosa' },
+  { value: '9', label: '9 - Gravado - Retiro' },
+  { value: '10', label: '10 - Exonerado - Retiro' },
+  { value: '11', label: '11 - Inafecto - Retiro' },
+];
+
+export const MONEDAS_SELECT = [
+  { value: '1', label: 'PEN - Soles' },
+  { value: '2', label: 'USD - Dólares' },
+];
+
+export const UNIDADES_MEDIDA_SELECT = [
+  { value: 'NIU', label: 'NIU - Unidad (bienes)' },
+  { value: 'ZZ', label: 'ZZ - Unidad (servicios)' },
+  { value: 'KGM', label: 'KGM - Kilogramo' },
+  { value: 'LTR', label: 'LTR - Litro' },
+  { value: 'MTR', label: 'MTR - Metro' },
+  { value: 'MTK', label: 'MTK - Metro cuadrado' },
+  { value: 'MTQ', label: 'MTQ - Metro cúbico' },
+  { value: 'SET', label: 'SET - Juego' },
+  { value: 'DZN', label: 'DZN - Docena' },
+  { value: 'GRM', label: 'GRM - Gramo' },
+  { value: 'DAY', label: 'DAY - Día' },
+  { value: 'HUR', label: 'HUR - Hora' },
+];
