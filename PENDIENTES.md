@@ -2,7 +2,102 @@
 
 **Fecha de actualización:** 20 de enero de 2026  
 **Estado Backend:** ✅ 100% Completado con **INTEGRACIÓN NUBEFACT**  
-**Estado Frontend:** 🟢 60% - Comprobantes electrónicos básicos completados
+**Estado Frontend:** 🟢 70% - Guías de Remisión implementadas
+
+---
+
+## 🎯 QUÉ SIGUE - PRÓXIMAS IMPLEMENTACIONES
+
+### 📊 **PRIORIDAD ALTA** (Semana actual)
+
+1. **Gestión de Series y Numeración** - 0%
+   - CRUD de series por empresa y tipo de comprobante
+   - Numeración automática correlativa
+   - Validación de series SUNAT
+   - Configuración de series por defecto
+
+2. **Reportes y Estadísticas** - 0%
+   - Reporte de ventas por período
+   - Reporte de comprobantes emitidos
+   - Exportación a Excel/PDF
+   - Gráficos de facturación mensual con datos reales
+
+3. **Gestión de Series** - 0%
+   - CRUD de series por empresa
+   - Numeración automática correlativa
+   - Validación de series SUNAT
+
+### 🔧 **PRIORIDAD MEDIA** (Próximas 2 semanas)
+
+4. **Retenciones y Percepciones** - 0%
+   - Formularios de emisión
+   - Cálculo automático de montos
+   - Integración NubeFact
+
+5. **Mejoras de UX** - 20%
+   - Loading states mejorados
+   - Validación en tiempo real
+   - Mensajes de error más descriptivos
+   - Confirmaciones de acciones críticas
+
+6. **Gestión de Clientes** - 0%
+   - CRUD completo de clientes
+   - Historial de comprobantes por cliente
+   - Importación masiva desde Excel
+
+### 📦 **FEATURES ADICIONALES** (Backlog)
+
+7. **Envío de correos automático**
+   - Enviar PDF+XML por email al emitir
+   - Plantillas personalizables
+   - Cola de trabajos para envíos masivos
+
+8. **Portal de cliente**
+   - Consulta de comprobantes
+   - Descarga de PDF/XML
+   - Validación con QR
+
+9. **Multi-empresa**
+   - Selector de empresa activa
+   - Permisos por empresa
+   - Dashboard multi-empresa
+
+---
+
+## 🐳 DOCKER - ESTADO ACTUAL
+
+**Configuración:** ✅ Completa y funcional
+
+### Servicios activos:
+- **PostgreSQL 15**: Base de datos principal (puerto 5432)
+- **MinIO**: Almacenamiento S3 para PDFs/XMLs (puertos 9000/9001)
+- **MinIO Init**: Auto-creación de bucket `facturacion`
+
+### ⚠️ Recomendaciones Docker:
+
+1. **No es necesario crear contenedor para Laravel**
+   - Ejecutar `php artisan serve` localmente es más ágil en desarrollo
+   - Para producción considerar nginx + php-fpm en contenedor
+
+2. **Posibles mejoras futuras:**
+   ```yaml
+   # Redis para caché y colas (opcional)
+   redis:
+     image: redis:7-alpine
+     ports:
+       - "6379:6379"
+   
+   # Nginx + PHP-FPM para producción
+   web:
+     build: ./docker/php
+     volumes:
+       - ./backend:/var/www
+   ```
+
+3. **Variables de entorno (.env)**
+   - ✅ DB_HOST=localhost (o 127.0.0.1)
+   - ✅ DB_PORT=5432
+   - ✅ Credenciales MinIO configuradas
 
 ---
 
@@ -122,33 +217,37 @@ e76073b - feat(nubefact): agregar comando artisan nubefact:sync para sincronizac
 09b52f7 - feat(frontend): implementar Notas de Crédito electrónicas
 0ea8c29 - fix(frontend): corregir warnings TypeScript en Textarea
 38ef3e5 - feat(frontend): implementar Notas de Débito electrónicas
+055f52c - docs: actualizar PENDIENTES.md con progreso 60%
+[NUEVO] - feat(frontend): implementar Guías de Remisión Electrónicas (GRE)
+[NUEVO] - chore: limpiar datos de prueba de la base de datos
 ```
 
 ---
 
 ### 📋 Tareas Pendientes
 
-#### 1️⃣ **Guías de Remisión Electrónicas**
-- [ ] Formulario GRE Remitente (09) - Transporte público
-- [ ] Formulario GRE Remitente (09) - Transporte privado
-- [ ] Formulario GRE Transportista (31)
-- [ ] Gestión de transportistas (RUC, placa, conductor)
-- [ ] Puntos de partida y llegada (ubigeo)
-- [ ] Items y peso total de mercancía
+#### 1️⃣ **Gestión de Series y Numeración** - ALTA PRIORIDAD
+- [ ] CRUD de series por empresa
+- [ ] Auto-incremento de correlativo por serie
+- [ ] Validación de formato de series SUNAT
+- [ ] Series por defecto para cada tipo de documento
+- [ ] Bloqueo de series utilizadas
 
 #### 2️⃣ **Funcionalidades Adicionales**
-- [ ] Tabla de comprobantes emitidos con filtros
+- [x] Tabla de comprobantes emitidos con filtros ✅
 - [ ] Consulta de estado de ticket SUNAT
 - [ ] Envío de comprobante por email
- - [ ] Otros comprobantes SUNAT (según anexo D y carpeta `examples/`)
-   - [ ] Resumen diario RC (backend ✔️, frontend pendiente)
-   - [ ] Comunicación de baja RA (backend ✔️, frontend pendiente)
-   - [ ] Retención (backend ✔️, frontend pendiente)
-   - [ ] Percepción (backend ✔️, frontend pendiente)
+- [ ] Otros comprobantes SUNAT (según anexo D y carpeta `examples/`)
+  - [ ] Resumen diario RC (backend ✔️, frontend pendiente)
+  - [ ] Comunicación de baja RA (backend ✔️, frontend pendiente)
+  - [ ] Retención (backend ✔️, frontend pendiente)
+  - [ ] Percepción (backend ✔️, frontend pendiente)
 
 ##### 🟡 **Dashboard Principal**
-- [ ] Gráfico de facturación del mes (Chart.js o Recharts)
-- [ ] Tarjetas de estadísticas (total ventas, pendientes, etc.)
+- [x] Gráfico de facturación mensual ✅
+- [x] Tarjetas de estadísticas ✅
+- [x] Conexión con datos reales de API ✅
+- [ ] Gráfico de facturación con datos reales por mes
 - [ ] Lista de oportunidades por estado
 - [ ] Alertas de SLA próximas a vencer
 - [ ] Modo TV para pantallas (dashboard simplificado)

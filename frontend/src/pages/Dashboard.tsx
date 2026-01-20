@@ -1,46 +1,115 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Receipt, TrendingUp, Clock, CheckCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Receipt, TrendingUp, CheckCircle, Building2 } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import api from '@/services/api';
 
-// Data para gráficos
-const facturacionMensual = [
-  { mes: 'Ene', monto: 12000 },
-  { mes: 'Feb', monto: 19000 },
-  { mes: 'Mar', monto: 15000 },
-  { mes: 'Abr', monto: 25000 },
-  { mes: 'May', monto: 22000 },
-  { mes: 'Jun', monto: 30000 },
-];
+interface Comprobante {
+  id: number;
+  tipo_comprobante: string;
+  serie: string;
+  numero: number;
+  cliente_denominacion: string;
+  total: number;
+  estado_sunat: string;
+  fecha_emision: string;
+}
 
-const tiposComprobantes = [
-  { tipo: 'Facturas', cantidad: 450 },
-  { tipo: 'Boletas', cantidad: 320 },
-  { tipo: 'NC', cantidad: 80 },
-  { tipo: 'ND', cantidad: 50 },
-];
-
-const estadosSunat = [
-  { estado: 'Aceptado', cantidad: 850 },
-  { estado: 'Observado', cantidad: 30 },
-  { estado: 'Rechazado', cantidad: 20 },
-];
+interface Empresa {
+  id: number;
+  ruc: string;
+  razon_social: string;
+  nombre_comercial: string;
+}
 
 export default function Dashboard() {
+  const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalFacturado: 0,
+    totalComprobantes: 0,
+    tasaAceptacion: 0,
+  });
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      const [comprobantesRes, empresasRes] = await Promise.all([
+        api.get('/facturacion/comprobantes'),
+        api.get('/v1/empresas')
+      ]);
+
+      const comprobantesData = Array.isArray(comprobantesRes.data) 
+        ? comprobantesRes.data 
+        : (comprobantesRes.data.data || []);
+      const empresasData = Array.isArray(empresasRes.data)
+        ? empresasRes.data
+        : (empresasRes.data.data || []);
+
+      setComprobantes(comprobantesData);
+      setEmpresas(empresasData);
+
+      // Calcular estadísticas
+      const totalFacturado = comprobantesData.reduce((sum: number, c: Comprobante) => sum + parseFloat(c.total?.toString() || '0'), 0);
+      const aceptados = comprobantesData.filter((c: Comprobante) => c.estado_sunat?.toLowerCase() === 'aceptado').length;
+      const tasaAceptacion = comprobantesData.length > 0 ? (aceptados / comprobantesData.length) * 100 : 0;
+
+      setStats({
+        totalFacturado,
+        totalComprobantes: comprobantesData.length,
+        tasaAceptacion,
+      });
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Datos para gráficos basados en comprobantes reales
+  const tiposComprobantes = [
+    { tipo: 'Facturas', cantidad: comprobantes.filter(c => c.tipo_comprobante === '01').length },
+    { tipo: 'Boletas', cantidad: comprobantes.filter(c => c.tipo_comprobante === '03').length },
+    { tipo: 'NC', cantidad: comprobantes.filter(c => c.tipo_comprobante === '07').length },
+    { tipo: 'ND', cantidad: comprobantes.filter(c => c.tipo_comprobante === '08').length },
+  ].filter(t => t.cantidad > 0);
+
+  const estadosSunat = [
+    { estado: 'Aceptado', cantidad: comprobantes.filter(c => c.estado_sunat?.toLowerCase() === 'aceptado').length },
+    { estado: 'Pendiente', cantidad: comprobantes.filter(c => !c.estado_sunat || c.estado_sunat === 'pendiente').length },
+    { estado: 'Rechazado', cantidad: comprobantes.filter(c => c.estado_sunat?.toLowerCase() === 'rechazado').length },
+  ].filter(e => e.cantidad > 0);
+
+  const ultimosComprobantes = comprobantes
+    .sort((a, b) => new Date(b.fecha_emision).getTime() - new Date(a.fecha_emision).getTime())
+    .slice(0, 5);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
       {/* Tarjetas de estadísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Facturado (Mes)</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Facturado</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">S/ 45,231.89</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <ArrowUpRight className="h-3 w-3 text-green-500" />
-              <span className="text-green-500">+20.1%</span> desde el mes pasado
+            <div className="text-2xl font-bold">S/ {stats.totalFacturado.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">
+              {comprobantes.length} comprobantes emitidos
             </p>
           </CardContent>
         </Card>
@@ -51,24 +120,22 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">900</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <ArrowUpRight className="h-3 w-3 text-green-500" />
-              <span className="text-green-500">+12.5%</span> desde el mes pasado
+            <div className="text-2xl font-bold">{stats.totalComprobantes}</div>
+            <p className="text-xs text-muted-foreground">
+              Total en el sistema
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Oportunidades Activas</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Empresas Registradas</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <ArrowUpRight className="h-3 w-3 text-green-500" />
-              <span className="text-green-500">+8</span> desde el mes pasado
+            <div className="text-2xl font-bold">{empresas.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Emisoras activas
             </p>
           </CardContent>
         </Card>
@@ -79,10 +146,9 @@ export default function Dashboard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">94.4%</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <ArrowDownRight className="h-3 w-3 text-red-500" />
-              <span className="text-red-500">-1.2%</span> desde el mes pasado
+            <div className="text-2xl font-bold">{stats.tasaAceptacion.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">
+              Comprobantes aceptados por SUNAT
             </p>
           </CardContent>
         </Card>
@@ -107,34 +173,41 @@ export default function Dashboard() {
               }}
               className="aspect-4/3 w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
             >
-              <BarChart 
-                data={facturacionMensual}
+              <BarChart
+                data={[
+                  { mes: 'Ene', monto: 0 },
+                  { mes: 'Feb', monto: 0 },
+                  { mes: 'Mar', monto: 0 },
+                  { mes: 'Abr', monto: 0 },
+                  { mes: 'May', monto: 0 },
+                  { mes: 'Jun', monto: 0 },
+                ]}
                 margin={{ top: 5, right: 5, bottom: 0, left: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis 
-                  dataKey="mes" 
-                  stroke="hsl(var(--muted-foreground))" 
+                <XAxis
+                  dataKey="mes"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={14}
                   tickLine={false}
                   axisLine={false}
                   style={{ fontSize: '14px' }}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))" 
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={14}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => `${value / 1000}k`}
                   style={{ fontSize: '14px' }}
                 />
-                <ChartTooltip 
+                <ChartTooltip
                   content={<ChartTooltipContent />}
                   cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                 />
-                <Bar 
-                  dataKey="monto" 
-                  fill="var(--color-monto)" 
+                <Bar
+                  dataKey="monto"
+                  fill="var(--color-monto)"
                   radius={[8, 8, 0, 0]}
                 />
               </BarChart>
@@ -142,119 +215,123 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-          <CardHeader>
-            <CardTitle>Tipos de Comprobantes</CardTitle>
-            <CardDescription>
-              Distribución por tipo de documento
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pb-0">
-            <ChartContainer
-              config={{
-                Facturas: {
-                  label: "Facturas",
-                  color: "hsl(var(--chart-1))",
-                },
-                Boletas: {
-                  label: "Boletas",
-                  color: "hsl(var(--chart-2))",
-                },
-                NC: {
-                  label: "Notas de Crédito",
-                  color: "hsl(var(--chart-3))",
-                },
-                ND: {
-                  label: "Notas de Débito",
-                  color: "hsl(var(--chart-4))",
-                },
-              }}
-              className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
-            >
-              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Pie
-                  data={tiposComprobantes}
-                  dataKey="cantidad"
-                  nameKey="tipo"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="65%"
-                >
-                  {tiposComprobantes.map((entry) => (
-                    <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
-                  ))}
-                </Pie>
-                <Legend 
-                  verticalAlign="top" 
-                  height={40}
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {tiposComprobantes.length > 0 && (
+          <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+            <CardHeader>
+              <CardTitle>Tipos de Comprobantes</CardTitle>
+              <CardDescription>
+                Distribución por tipo de documento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-0">
+              <ChartContainer
+                config={{
+                  Facturas: {
+                    label: "Facturas",
+                    color: "hsl(var(--chart-1))",
+                  },
+                  Boletas: {
+                    label: "Boletas",
+                    color: "hsl(var(--chart-2))",
+                  },
+                  NC: {
+                    label: "Notas de Crédito",
+                    color: "hsl(var(--chart-3))",
+                  },
+                  ND: {
+                    label: "Notas de Débito",
+                    color: "hsl(var(--chart-4))",
+                  },
+                }}
+                className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
+              >
+                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={tiposComprobantes}
+                    dataKey="cantidad"
+                    nameKey="tipo"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="65%"
+                  >
+                    {tiposComprobantes.map((entry) => (
+                      <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
+                    ))}
+                  </Pie>
+                  <Legend
+                    verticalAlign="top"
+                    height={40}
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
+                  />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Segunda fila de gráficos */}
+      {/* Segunda fila */}
       <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-          <CardHeader>
-            <CardTitle>Estados SUNAT</CardTitle>
-            <CardDescription>
-              Respuestas de validación SUNAT
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pb-0">
-            <ChartContainer
-              config={{
-                Aceptado: {
-                  label: "Aceptado",
-                  color: "hsl(var(--chart-2))",
-                },
-                Observado: {
-                  label: "Observado",
-                  color: "hsl(var(--chart-4))",
-                },
-                Rechazado: {
-                  label: "Rechazado",
-                  color: "hsl(var(--chart-5))",
-                },
-              }}
-              className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
-            >
-              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Pie
-                  data={estadosSunat}
-                  dataKey="cantidad"
-                  nameKey="estado"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="40%"
-                  outerRadius="65%"
-                  label={{
-                    fill: 'hsl(var(--foreground))',
-                    fontSize: 14,
-                    fontWeight: 600,
-                  }}
-                  labelLine={false}
-                >
-                  {estadosSunat.map((entry) => (
-                    <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
-                  ))}
-                </Pie>
-                <Legend 
-                  verticalAlign="top" 
-                  height={40}
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {estadosSunat.length > 0 && (
+          <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+            <CardHeader>
+              <CardTitle>Estados SUNAT</CardTitle>
+              <CardDescription>
+                Respuestas de validación SUNAT
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-0">
+              <ChartContainer
+                config={{
+                  Aceptado: {
+                    label: "Aceptado",
+                    color: "hsl(var(--chart-2))",
+                  },
+                  Pendiente: {
+                    label: "Pendiente",
+                    color: "hsl(var(--chart-4))",
+                  },
+                  Rechazado: {
+                    label: "Rechazado",
+                    color: "hsl(var(--chart-5))",
+                  },
+                }}
+                className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
+              >
+                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={estadosSunat}
+                    dataKey="cantidad"
+                    nameKey="estado"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="40%"
+                    outerRadius="65%"
+                    label={{
+                      fill: 'hsl(var(--foreground))',
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                    labelLine={false}
+                  >
+                    {estadosSunat.map((entry) => (
+                      <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="top" 
+                    height={40}
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
+                  />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
@@ -264,32 +341,66 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
-              {[
-                { numero: 'F001-00123', cliente: 'EMPRESA CLIENTE SAC', monto: 118.00, estado: 'Aceptado' },
-                { numero: 'B001-00456', cliente: 'Juan Pérez', monto: 85.00, estado: 'Aceptado' },
-                { numero: 'F001-00124', cliente: 'INVERSIONES XYZ SAC', monto: 2500.00, estado: 'Aceptado' },
-                { numero: 'NC01-00012', cliente: 'ABC CORP', monto: 150.00, estado: 'Observado' },
-              ].map((doc, index) => (
-                <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium leading-none">{doc.numero}</p>
-                    <p className="text-sm text-muted-foreground truncate">{doc.cliente}</p>
+            {ultimosComprobantes.length > 0 ? (
+              <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
+                {ultimosComprobantes.map((doc) => (
+                  <div key={doc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">{doc.serie}-{doc.numero}</p>
+                      <p className="text-sm text-muted-foreground truncate">{doc.cliente_denominacion}</p>
+                    </div>
+                    <div className="text-left sm:text-right space-y-1 shrink-0">
+                      <p className="text-sm font-medium">S/ {parseFloat(doc.total?.toString() || '0').toFixed(2)}</p>
+                      <p className={`text-xs font-medium ${
+                        doc.estado_sunat?.toLowerCase() === 'aceptado' 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : doc.estado_sunat?.toLowerCase() === 'rechazado'
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-yellow-600 dark:text-yellow-400'
+                      }`}>
+                        {doc.estado_sunat || 'Pendiente'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-left sm:text-right space-y-1 shrink-0">
-                    <p className="text-sm font-medium">S/ {doc.monto.toFixed(2)}</p>
-                    <p className={`text-xs font-medium ${
-                      doc.estado === 'Aceptado' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'
-                    }`}>
-                      {doc.estado}
-                    </p>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No hay comprobantes emitidos</p>
+                <p className="text-sm">Comienza emitiendo tu primer comprobante</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tercera fila - Empresas */}
+      {empresas.length > 0 && (
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle>Empresas Registradas</CardTitle>
+            <CardDescription>
+              Empresas emisoras de comprobantes electrónicos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {empresas.slice(0, 4).map((empresa) => (
+                <div key={empresa.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium leading-none truncate">{empresa.nombre_comercial || empresa.razon_social}</p>
+                    <p className="text-sm text-muted-foreground">RUC: {empresa.ruc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 }

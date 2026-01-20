@@ -3,14 +3,15 @@ import EmitirFactura from './Facturacion/EmitirFactura';
 import EmitirBoleta from './Facturacion/EmitirBoleta';
 import EmitirNotaCredito from './Facturacion/EmitirNotaCredito';
 import EmitirNotaDebito from './Facturacion/EmitirNotaDebito';
+import EmitirGuiaRemision from './Facturacion/EmitirGuiaRemision';
 import ListaComprobantes from './Facturacion/ListaComprobantes';
-import { FileText, Receipt, FileCheck, FileX, List } from 'lucide-react';
+import { FileText, Receipt, FileCheck, FileX, Truck, List } from 'lucide-react';
 
 export default function FacturacionNubefact() {
   return (
     <div className="container mx-auto py-6">
       <Tabs defaultValue="factura" className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-4xl grid-cols-6">
           <TabsTrigger value="factura" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Factura
@@ -26,6 +27,10 @@ export default function FacturacionNubefact() {
           <TabsTrigger value="nota-debito" className="flex items-center gap-2">
             <FileX className="w-4 h-4" />
             ND
+          </TabsTrigger>
+          <TabsTrigger value="guia" className="flex items-center gap-2">
+            <Truck className="w-4 h-4" />
+            GRE
           </TabsTrigger>
           <TabsTrigger value="lista" className="flex items-center gap-2">
             <List className="w-4 h-4" />
@@ -47,6 +52,10 @@ export default function FacturacionNubefact() {
 
         <TabsContent value="nota-debito">
           <EmitirNotaDebito />
+        </TabsContent>
+
+        <TabsContent value="guia">
+          <EmitirGuiaRemision />
         </TabsContent>
 
         <TabsContent value="lista">
