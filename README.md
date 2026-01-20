@@ -2,19 +2,22 @@
 
 ## 🎯 Descripción
 
-Sistema integral de gestión comercial y facturación electrónica integrado con SUNAT (Perú). Permite la emisión de comprobantes electrónicos, gestión de oportunidades, control de SLA y administración multiempresa.
+Sistema integral de gestión comercial y facturación electrónica integrado con **NubeFact API** (proveedor SUNAT Perú). Permite la emisión de comprobantes electrónicos, guías de remisión, gestión de oportunidades, control de SLA y administración multiempresa.
 
 ## 🚀 Características Principales
 
-- ✅ **Facturación Electrónica SUNAT**
+- ✅ **Facturación Electrónica vía NubeFact**
   - Facturas (01), Boletas (03)
   - Notas de Crédito (07) y Débito (08)
-  - Integración directa con SUNAT vía Greenter
-  - Generación automática de XML, CDR y PDF
+  - Guías de Remisión Electrónica (07, 08)
+  - Integración con API JSON V1 de NubeFact
+  - Generación automática de XML, CDR y PDF por NubeFact
+  - Sincronización automática de estados SUNAT
+  - QR obligatorio y PDF417 incluidos
 
 - 🏢 **Multiempresa (Multi-RUC)**
   - Gestión de múltiples empresas emisoras
-  - Certificados y credenciales independientes
+  - Certificados y credenciales independientes por empresa
   - Aislamiento total de datos
 
 - 📊 **Gestión Comercial**
@@ -24,17 +27,23 @@ Sistema integral de gestión comercial y facturación electrónica integrado con
   - Seguimiento de pagos
   - Dashboards en tiempo real
 
+- 🔄 **Sincronización NubeFact**
+  - Comando artisan para sync batch
+  - Actualización automática de estados SUNAT
+  - Almacenamiento local de respuestas API
+
 ## 🛠 Stack Tecnológico
 
 ### Backend
-- **PHP** >= 8.1
+- **PHP** >= 8.2
 - **Laravel** 11.x
 - **PostgreSQL** 15+ (via Docker)
-- **Greenter** (Laravel Greenter v1.0.3)
-- **WKHTMLtoPDF** (generación de PDFs)
+- **NubeFact API** (JSON V1)
+- **MinIO** (almacenamiento S3 compatible)
 
 ### Frontend
 - **React** 18+
+- **TypeScript**
 - **shadcn/ui** + TailwindCSS
 - **Vite**
 
@@ -44,30 +53,27 @@ Sistema integral de gestión comercial y facturación electrónica integrado con
 - **Docker Compose** para orquestación
 
 ### Storage
-- **MinIO** (S3 compatible) para XML/PDF/CDR
+- **MinIO** (S3 compatible) para documentos adjuntos
+- **NubeFact Cloud** para XML/PDF/CDR de comprobantes
 
 ## 📋 Requisitos Previos
 
 - **Docker Desktop** (para PostgreSQL + MinIO)
-- **WKHTMLtoPDF** ([descargar](https://wkhtmltopdf.org/downloads.html))
-- PHP >= 8.1 con extensiones:
-  - soap
-  - openssl
-  - pgsql
-  - pdo_pgsql
-  - zip
-- Composer
-- Node.js >= 18
-- **Docker Desktop** (requerido para PostgreSQL + MinIO)
-- wkhtmltopdf (para PDFs)
+- **PHP >= 8.2** con extensiones:
+  - pgsql, pdo_pgsql
+  - openssl, zip, curl
+  - mbstring, xml
+- **Composer** >= 2.0
+- **Node.js** >= 18
+- **Cuenta NubeFact** (obtener en [nubefact.com](https://nubefact.com))
 
 ## ⚙️ Instalación
 
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/diegomejiam/Nubofact-Web-y-Facturador.git
-cd Nubofact-Web-y-Facturador
+git clone https://github.com/tu-usuario/Plataforma_Op_Com_Facturacion_Elect.git
+cd Plataforma_Op_Com_Facturacion_Elect
 ```
 
 ### 2. **Iniciar servicios Docker**
@@ -99,6 +105,16 @@ cp .env.example .env
 php artisan key:generate
 ```
 
+**Configurar NubeFact en `.env`:**
+```env
+NUBEFACT_BASE_URL=https://api.pse.pe/api/v1/{tu_ruc_key}
+NUBEFACT_TOKEN=tu_token_jwt_aqui
+NUBEFACT_AUTO_SUNAT=true
+NUBEFACT_PDF_FORMAT=A4
+```
+
+Ver `backend/INTEGRACION_NUBEFACT.md` para documentación completa de NubeFact.
+
 Editar `backend/.env` con las configuraciones Docker:
 
 ```env
@@ -117,14 +133,6 @@ MINIO_KEY=minio
 MINIO_SECRET=minio123
 MINIO_BUCKET=facturacion
 MINIO_USE_PATH_STYLE_ENDPOINT=true
-
-# Greenter (Facturación SUNAT)
-GREENTER_MODE=beta
-GREENTER_COMPANY_RUC=20000000001
-GREENTER_COMPANY_NAME="MI EMPRESA SAC"
-GREENTER_SOL_USER=MODDATOS
-GREENTER_SOL_PASS=MODDATOS
-GREENTER_PDF_BIN_PATH="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"
 ```
 
 ### 5. Configurar base de datos
@@ -143,7 +151,18 @@ php artisan db:seed --class=CatalogosSunatSeeder
 php artisan storage:link
 ```
 
-### 7. Iniciar servidor de desarrollo
+### 7. Verificar integración NubeFact
+
+```bash
+# Ejecutar tests de integración
+vendor/bin/phpunit tests/Feature/NubefactIntegrationTest.php --filter test_mapear
+
+# Test manual (opcional - requiere credenciales reales)
+php artisan tinker
+>>> app(\App\Services\NubefactClient::class)->validarCredenciales();
+```
+
+### 8. Iniciar servidor de desarrollo
 
 ```bash
 # Backend Laravel
@@ -152,6 +171,50 @@ php artisan serve
 
 # Verificar API
 curl http://127.0.0.1:8000/api/facturacion/comprobantes
+```
+
+## 📡 Endpoints API Principales
+
+### Facturación
+
+```bash
+# Listar comprobantes
+GET /api/facturacion/comprobantes
+
+# Emitir con NubeFact
+POST /api/nubefact/comprobantes
+Body: {"comprobante_id": 123}
+
+# Consultar estado
+GET /api/nubefact/comprobantes/{tipo}/{serie}/{numero}
+
+# Anular comprobante
+DELETE /api/nubefact/comprobantes/{tipo}/{serie}/{numero}
+Body: {"motivo": "Error en datos"}
+```
+
+### Guías de Remisión
+
+```bash
+# Emitir guía
+POST /api/nubefact/guias
+Body: {"guia_id": 456}
+
+# Consultar estado
+GET /api/nubefact/guias/{tipo}/{serie}/{numero}
+```
+
+### Sincronización
+
+```bash
+# Sincronizar comprobantes pendientes
+php artisan nubefact:sync --pendientes
+
+# Sincronizar por fecha
+php artisan nubefact:sync --desde=2026-01-01 --hasta=2026-01-31
+
+# Sincronizar empresa específica
+php artisan nubefact:sync --empresa=1
 ```
 
 ## 🐳 Gestión de Docker
@@ -214,43 +277,110 @@ minio server ./minio-data --console-address ":9001"
 ## 📁 Estructura del Proyecto
 
 ```
-├── app/
-│   ├── Http/Controllers/Api/
-│   │   ├── FacturacionController.php
-│   │   ├── EmpresaController.php
-│   │   └── OportunidadController.php
-│   ├── Models/
-│   │   ├── Empresa.php
-│   │   ├── Comprobante.php
-│   │   └── Oportunidad.php
-│   └── Services/
-│       └── FacturacionService.php
-├── database/
-│   ├── migrations/
-│   └── seeders/
-│       └── CatalogosSunatSeeder.php
-├── resources/
-│   └── js/
+Plataforma_Op_Com_Facturacion_Elect/
+├── backend/
+│   ├── app/
+│   │   ├── Console/Commands/
+│   │   │   └── NubefactSyncCommand.php
+│   │   ├── Http/Controllers/Api/
+│   │   │   ├── FacturacionController.php
+│   │   │   ├── NubefactController.php      ← Emisión NubeFact
+│   │   │   ├── EmpresaController.php
+│   │   │   └── OportunidadController.php
+│   │   ├── Models/
+│   │   │   ├── Empresa.php
+│   │   │   ├── Comprobante.php             ← Con campos NubeFact
+│   │   │   ├── GuiaRemision.php            ← Nuevo modelo GRE
+│   │   │   └── Oportunidad.php
+│   │   └── Services/
+│   │       ├── NubefactClient.php          ← Cliente API
+│   │       ├── NubefactMapper.php          ← Conversión datos
+│   │       └── FacturacionService.php
+│   ├── config/
+│   │   ├── nubefact.php                    ← Config NubeFact
+│   │   └── logging.php                     ← Canal nubefact
+│   ├── database/
+│   │   ├── migrations/
+│   │   │   ├── *_add_nubefact_fields_to_comprobantes_table.php
+│   │   │   └── *_create_guia_remisions_table.php
+│   │   └── seeders/
+│   │       └── CatalogosSunatSeeder.php
+│   ├── tests/Feature/
+│   │   └── NubefactIntegrationTest.php
+│   ├── INTEGRACION_NUBEFACT.md             ← Documentación completa
+│   └── .env
+├── frontend/
+│   └── src/
 │       ├── components/
 │       └── pages/
-└── public/
-    ├── certs/
-    └── images/
+├── examples/                                ← 60+ ejemplos JSON NubeFact
+│   ├── EJEMPLO JSON GENERAR CPE FACTURA 1 GRAVADA.txt
+│   └── NubeFact-json.php
+├── docker-compose.yml
+└── README.md
 ```
 
 ## 🔐 Seguridad
 
-- ⚠️ **NUNCA** subir certificados al repositorio
+- ⚠️ **NUNCA** subir tokens NubeFact al repositorio
+- ⚠️ **NUNCA** commitear archivos `.env` con credenciales reales
 - ✅ Usar variables de entorno para credenciales
-- ✅ Encriptar usuario SOL y claves SUNAT
-- ✅ Implementar roles y permisos
-- ✅ Auditoría de emisiones
+- ✅ Rotar tokens NubeFact periódicamente
+- ✅ Implementar roles y permisos (próximo paso)
+- ✅ Auditoría completa de emisiones (logs en `storage/logs/nubefact-*.log`)
 
 ## 📚 Documentación
 
+- **[Integración NubeFact](./backend/INTEGRACION_NUBEFACT.md)** ← Documentación completa API
 - [Requerimientos del MVP](./requerimientos-mvp.md)
 - [Catálogos SUNAT](https://cpe.sunat.gob.pe/node/88)
-- [Greenter Docs](https://greenter.dev/)
+- [NubeFact Docs](https://nubefact.com/soporte)
+- Manuales PDF en raíz del proyecto
+
+## 🧪 Testing
+
+```bash
+# Backend (Laravel)
+cd backend
+vendor/bin/phpunit
+
+# Tests específicos de NubeFact
+vendor/bin/phpunit tests/Feature/NubefactIntegrationTest.php
+
+# Frontend (React)
+cd frontend
+npm run test
+```
+
+## 🚀 Deployment
+
+### Producción
+
+1. **Actualizar credenciales NubeFact:**
+   ```env
+   NUBEFACT_BASE_URL=https://api.nubefact.com/api/v1/{ruc_key}
+   NUBEFACT_TOKEN=token_produccion_aqui
+   NUBEFACT_MODE=production
+   ```
+
+2. **Optimizar Laravel:**
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+3. **Build frontend:**
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+4. **Configurar cron para sincronización:**
+   ```cron
+   # Sincronizar comprobantes cada hora
+   0 * * * * cd /path/to/app && php artisan nubefact:sync --pendientes
+   ```
 
 ## 🤝 Contribución
 
@@ -268,6 +398,9 @@ Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
 - `fix:` Corrección de bugs
 - `docs:` Cambios en documentación
 - `style:` Formato, punto y coma faltantes, etc
+- `refactor:` Refactorización de código
+- `test:` Añadir tests
+- `chore:` Actualización de tareas de build, configs, etc
 - `refactor:` Refactorización de código
 - `test:` Añadir tests
 - `chore:` Tareas de mantenimiento

@@ -2,26 +2,52 @@
 
 ## 📋 Descripción
 
-Esta plataforma está integrada con la API de NubeFact para emisión y sincronización de comprobantes electrónicos (facturación electrónica) y guías de remisión electrónicas (GRE) en Perú.
+Esta plataforma está integrada con la API de NubeFact para **emisión** y **sincronización** de comprobantes electrónicos (facturación electrónica) y guías de remisión electrónicas (GRE) en Perú.
+
+**Capacidades del MVP:**
+- ✅ Emitir facturas, boletas, notas de crédito y débito mediante NubeFact
+- ✅ Emitir guías de remisión electrónicas (remitente y transportista)
+- ✅ Consultar estado y obtener PDF/XML/CDR de comprobantes
+- ✅ Anular comprobantes emitidos
+- ✅ Sincronización automática con comando artisan
+- ✅ Almacenamiento de respuestas NubeFact en base de datos local
 
 ## 🔧 Configuración
 
 ### Variables de Entorno (.env)
 
 ```env
+# URL base incluye tu RUC_KEY (obtener desde panel NubeFact)
 NUBEFACT_BASE_URL=https://api.pse.pe/api/v1/{ruc_key}
+
+# Token JWT (obtener desde panel NubeFact > API)
 NUBEFACT_TOKEN=eyJhbGciOiJIUzI1NiJ9...
+
+# Timeout de peticiones HTTP (segundos)
 NUBEFACT_TIMEOUT=30
+
+# Enviar automáticamente a SUNAT al generar
 NUBEFACT_AUTO_SUNAT=true
+
+# Enviar email automático al cliente
 NUBEFACT_AUTO_EMAIL=false
+
+# Formato de PDF (A4, A5, TICKET)
 NUBEFACT_PDF_FORMAT=A4
+
+# Incluir archivos base64 en respuesta (aumenta tamaño)
 NUBEFACT_INCLUDE_BASE64=false
+
+# Modo (demo, production)
 NUBEFACT_MODE=demo
 ```
 
 ### Archivo de Configuración
 
-Ver `config/nubefact.php` para opciones avanzadas.
+Ver `config/nubefact.php` para opciones avanzadas como:
+- Mapeo de códigos de error
+- Configuración de reintentos para guías
+- Formato de PDF personalizado
 
 ## 🚀 Funcionalidades
 
@@ -261,6 +287,82 @@ Las GRE requieren 2 pasos. Esperar aceptación SUNAT (el controlador hace reinte
 Verificar que tenga `nubefact_enlace` poblado. Si no, usar `--force` en sync.
 
 ## 📚 Documentación NubeFact
+
+- Manual oficial API JSON: `NUBEFACT DOC API JSON V1.pdf` (raíz del proyecto)
+- Manual Guías de Remisión: `API NUBEFACT - GUIA DE REMISIÓN.pdf` (raíz del proyecto)
+- Ejemplos JSON: Carpeta `examples/` con 60+ ejemplos oficiales
+- Panel web: https://app.nubefact.com (demo) / https://www.nubefact.com (producción)
+- Soporte: soporte@nubefact.com / +51 1 468 3535
+
+## 📝 Próximos Pasos (Post-MVP)
+
+1. **Webhook Listener**
+   - Recibir notificaciones de SUNAT en tiempo real
+   - Actualizar estados automáticamente sin polling
+
+2. **Retry Queue**
+   - Cola de reintentos para comprobantes fallidos
+   - Jobs Laravel con exponential backoff
+
+3. **Batch Emission**
+   - Emitir múltiples comprobantes en una sola petición
+   - Resumen diario de boletas
+
+4. **PDF Personalizado**
+   - Diseño custom con logo de empresa
+   - Plantillas Blade convertidas a PDF via wkhtmltopdf
+
+5. **Auditoría Avanzada**
+   - Dashboard de métricas de emisión
+   - Alertas de errores recurrentes
+   - Reportes de uso de API
+
+## ✅ Checklist de Implementación
+
+- [x] Remover Greenter
+- [x] Configurar credenciales NubeFact
+- [x] Crear NubefactClient (HTTP wrapper)
+- [x] Crear NubefactMapper (conversión de datos)
+- [x] Crear NubefactController (endpoints)
+- [x] Migrar campos NubeFact a Comprobante
+- [x] Crear modelos GuiaRemision
+- [x] Comando de sincronización
+- [x] Tests unitarios
+- [x] Documentación completa
+- [ ] Integración con frontend React
+- [ ] Testing E2E con comprobantes reales
+- [ ] Deployment a producción
+- [ ] Monitoreo y alertas
+
+## 🔐 Seguridad
+
+**Tokens:**
+- Nunca commitear tokens reales al repositorio
+- Usar `.env` para credenciales sensibles
+- Rotar tokens periódicamente
+
+**API Rate Limits:**
+- NubeFact no tiene límites documentados oficialmente
+- Implementar throttling en endpoints si es necesario
+
+**Validaciones:**
+- Todos los datos se validan antes de enviar a NubeFact
+- Sanitización de inputs en controllers
+- Logs de auditoría completos
+
+## 🤝 Contribución
+
+Ver guía de commits en el proyecto:
+- `feat(nubefact):` Nuevas funcionalidades
+- `fix(nubefact):` Corrección de bugs
+- `docs(nubefact):` Actualización de documentación
+- `test(nubefact):` Nuevos tests o cambios en tests
+
+---
+
+**Última actualización:** 20 de enero de 2026  
+**Versión de la API:** JSON V1  
+**Estado:** ✅ Implementado y probado
 
 - API JSON V1: Ver `NUBEFACT DOC API JSON V1.pdf`
 - Guías GRE: Ver `API NUBEFACT - GUIA DE REMISIÓN.pdf`
