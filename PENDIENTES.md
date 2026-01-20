@@ -1,103 +1,74 @@
 # 📋 PENDIENTES - Plataforma de Facturación Electrónica
 
-**Fecha de actualización:** 16 de enero de 2026  
-**Estado Backend:** ✅ 100% Completado y **REFACTORIZADO según tutorial**  
-**Estado Frontend:** 🟡 ~50% - En desarrollo (Dashboard, Empresas, Facturación, Oportunidades)
+**Fecha de actualización:** 20 de enero de 2026  
+**Estado Backend:** ✅ 100% Completado con **INTEGRACIÓN NUBEFACT**  
+**Estado Frontend:** 🔴 0% - Pendiente (próxima fase)
 
 ---
 
-## ✅ REFACTORIZACIÓN COMPLETADA (Opción 1)
+## ✅ MIGRACIÓN A NUBEFACT COMPLETADA
 
-### ✨ Cambios Implementados
+### 🎉 Cambios Implementados (20/01/2026)
 
-**Backend ahora sigue EXACTAMENTE el tutorial de CodersFree:**
+**Backend migrado completamente de Greenter a NubeFact API:**
 
-✅ **FacturacionService.php reescrito (360 líneas)**
-- Usa `Greenter::sent($tipoComprobante, $data)` - UNA SOLA LÍNEA
-- Generación automática de PDFs con `GreenterReport::generatePdf()`
-- Generación de HTML con `GreenterReport::generateHtml()`
-- Almacenamiento simplificado: `Storage::disk('public')->put()`
-- Try-catch según tutorial
+✅ **Greenter removido completamente**
+- Package `codersfree/laravel-greenter` eliminado de composer.json
+- Todos los servicios Greenter deshabilitados con excepciones
+- Bootstrap cache limpiado (services.php, packages.php)
+- Variables de entorno GREENTER_* removidas
 
-✅ **FacturacionController.php actualizado**
-- Métodos con try-catch explícito
-- Tipos de comprobante: 'invoice', 'note', 'despatch'
-- Nuevo endpoint: `/api/facturacion/descargar/html/{id}`
+✅ **Integración NubeFact implementada**
+- `NubefactClient.php`: Cliente HTTP para 6 operaciones API
+- `NubefactMapper.php`: Conversión bidireccional de datos
+- `NubefactController.php`: 5 endpoints REST
+- `NubefactSyncCommand.php`: Comando artisan de sincronización
+- `config/nubefact.php`: Configuración centralizada
+- Canal de logging dedicado: `nubefact`
 
-✅ **Vistas publicadas**
-- `resources/views/vendor/laravel-greenter/` con templates personalizables
-- Plantillas: invoice.html.twig, note.html.twig, despatch.html.twig
+✅ **Base de datos actualizada**
+- 19 campos NubeFact agregados a tabla `comprobantes`
+- Tabla `guia_remisions` creada (40+ columnas)
+- Tabla `guia_remision_items` para líneas de GRE
+- Modelos `GuiaRemision` y `GuiaRemisionItem` creados
+- Migraciones ejecutadas en base de datos
 
-✅ **Configuración actualizada**
-- `config/greenter.php` con bin_path para WKHTMLtoPDF
-- Configuración dinámica de empresa en runtime
+✅ **Endpoints API disponibles**
+- `POST /api/nubefact/comprobantes` - Emitir comprobante
+- `GET /api/nubefact/comprobantes/{tipo}/{serie}/{numero}` - Consultar
+- `DELETE /api/nubefact/comprobantes/{tipo}/{serie}/{numero}` - Anular
+- `POST /api/nubefact/guias` - Emitir GRE
+- `GET /api/nubefact/guias/{tipo}/{serie}/{numero}` - Consultar GRE
+
+✅ **Tests implementados**
+- `NubefactIntegrationTest.php` con 15 assertions pasando
+- Tests de mapeo de tipos de documento y comprobantes
+- Tests de conexión preparados (marcados como skipped)
+
+✅ **Documentación completa**
+- `backend/INTEGRACION_NUBEFACT.md` - Guía completa de integración
+- `README.md` actualizado con instrucciones NubeFact
+- Ejemplos oficiales en carpeta `examples/` (60+ archivos)
+- Correcciones de tipos de datos según ejemplos NubeFact
+
+✅ **Commits realizados (7 commits)**
+```
+b6ac622 - feat(nubefact): agregar modelos GuiaRemision y campos NubeFact en Comprobante
+9a077b1 - feat(nubefact): agregar NubefactMapper, NubefactController y rutas de API
+e76073b - feat(nubefact): agregar comando artisan nubefact:sync para sincronización
+4799220 - test(nubefact): agregar tests de integración y mejorar mapeo de tipos
+99c62e8 - docs(nubefact): agregar documentación completa de integración con NubeFact
+483cb72 - fix(nubefact): corregir tipos de datos en NubefactMapper según ejemplos oficiales
+536a20e - docs: actualizar README y documentación NubeFact con info completa
+```
 
 ---
 
-## ⚠️ ACCIÓN REQUERIDA: Instalar WKHTMLtoPDF
+## 🎯 SIGUIENTE FASE: FRONTEND
 
-### 📥 Instrucciones Completas
+### 📋 Tareas Inmediatas
 
-Ver archivo: [INSTRUCCIONES_WKHTMLTOPDF.md](INSTRUCCIONES_WKHTMLTOPDF.md)
-
-**Resumen rápido:**
-1. Descargar: https://wkhtmltopdf.org/downloads.html
-2. Instalar en: `C:\Program Files\wkhtmltopdf\`
-3. Verificar: `& "C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe" --version`
-
-**SIN este programa:** Sistema funciona pero NO genera PDFs (solo XML/CDR)  
-**CON este programa:** Sistema 100% funcional con representación impresa
-
----
-
-## 🎯 PLAN DE ACCIÓN ACTUALIZADO
-
-- [ ] **Inicializar proyecto React con Vite**
-  ```bash
-  cd C:\Plataforma_Op_Com_Facturacion_Elect
-  npm create vite@latest frontend -- --template react-ts
-  cd frontend
-  npm install
-  ```
-
-- [ ] **Instalar shadcn/ui**
-  ```bash
-  npx shadcn-ui@latest init
-  ```
-
-- [ ] **Configurar TailwindCSS y dependencias**
-  - Instalar: `axios`, `react-router-dom`, `zustand`, `react-hook-form`, `zod`
-
-- [ ] **Crear estructura de carpetas**
-  ```
-  frontend/src/
-  ├── components/
-  │   ├── ui/           # Componentes shadcn
-  │   ├── layout/       # Header, Sidebar, Layout
-  │   └── forms/        # Formularios de emisión
-  ├── pages/
-  │   ├── Dashboard.tsx
-  │   ├── Empresas/
-  │   ├── Oportunidades/
-  │   ├── Facturacion/
-  │   ├── Documentos/
-  │   └── Pagos/
-  ├── services/         # API clients
-  ├── hooks/            # Custom hooks
-  ├── stores/           # Zustand stores
-  └── lib/              # Utilidades
-  ```
-
-- [ ] **Componentes shadcn a instalar**
-  - `button`, `card`, `form`, `input`, `select`, `table`, `dialog`
-  - `dropdown-menu`, `tabs`, `badge`, `alert`, `toast`
-
-#### 3️⃣ **MÓDULOS FRONTEND** (Por Prioridad)
-
-##### 🔴 **Módulo de Facturación** (CRÍTICO)
-- [ ] Formulario de emisión de **Facturas** (01)
-- [ ] Formulario de emisión de **Boletas** (03)
-- [ ] Formulario de emisión de **Notas de Crédito** (07)
+#### 1️⃣ **Inicialización Frontend React + TypeScript**
 - [ ] Formulario de emisión de **Notas de Débito** (08)
 - [ ] Tabla de comprobantes emitidos con filtros
 - [ ] Descargar XML/CDR/PDF de comprobantes
@@ -126,38 +97,117 @@ Ver archivo: [INSTRUCCIONES_WKHTMLTOPDF.md](INSTRUCCIONES_WKHTMLTOPDF.md)
   - Formulario con cliente, vendedor, productos
   - Cambio de estado (lead → ganada)
   - Vista kanban por estados
-  
-- [ ] **Gestión de Documentos**
-  - Upload a MinIO con preview
-  - Galería de documentos por oportunidad
-  
-- [ ] **Registro de Pagos**
-  - Formulario con método de pago
-  - Asociar a oportunidad/comprobante
-  - Timeline de pagos
 
-##### 🔵 **Extras**
-- [ ] **Catálogos SUNAT**
-  - Tablas de consulta de catálogos 01-53
-  
-- [ ] **Sistema de Alertas**
-  - Notificaciones en tiempo real
-  - Marcar como leída
-  - Badge de contador
-  
-- [ ] **Auditoría**
-  - Logs de operaciones
-  - Filtros por usuario/fecha
+- [ ] **Configurar proyecto Vite + React + TypeScript**
+  ```bash
+  cd C:\Plataforma_Op_Com_Facturacion_Elect\frontend
+  npm install
+  npm run dev
+  ```
 
-#### 4️⃣ **INTEGRACIÓN BACKEND-FRONTEND**
+- [ ] **Instalar shadcn/ui y dependencias**
+  ```bash
+  npx shadcn-ui@latest init
+  npm install axios react-router-dom zustand react-hook-form zod
+  ```
+
+- [ ] **Crear estructura de carpetas frontend**
+  ```
+  frontend/src/
+  ├── components/
+  │   ├── ui/              # Componentes shadcn
+  │   ├── layout/          # Header, Sidebar, Layout
+  │   ├── facturacion/     # Componentes de emisión
+  │   └── guias/           # Componentes GRE
+  ├── pages/
+  │   ├── Dashboard.tsx
+  │   ├── Empresas/
+  │   ├── Facturacion/
+  │   │   ├── EmitirFactura.tsx
+  │   │   ├── EmitirBoleta.tsx
+  │   │   └── ListaComprobantes.tsx
+  │   ├── Guias/
+  │   └── Oportunidades/
+  ├── services/
+  │   ├── api.ts           # Cliente axios
+  │   └── nubefact.ts      # Servicios NubeFact
+  ├── hooks/
+  ├── stores/              # Zustand stores
+  └── lib/                 # Utilidades
+  ```
+
+- [ ] **Componentes shadcn a instalar**
+  - `button`, `card`, `form`, `input`, `select`, `table`
+  - `dialog`, `dropdown-menu`, `tabs`, `badge`, `alert`, `toast`
+
+#### 2️⃣ **Módulo de Facturación con NubeFact** (CRÍTICO)
+
+- [ ] **Formulario de emisión de Facturas (01)**
+  - Autocompletar cliente por RUC/DNI
+  - Tabla de items con cálculos automáticos
+  - Validación de totales
+  - Integración con `POST /api/nubefact/comprobantes`
+  
+- [ ] **Formulario de emisión de Boletas (03)**
+  - Similar a facturas pero con validaciones de boleta
+  - Cliente DNI opcional para montos < 700 soles
+  
+- [ ] **Formulario de Notas de Crédito (07)**
+  - Selector de comprobante original
+  - Tipos de nota de crédito (catálogo 09)
+  - Validación de montos
+
+- [ ] **Lista de Comprobantes**
+  - Tabla con filtros (empresa, tipo, serie, fechas)
+  - Badges de estado SUNAT (aceptado/rechazado/pendiente)
+  - Botones de descarga PDF/XML/CDR
+  - Botón de anulación con confirmación
+  - Sincronización manual por comprobante
+
+- [ ] **Vista de Detalle de Comprobante**
+  - Información completa del comprobante
+  - QR code display (desde nubefact_cadena_qr)
+  - Timeline de estados
+  - Botones de reenvío a cliente
+
+#### 3️⃣ **Módulo de Guías de Remisión**
+
+- [ ] **Formulario GRE Remitente (07)**
+  - Datos de traslado (motivo, fecha inicio)
+  - Origen/destino con ubigeo
+  - Transportista (público/privado)
+  - Vehículo y conductor
+  - Items de la guía
+  
+- [ ] **Formulario GRE Transportista (08)**
+  - Similar a remitente con campos específicos
+  
+- [ ] **Lista de Guías**
+  - Estados de aceptación SUNAT
+  - Descarga de PDF/XML
+
+#### 4️⃣ **Dashboard y Estadísticas**
+
+- [ ] **Dashboard principal**
+  - KPIs de facturación del mes
+  - Gráficos de ventas (recharts/visx)
+  - Comprobantes recientes
+  - Alertas de errores SUNAT
+
+- [ ] **Gestión de Empresas**
+  - CRUD completo multiempresa
+  - Selector de empresa activa
+  - Configuración de series por tipo
+
+#### 5️⃣ **Integración Backend-Frontend**
 
 - [ ] **Configurar CORS en Laravel**
   ```bash
   php artisan config:publish cors
   ```
-  Permitir origen: `http://localhost:5173` (Vite)
+  Permitir: `http://localhost:5173`
 
-- [ ] **Crear servicio API client en React**
+- [ ] **Servicio API client en React**
   ```typescript
   // frontend/src/services/api.ts
   const api = axios.create({
@@ -165,68 +215,58 @@ Ver archivo: [INSTRUCCIONES_WKHTMLTOPDF.md](INSTRUCCIONES_WKHTMLTOPDF.md)
   });
   ```
 
-- [ ] **Autenticación** (⚠️ PENDIENTE)
-  - Laravel Sanctum SPA authentication
-  - Middleware de autenticación en rutas protegidas
-  - Login/Logout frontend
-  - Protección de rutas React con react-router
+- [ ] **Store Zustand para NubeFact**
+  - Estado de comprobantes
+  - Estado de sincronización
+  - Empresa seleccionada
 
-#### 5️⃣ **CONFIGURACIÓN DOCKER PARA DESARROLLO COMPLETO**
+#### 6️⃣ **Testing**
 
-- [ ] **Actualizar docker-compose.yml**
-  - Agregar servicio `laravel` (PHP-FPM + Nginx)
-  - Agregar servicio `frontend` (Node para Vite)
-  - Networking entre servicios
-
-- [ ] **Variables de entorno**
-  - Archivo `.env.example` para referencia
-  - Documentar todas las credenciales necesarias
-
-#### 6️⃣ **TESTING Y VALIDACIÓN**
-
-- [ ] **Backend Testing**
-  - PHPUnit tests para endpoints críticos
-  - Tests de integración con SUNAT beta
+- [ ] **Backend**
+  - Tests E2E con NubeFact demo
+  - Emisión real de comprobantes de prueba
   
-- [ ] **Frontend Testing**
+- [ ] **Frontend**
   - Vitest + React Testing Library
-  - Tests de componentes formularios
+  - Tests de formularios de emisión
 
-#### 7️⃣ **DOCUMENTACIÓN**
+#### 7️⃣ **Deployment**
 
-- [ ] **README.md detallado**
-  - Instalación paso a paso
-  - Configuración de credenciales SUNAT
-  - Catálogos oficiales de referencia
-  
-- [ ] **Diagramas de arquitectura**
-  - Diagrama de base de datos (ER)
-  - Flujo de emisión de comprobantes
-  
-- [ ] **API Documentation**
-  - Swagger/OpenAPI para endpoints REST
+- [ ] **Producción**
+  - Cambiar a credenciales NubeFact producción
+  - Optimización Laravel (config/route/view cache)
+  - Build frontend para producción
+  - Configurar cron para `nubefact:sync`
 
 ---
 
-## 🎯 PLAN DE ACCIÓN RECOMENDADO
+## 🔥 PRIORIDAD INMEDIATA (ESTA SEMANA)
 
-### **Opción A: Refactorizar Backend (Seguir Tutorial)**
-1. ✅ Reescribir `FacturacionService.php` usando fachada `Greenter`
-2. ✅ Instalar y configurar WKHTMLtoPDF
-3. ✅ Publicar vistas y personalizar plantillas
-4. ✅ Agregar endpoints para HTML/PDF
-5. 🚀 Proceder con Frontend React
+1. ✅ **Backend NubeFact** (COMPLETADO)
+2. 🔴 **Frontend: Formulario Emisión Factura**
+3. 🔴 **Frontend: Lista Comprobantes con estados**
+4. 🟡 **Integración E2E: Emitir factura real de prueba**
+5. 🟡 **Dashboard básico con estadísticas**
 
-**Ventaja:** Código más limpio y mantenible (según tutorial)  
-**Desventaja:** Requiere refactorizar servicio que ya funciona
+---
 
-### **Opción B: Mantener Implementación Actual (Más Rápido)**
-1. ✅ Backend funcional con greenter base (YA HECHO)
-2. ❌ Agregar generación de PDFs manualmente (sin laravel-greenter)
-3. 🚀 Enfoque en Frontend React inmediatamente
+## 📊 PROGRESO GENERAL
 
-**Ventaja:** No perder tiempo refactorizando  
-**Desventaja:** Código más complejo, sin usar las ventajas de laravel-greenter
+| Módulo                    | Estado | Progreso |
+|---------------------------|--------|----------|
+| Backend Core              | ✅     | 100%     |
+| Integración NubeFact      | ✅     | 100%     |
+| Base de Datos             | ✅     | 100%     |
+| API Endpoints             | ✅     | 100%     |
+| Tests Backend             | ✅     | 100%     |
+| Documentación             | ✅     | 100%     |
+| Frontend Setup            | 🔴     | 0%       |
+| Formularios Emisión       | 🔴     | 0%       |
+| Dashboard                 | 🔴     | 0%       |
+| Autenticación             | 🔴     | 0%       |
+| Testing E2E               | 🔴     | 0%       |
+
+**Progreso Total:** ~60% (Backend completo, Frontend pendiente)
 
 ---
 
