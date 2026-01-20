@@ -164,10 +164,11 @@ export default function EmitirFactura() {
           description: response.sunat_description || response.sunat_soap_error,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error('Error al procesar la factura', {
-        description: error.response?.data?.message || error.message,
+        description: err.response?.data?.message || err.message || 'Error desconocido',
       });
     } finally {
       setLoading(false);

@@ -131,13 +131,20 @@ export const consultarComprobante = async (
   return response.data;
 };
 
+export interface AnularComprobanteResponse {
+  success: boolean;
+  message?: string;
+  errors?: boolean;
+  sunat_description?: string;
+}
+
 // Anular comprobante
 export const anularComprobante = async (
   tipo: number,
   serie: string,
   numero: number,
   data: AnularComprobanteRequest
-): Promise<any> => {
+): Promise<AnularComprobanteResponse> => {
   const response = await api.delete(`/nubefact/comprobantes/${tipo}/${serie}/${numero}`, {
     data,
   });

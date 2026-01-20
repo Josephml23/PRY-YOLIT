@@ -419,4 +419,4 @@ Desarrollado como parte del proyecto de Plataforma Operativa y Comercial con Fac
 
 ---
 
-**⚡ Powered by Laravel + Greenter + React + shadcn/ui**
+**⚡ Powered by Laravel + NubeFact + React + shadcn/ui**

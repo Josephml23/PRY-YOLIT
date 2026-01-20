@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { listarComprobantes, consultarComprobante, anularComprobante } from '@/services/nubefact';
-import { Download, FileText, FileX, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, FileText, Loader2, RefreshCw, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -61,7 +61,7 @@ export default function ListaComprobantes() {
   const [comprobanteAnular, setComprobanteAnular] = useState<Comprobante | null>(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
-  const cargarComprobantes = async () => {
+  const cargarComprobantes = useCallback(async () => {
     try {
       setLoading(true);
       const data = await listarComprobantes({
@@ -69,25 +69,26 @@ export default function ListaComprobantes() {
         estado_sunat: filtroEstado !== 'all' ? filtroEstado : undefined,
       });
       setComprobantes(data.data || data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al cargar comprobantes:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error('Error al cargar comprobantes', {
-        description: error.response?.data?.message || error.message,
+        description: err.response?.data?.message || err.message || 'Error desconocido',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroTipo, filtroEstado]);
 
   useEffect(() => {
     cargarComprobantes();
-  }, [filtroTipo, filtroEstado]);
+  }, [cargarComprobantes]);
 
   const handleConsultar = async (comprobante: Comprobante) => {
     try {
       setConsultando(comprobante.id);
       const tipo = parseInt(comprobante.tipo_doc);
-      const response = await consultarComprobante(tipo, comprobante.serie, comprobante.correlativo);
+      const response = await consultarComprobante(tipo, comprobante.serie, parseInt(comprobante.correlativo));
 
       toast.success('Comprobante consultado', {
         description: `Estado: ${response.sunat_description || 'Aceptado'}`,
@@ -107,10 +108,11 @@ export default function ListaComprobantes() {
             : c
         )
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error('Error al consultar', {
-        description: error.response?.data?.message || error.message,
+        description: err.response?.data?.message || err.message || 'Error desconocido',
       });
     } finally {
       setConsultando(null);
@@ -127,7 +129,7 @@ export default function ListaComprobantes() {
       setAnulando(comprobanteAnular.id);
       const tipo = parseInt(comprobanteAnular.tipo_doc);
       
-      await anularComprobante(tipo, comprobanteAnular.serie, comprobanteAnular.correlativo, {
+      await anularComprobante(tipo, comprobanteAnular.serie, parseInt(comprobanteAnular.correlativo), {
         empresa_id: comprobanteAnular.empresa_id,
         tipo_de_comprobante: tipo,
         serie: comprobanteAnular.serie,
@@ -140,10 +142,11 @@ export default function ListaComprobantes() {
       setComprobanteAnular(null);
       setMotivoAnulacion('');
       cargarComprobantes();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error('Error al anular', {
-        description: error.response?.data?.message || error.message,
+        description: err.response?.data?.message || err.message || 'Error desconocido',
       });
     } finally {
       setAnulando(null);
@@ -254,7 +257,7 @@ export default function ListaComprobantes() {
                       </TableCell>
                       <TableCell>{`${comprobante.serie}-${comprobante.correlativo}`}</TableCell>
                       <TableCell>{new Date(comprobante.fecha_emision).toLocaleDateString()}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
+                      <TableCell className="max-w-50 truncate">
                         {comprobante.cliente_razon_social}
                       </TableCell>
                       <TableCell>{comprobante.cliente_num_doc}</TableCell>
