@@ -245,12 +245,21 @@ class NubefactClient
     /**
      * Helper: Mapear tipo de comprobante interno a código NubeFact
      * 
-     * @param string $tipo 'FACTURA', 'BOLETA', 'NC', 'ND'
+     * @param string $tipo 'FACTURA', 'BOLETA', 'NC', 'ND' O códigos SUNAT ('01', '03', '07', '08')
      * @return int Código para NubeFact (1, 2, 3, 4)
      */
     public static function mapearTipoComprobante(string $tipo): int
     {
-        $mapa = [
+        // Mapeo desde códigos SUNAT
+        $mapaSunat = [
+            '01' => 1,  // Factura
+            '03' => 2,  // Boleta
+            '07' => 3,  // Nota de Crédito
+            '08' => 4,  // Nota de Débito
+        ];
+
+        // Mapeo desde nombres
+        $mapaNombres = [
             'FACTURA' => 1,
             'BOLETA' => 2,
             'NC' => 3,
@@ -259,7 +268,13 @@ class NubefactClient
             'GRE_TRANSPORTISTA' => 8,
         ];
 
-        return $mapa[strtoupper($tipo)] ?? 1;
+        // Intentar primero con código SUNAT
+        if (isset($mapaSunat[$tipo])) {
+            return $mapaSunat[$tipo];
+        }
+
+        // Si no, intentar con nombre
+        return $mapaNombres[strtoupper($tipo)] ?? 1;
     }
 
     /**
