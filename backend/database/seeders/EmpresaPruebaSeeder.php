@@ -9,18 +9,19 @@ class EmpresaPruebaSeeder extends Seeder
 {
     public function run()
     {
-        // Crear empresa de prueba con credenciales de modo beta SUNAT
+        // Crear empresa de prueba compatible con NubeFact
+        // El RUC key está configurado en .env (NUBEFACT_RUC)
         Empresa::create([
             'ruc' => '20000000001',
-            'razon_social' => 'GREEN SAC',
-            'nombre_comercial' => 'GREEN',
+            'razon_social' => 'EMPRESA DE PRUEBA NUBEFACT SAC',
+            'nombre_comercial' => 'NUBEFACT TEST',
             'ubigeo' => '150101',
             'departamento' => 'LIMA',
             'provincia' => 'LIMA',
             'distrito' => 'LIMA',
-            'direccion' => 'Av. Villa Nueva 221',
-            'sol_user' => 'MODDATOS',
-            'sol_password' => 'MODDATOS',
+            'direccion' => 'Av. Prueba 123, Oficina 456',
+            'sol_user' => null, // No usa SOL, usa NubeFact API
+            'sol_password' => null,
             'modo' => 'beta', // MODO BETA
             'activo' => true,
         ]);

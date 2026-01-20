@@ -14,7 +14,7 @@ class NubefactIntegrationTest extends TestCase
      *
      * @return void
      */
-    public function test_credenciales_nubefact_validas()
+    public function test_credenciales_nubefact_validas(): void
     {
         $this->markTestSkipped('Test manual - ejecutar solo cuando se necesite validar credenciales');
         
@@ -30,7 +30,7 @@ class NubefactIntegrationTest extends TestCase
      * 
      * @return void
      */
-    public function test_consultar_comprobante_prueba()
+    public function test_consultar_comprobante_prueba(): void
     {
         $this->markTestSkipped('Test manual - requiere comprobante real en NubeFact');
         
@@ -52,7 +52,7 @@ class NubefactIntegrationTest extends TestCase
      * 
      * @return void
      */
-    public function test_mapear_tipo_comprobante()
+    public function test_mapear_tipo_comprobante(): void
     {
         // Desde nombres
         $this->assertEquals(1, NubefactClient::mapearTipoComprobante('FACTURA'));
@@ -74,7 +74,7 @@ class NubefactIntegrationTest extends TestCase
      * 
      * @return void
      */
-    public function test_mapear_tipo_documento()
+    public function test_mapear_tipo_documento(): void
     {
         $this->assertEquals('6', NubefactClient::mapearTipoDocumento('RUC'));
         $this->assertEquals('1', NubefactClient::mapearTipoDocumento('DNI'));
