@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\CatalogoSunatController;
 use App\Http\Controllers\Api\AlertaController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\NubefactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +45,18 @@ Route::prefix('facturacion')->group(function () {
     // Estadísticas y reportes
     Route::get('/estadisticas', [FacturacionController::class, 'estadisticas']);
     Route::get('/reporte/ventas', [FacturacionController::class, 'reporteVentas']);
+});
+
+// Rutas de emisión y sincronización con NubeFact
+Route::prefix('nubefact')->middleware('api')->group(function () {
+    // Comprobantes
+    Route::post('/comprobantes', [NubefactController::class, 'emitirComprobante']);
+    Route::get('/comprobantes/{tipo}/{serie}/{numero}', [NubefactController::class, 'consultarComprobante']);
+    Route::delete('/comprobantes/{tipo}/{serie}/{numero}', [NubefactController::class, 'anularComprobante']);
+    
+    // Guías de remisión
+    Route::post('/guias', [NubefactController::class, 'emitirGuia']);
+    Route::get('/guias/{tipo}/{serie}/{numero}', [NubefactController::class, 'consultarGuia']);
 });
 
 // Rutas adicionales para futuras implementaciones
