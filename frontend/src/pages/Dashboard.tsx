@@ -99,6 +99,27 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
+      {/* Header del Dashboard */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Resumen general de facturación electrónica
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-muted-foreground">
+            Actualizado: {new Date().toLocaleDateString('es-PE', { 
+              day: '2-digit', 
+              month: 'short', 
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* Tarjetas de estadísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
         <Card className="hover:shadow-lg transition-shadow">

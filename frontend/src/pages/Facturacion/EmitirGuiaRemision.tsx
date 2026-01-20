@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -111,8 +111,24 @@ const guiaSchema = z.object({
 type GuiaFormData = z.infer<typeof guiaSchema>;
 
 export default function EmitirGuiaRemision() {
-  const [empresas] = useState<Empresa[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const cargarEmpresas = async () => {
+      try {
+        const response = await api.get('/v1/empresas');
+        const empresasData = Array.isArray(response.data)
+          ? response.data
+          : (response.data.data || []);
+        setEmpresas(empresasData);
+      } catch (error) {
+        console.error('Error al cargar empresas:', error);
+        toast.error('Error al cargar empresas');
+      }
+    };
+    cargarEmpresas();
+  }, []);
 
   const form = useForm<GuiaFormData>({
     resolver: zodResolver(guiaSchema),
