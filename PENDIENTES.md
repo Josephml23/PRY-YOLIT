@@ -2,7 +2,7 @@
 
 **Fecha de actualización:** 20 de enero de 2026  
 **Estado Backend:** ✅ 100% Completado con **INTEGRACIÓN NUBEFACT**  
-**Estado Frontend:** 🔴 0% - Pendiente (próxima fase)
+**Estado Frontend:** � 25% - Emisión de facturas implementada
 
 ---
 
