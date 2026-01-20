@@ -136,6 +136,7 @@ export default function EmitirBoleta() {
 
       const payload: EmitirComprobanteRequest = {
         ...data,
+        cliente_numero_de_documento: data.cliente_numero_de_documento || '',
         operacion: 'generar_comprobante',
         tipo_de_comprobante: TIPOS_COMPROBANTE.BOLETA,
         sunat_transaction: 1,
