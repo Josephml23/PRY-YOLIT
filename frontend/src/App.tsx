@@ -10,10 +10,8 @@ import FacturacionNubefact from '@/pages/FacturacionNubefact';
 import Oportunidades from '@/pages/Oportunidades';
 import DetalleOportunidad from '@/pages/DetalleOportunidad';
 import Configuracion from '@/pages/Configuracion';
-
-// Páginas temporales
-const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
-const PagosPage = () => <div>Pagos - En desarrollo</div>;
+import DocumentosPage from '@/pages/Documentos';
+import PagosPage from '@/pages/Pagos';
 
 function App() {
   return (

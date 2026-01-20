@@ -409,7 +409,7 @@ export default function Configuracion() {
                   <TableHead className="text-right">Correlativo</TableHead>
                   <TableHead>Por defecto</TableHead>
                   <TableHead>Activa</TableHead>
-                  <TableHead className="w-[120px] text-right">Acciones</TableHead>
+                  <TableHead className="w-30 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

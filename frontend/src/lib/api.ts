@@ -166,11 +166,61 @@ export interface Oportunidad {
 export interface Documento {
   id: number;
   oportunidad_id: number | null;
+  usuario_id?: number | null;
   tipo: string;
+  nombre_archivo: string;
   storage_path: string;
+  mime_type: string;
+  size: number;
   metadata?: Record<string, unknown> | null;
+  descripcion?: string | null;
+  version?: number | null;
+  documento_padre_id?: number | null;
   created_at: string;
   updated_at: string;
+  oportunidad?: {
+    id: number;
+    cliente_nombre?: string | null;
+    descripcion?: string | null;
+  } | null;
+  usuario?: {
+    id: number;
+    name: string;
+  } | null;
+}
+
+export interface Pago {
+  id: number;
+  oportunidad_id: number | null;
+  comprobante_id: number | null;
+  usuario_id: number | null;
+  fecha_pago: string;
+  monto: number;
+  moneda: string;
+  medio_pago: string;
+  nro_operacion?: string | null;
+  banco?: string | null;
+  comprobante_path?: string | null;
+  estado?: string | null;
+  observaciones?: string | null;
+  created_at: string;
+  updated_at: string;
+  oportunidad?: {
+    id: number;
+    cliente_nombre?: string | null;
+    descripcion?: string | null;
+  } | null;
+  comprobante?: {
+    id: number;
+    tipo_doc: string;
+    serie: string;
+    numero: string;
+    mto_imp_venta?: number;
+  } | null;
+  usuario?: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 export interface Serie {
@@ -260,6 +310,24 @@ export const api = {
       }),
     eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/documentos/${id}`),
     descargar: (id: number) => apiClient.get(`/v1/documentos/${id}/descargar`, { responseType: 'blob' }),
+  },
+
+  // Pagos
+  pagos: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<PaginatedResponse<Pago>>('/v1/pagos', { params }),
+    obtener: (id: number) => apiClient.get<ApiResponse<Pago>>(`/v1/pagos/${id}`),
+    crear: (data: Partial<Pago>) => apiClient.post<ApiResponse<Pago>>('/v1/pagos', data),
+    actualizar: (id: number, data: Partial<Pago>) =>
+      apiClient.put<ApiResponse<Pago>>(`/v1/pagos/${id}`, data),
+    eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/pagos/${id}`),
+    descargarComprobante: (id: number) =>
+      apiClient.get(`/v1/pagos/${id}/comprobante`, { responseType: 'blob' }),
+    estadisticas: (params?: Record<string, unknown>) =>
+      apiClient.get<ApiResponse<{ total_pagos: number; monto_total: number; por_medio_pago: Record<string, { cantidad: number; total: number }> }>>(
+        '/v1/pagos/estadisticas/general',
+        { params },
+      ),
   },
 
   // Series de facturación
