@@ -1,12 +1,168 @@
-# 📋 PENDIENTES - Plataforma de Facturación Electrónica
+# 📋 PENDIENTES - Plataforma Operativa y Comercial con Facturación Electrónica
 
 **Fecha de actualización:** 20 de enero de 2026  
-**Estado Backend:** ✅ 100% Completado con **INTEGRACIÓN NUBEFACT**  
-**Estado Frontend:** 🟢 70% - Guías de Remisión implementadas
+**Estado Backend:** ✅ 100% Completado  
+**Estado Frontend:** 🟢 70% - Facturación completada  
+**MVP Operativo:** 🟡 30% - Pendiente gestión de documentos, pagos y SLA
 
 ---
 
-## 🎯 QUÉ SIGUE - PRÓXIMAS IMPLEMENTACIONES
+## 🎯 ESTADO DEL MVP - ANÁLISIS COMPLETO
+
+### ✅ MÓDULO 1: FACTURACIÓN ELECTRÓNICA (100%)
+**Backend:**
+- ✅ Integración NubeFact completa
+- ✅ Modelos: Comprobante, ComprobanteItem, GuiaRemision
+- ✅ Controllers: NubefactController (emitir, consultar, anular)
+- ✅ Servicios: NubefactClient, NubefactMapper
+- ✅ Rutas API: `/api/nubefact/*`
+
+**Frontend:**
+- ✅ EmitirFactura.tsx (695 líneas)
+- ✅ EmitirBoleta.tsx (675 líneas)
+- ✅ EmitirNotaCredito.tsx (815 líneas)
+- ✅ EmitirNotaDebito.tsx (747 líneas)
+- ✅ EmitirGuiaRemision.tsx (870 líneas)
+- ✅ ListaComprobantes.tsx
+- ✅ Validaciones con zod + react-hook-form
+
+---
+
+### ✅ MÓDULO 2: EMPRESAS (100%)
+**Backend:**
+- ✅ Modelo Empresa
+- ✅ EmpresaController (CRUD completo)
+- ✅ Rutas `/api/v1/empresas`
+
+**Frontend:**
+- ✅ Empresas.tsx (gestión completa)
+- ✅ Formularios validados
+- ✅ Tabla con filtros
+
+---
+
+### 🟡 MÓDULO 3: OPORTUNIDADES (Backend 100%, Frontend 50%)
+**Backend:**
+- ✅ Modelo Oportunidad
+- ✅ OportunidadController
+- ✅ Relaciones con empresas, usuarios, documentos
+- ✅ Rutas `/api/v1/oportunidades`
+
+**Frontend:**
+- ✅ Oportunidades.tsx (existe pero necesita mejoras)
+- ❌ Integración completa con documentos
+- ❌ Gestión de estados (workflow)
+- ❌ Asignación de responsables
+
+---
+
+### ❌ MÓDULO 4: DOCUMENTOS Y ADJUNTOS (0%)
+**Backend:** ✅ Completo
+- Modelo Documento
+- Storage con MinIO
+- Versionamiento
+
+**Frontend:** ❌ Pendiente
+- [ ] Componente de carga de archivos
+- [ ] Visualizador de documentos por oportunidad
+- [ ] Gestión de versiones
+- [ ] Descarga de documentos
+
+---
+
+### ❌ MÓDULO 5: PAGOS (0%)
+**Backend:** ✅ Completo
+- Modelo Pago
+- PagoController
+- Relaciones con oportunidades y comprobantes
+
+**Frontend:** ❌ Pendiente
+- [ ] Formulario de registro de pagos
+- [ ] Lista de pagos por oportunidad
+- [ ] Conciliación con comprobantes
+- [ ] Reportes de pagos
+
+---
+
+### ❌ MÓDULO 6: SLA Y ALERTAS (0%)
+**Backend:** ✅ Completo
+- Modelo SlaConfiguracion
+- Modelo Alerta
+- Cálculo automático de vencimientos
+
+**Frontend:** ❌ Pendiente
+- [ ] Dashboard de alertas
+- [ ] Configuración de SLA
+- [ ] Notificaciones en tiempo real
+- [ ] Indicadores visuales de vencimiento
+
+---
+
+### ❌ MÓDULO 7: DASHBOARD TV (0%)
+- [ ] Vista optimizada para pantallas grandes
+- [ ] Auto-refresh
+- [ ] KPIs en tiempo real
+- [ ] Modo kiosko (fullscreen)
+
+---
+
+## 🚀 PLAN DE IMPLEMENTACIÓN INMEDIATA
+
+### 📋 **SPRINT 1: COMPLETAR MVP OPERATIVO** (Esta semana)
+
+#### Día 1-2: Módulo de Documentos
+1. ✅ Componente de carga de archivos (drag & drop)
+2. ✅ Lista de documentos por oportunidad
+3. ✅ Descarga de documentos
+4. ✅ Integración con MinIO
+
+#### Día 3: Módulo de Pagos
+1. ✅ Formulario de registro de pagos
+2. ✅ Lista de pagos
+3. ✅ Asociación con oportunidades
+
+#### Día 4: SLA Básico
+1. ✅ Dashboard de alertas
+2. ✅ Indicadores visuales de vencimiento
+3. ✅ Lista de pendientes
+
+#### Día 5: Dashboard TV
+1. ✅ Vista básica con KPIs
+2. ✅ Auto-refresh
+3. ✅ Responsive para pantallas grandes
+
+---
+
+## 📊 PRIORIDADES TÉCNICAS INMEDIATAS
+
+### 🔴 ALTA PRIORIDAD (HOY)
+1. **Gestión de Documentos** - Sin esto no hay trazabilidad
+   - Upload de archivos
+   - Visualización por oportunidad
+   - Descarga
+
+2. **Registro de Pagos** - Crítico para operaciones
+   - Formulario básico
+   - Asociación con oportunidades
+
+### 🟡 MEDIA PRIORIDAD (Esta semana)
+3. **SLA y Alertas**
+   - Dashboard de vencimientos
+   - Indicadores visuales
+
+4. **Dashboard TV**
+   - Vista básica funcional
+
+### 🟢 BAJA PRIORIDAD (Próxima semana)
+5. Reportes avanzados
+6. Exportación Excel/PDF
+7. Gestión de Series auto-numéricas
+
+---
+
+## 🎯 QUÉ SIGUE AHORA
+
+Voy a implementar en este orden:
 
 ### 📊 **PRIORIDAD ALTA** (Semana actual)
 

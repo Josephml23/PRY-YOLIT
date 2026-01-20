@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ const ESTADOS: { value: EstadoOportunidad; label: string }[] = [
 
 export default function Oportunidades() {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loadingEmpresas, setLoadingEmpresas] = useState(true);
@@ -398,6 +400,9 @@ export default function Oportunidades() {
                       </td>
                       <td className="py-2 pr-0 text-right">
                         <div className="inline-flex gap-2">
+                          <Button size="sm" variant="default" onClick={() => navigate(`/oportunidades/${o.id}`)}>
+                            Ver detalle
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => abrirEditar(o)}>
                             Editar
                           </Button>

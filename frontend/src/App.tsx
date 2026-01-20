@@ -7,6 +7,7 @@ import Empresas from '@/pages/Empresas';
 import Facturacion from '@/pages/Facturacion';
 import FacturacionNubefact from '@/pages/FacturacionNubefact';
 import Oportunidades from '@/pages/Oportunidades';
+import DetalleOportunidad from '@/pages/DetalleOportunidad';
 
 // Páginas temporales
 const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
@@ -21,6 +22,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="empresas" element={<Empresas />} />
             <Route path="oportunidades" element={<Oportunidades />} />
+            <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
             <Route path="facturacion" element={<Facturacion />} />
             <Route path="facturacion-nubefact" element={<FacturacionNubefact />} />
             <Route path="documentos" element={<DocumentosPage />} />
