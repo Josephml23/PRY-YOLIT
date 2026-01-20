@@ -9,6 +9,7 @@ import Facturacion from '@/pages/Facturacion';
 import FacturacionNubefact from '@/pages/FacturacionNubefact';
 import Oportunidades from '@/pages/Oportunidades';
 import DetalleOportunidad from '@/pages/DetalleOportunidad';
+import Configuracion from '@/pages/Configuracion';
 
 // Páginas temporales
 const DocumentosPage = () => <div>Documentos - En desarrollo</div>;
@@ -29,6 +30,7 @@ function App() {
             <Route path="facturacion-nubefact" element={<FacturacionNubefact />} />
             <Route path="documentos" element={<DocumentosPage />} />
             <Route path="pagos" element={<PagosPage />} />
+            <Route path="configuracion" element={<Configuracion />} />
           </Route>
         </Routes>
         <Toaster />

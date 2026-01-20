@@ -173,6 +173,32 @@ export interface Documento {
   updated_at: string;
 }
 
+export interface Serie {
+  id: number;
+  empresa_id: number;
+  tipo_comprobante: string; // 01, 03, 07, 08, etc.
+  serie: string;
+  correlativo_actual: number;
+  activo: boolean;
+  por_defecto: boolean;
+  empresa?: {
+    id: number;
+    ruc: string;
+    razon_social: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SerieFormData {
+  empresa_id: number;
+  tipo_comprobante: string;
+  serie: string;
+  correlativo_actual: number;
+  activo: boolean;
+  por_defecto: boolean;
+}
+
 // Servicios de API
 export const api = {
   // Empresas
@@ -234,5 +260,16 @@ export const api = {
       }),
     eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/documentos/${id}`),
     descargar: (id: number) => apiClient.get(`/v1/documentos/${id}/descargar`, { responseType: 'blob' }),
+  },
+
+  // Series de facturación
+  series: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<ApiResponse<Serie[]>>('/v1/series', { params }),
+    crear: (data: Partial<SerieFormData>) =>
+      apiClient.post<ApiResponse<Serie>>('/v1/series', data),
+    actualizar: (id: number, data: Partial<SerieFormData>) =>
+      apiClient.put<ApiResponse<Serie>>(`/v1/series/${id}`, data),
+    eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/series/${id}`),
   },
 };

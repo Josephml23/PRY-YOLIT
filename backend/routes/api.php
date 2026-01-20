@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CatalogoSunatController;
 use App\Http\Controllers\Api\AlertaController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NubefactController;
+use App\Http\Controllers\Api\SerieController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,4 +117,10 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('dashboard/tv', [DashboardController::class, 'tv']);
     Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
+
+    // Series de facturación
+    Route::get('/series', [SerieController::class, 'index']);
+    Route::post('/series', [SerieController::class, 'store']);
+    Route::put('/series/{id}', [SerieController::class, 'update']);
+    Route::delete('/series/{id}', [SerieController::class, 'destroy']);
 });
