@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { emitirComprobante, consultarComprobante, TIPOS_DOCUMENTO_SELECT, TIPOS_IGV_SELECT, MONEDAS_SELECT, UNIDADES_MEDIDA_SELECT } from '@/services/nubefact';
+import { api, type Serie } from '@/lib/api';
 
 // Catálogo 10 - Tipos de Nota de Débito
 const TIPOS_NOTA_DEBITO = [
@@ -68,6 +69,8 @@ export default function EmitirNotaDebito() {
   const [isLoading, setIsLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [buscandoDocumento, setBuscandoDocumento] = useState(false);
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [loadingSeries, setLoadingSeries] = useState(false);
 
   const { register, control, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<NotaDebitoFormData>({
     resolver: zodResolver(notaDebitoSchema),
@@ -99,6 +102,31 @@ export default function EmitirNotaDebito() {
   const watchItems = watch('items');
   const watchMoneda = watch('moneda');
   const watchTipoDocModifica = watch('documento_que_se_modifica_tipo');
+
+  useEffect(() => {
+    const cargarSeries = async () => {
+      try {
+        setLoadingSeries(true);
+        const empresaId = 1; // TODO: obtener de contexto/selector
+        const res = await api.series.listar({ empresa_id: empresaId, tipo_comprobante: '08' });
+        const lista = res.data.data;
+        setSeries(lista);
+
+        if (lista.length > 0) {
+          const serieDefecto = lista.find((s) => s.por_defecto) ?? lista[0];
+          setValue('serie', serieDefecto.serie);
+          setValue('numero', String((serieDefecto.correlativo_actual ?? 0) + 1));
+        }
+      } catch {
+        // se mantiene modo manual
+      } finally {
+        setLoadingSeries(false);
+      }
+    };
+
+    void cargarSeries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Buscar documento original
   const buscarDocumentoOriginal = async () => {
@@ -400,11 +428,36 @@ export default function EmitirNotaDebito() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="serie">Serie ND</Label>
-                <Input
-                  id="serie"
-                  {...register('serie')}
-                  placeholder="FD01"
-                />
+                {series.length > 0 ? (
+                  <Select
+                    value={watch('serie')}
+                    onValueChange={(value) => {
+                      setValue('serie', value);
+                      const encontrada = series.find((s) => s.serie === value);
+                      if (encontrada) {
+                        setValue('numero', String((encontrada.correlativo_actual ?? 0) + 1));
+                      }
+                    }}
+                    disabled={loadingSeries}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingSeries ? 'Cargando series...' : 'Seleccione serie'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {series.map((s) => (
+                        <SelectItem key={s.id} value={s.serie}>
+                          {s.serie}{s.por_defecto ? ' (por defecto)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="serie"
+                    {...register('serie')}
+                    placeholder="FD01"
+                  />
+                )}
                 {errors.serie && <p className="text-sm text-red-500">{errors.serie.message}</p>}
               </div>
 

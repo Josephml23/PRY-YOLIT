@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Truck, Plus, Trash2, Send, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/services/api';
+import { api as apiV1, type Serie } from '@/lib/api';
 
 interface Empresa {
   id: number;
@@ -113,6 +114,8 @@ type GuiaFormData = z.infer<typeof guiaSchema>;
 export default function EmitirGuiaRemision() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [loadingSeries, setLoadingSeries] = useState(false);
 
   useEffect(() => {
     const cargarEmpresas = async () => {
@@ -128,6 +131,31 @@ export default function EmitirGuiaRemision() {
       }
     };
     cargarEmpresas();
+  }, []);
+
+  useEffect(() => {
+    const cargarSeries = async () => {
+      try {
+        setLoadingSeries(true);
+        const empresaId = form.getValues('empresa_id') || 1;
+        const res = await apiV1.series.listar({ empresa_id: empresaId, tipo_comprobante: '09' });
+        const lista = res.data.data;
+        setSeries(lista);
+
+        if (lista.length > 0) {
+          const serieDefecto = lista.find((s) => s.por_defecto) ?? lista[0];
+          form.setValue('serie', serieDefecto.serie);
+          form.setValue('numero', (serieDefecto.correlativo_actual ?? 0) + 1);
+        }
+      } catch {
+        // se mantiene modo manual
+      } finally {
+        setLoadingSeries(false);
+      }
+    };
+
+    void cargarSeries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const form = useForm<GuiaFormData>({
@@ -249,7 +277,32 @@ export default function EmitirGuiaRemision() {
                   <FormItem>
                     <FormLabel>Serie</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="T001" maxLength={4} />
+                      {series.length > 0 ? (
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            const encontrada = series.find((s) => s.serie === value);
+                            if (encontrada) {
+                              form.setValue('numero', (encontrada.correlativo_actual ?? 0) + 1);
+                            }
+                          }}
+                          disabled={loadingSeries}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={loadingSeries ? 'Cargando series...' : 'Seleccione serie'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {series.map((s) => (
+                              <SelectItem key={s.id} value={s.serie}>
+                                {s.serie}{s.por_defecto ? ' (por defecto)' : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input {...field} placeholder="T001" maxLength={4} />
+                      )}
                     </FormControl>
                     <FormMessage />
                   </FormItem>
