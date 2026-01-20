@@ -7,6 +7,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
+/**
+ * @method void markTestSkipped(string $message = '')
+ * @method void expectNotToPerformAssertions()
+ * @method void assertIsArray($actual, string $message = '')
+ * @method void assertArrayHasKey($key, $array, string $message = '')
+ * @method void assertEquals($expected, $actual, string $message = '')
+ */
 class NubefactIntegrationTest extends TestCase
 {
     /**
