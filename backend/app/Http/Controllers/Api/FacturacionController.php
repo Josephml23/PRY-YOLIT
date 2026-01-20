@@ -225,20 +225,10 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        try {
-            $data = $request->all();
-
-            $resultado = $this->facturacionService->enviarResumen($data);
-
-            return response()->json($resultado, 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'La funcionalidad de resumen diario debe realizarse mediante NubeFact. Use el endpoint /api/nubefact/comprobantes para emisión.',
+        ], 501);
     }
 
     /**
@@ -255,20 +245,10 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        try {
-            $data = $request->all();
-
-            $resultado = $this->facturacionService->comunicarBaja($data);
-
-            return response()->json($resultado, 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'La anulación de comprobantes debe realizarse mediante NubeFact. Use DELETE /api/nubefact/comprobantes/{tipo}/{serie}/{numero}',
+        ], 501);
     }
 
     /**
@@ -285,20 +265,10 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        try {
-            $data = $request->all();
-
-            $resultado = $this->facturacionService->emitirRetencion($data);
-
-            return response()->json($resultado, 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'La emisión de retenciones debe realizarse mediante NubeFact API. Funcionalidad en desarrollo.',
+        ], 501);
     }
 
     /**
@@ -315,20 +285,10 @@ class FacturacionController extends Controller
             ], 422);
         }
 
-        try {
-            $data = $request->all();
-
-            $resultado = $this->facturacionService->emitirPercepcion($data);
-
-            return response()->json($resultado, 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'La emisión de percepciones debe realizarse mediante NubeFact API. Funcionalidad en desarrollo.',
+        ], 501);
     }
 
     /**
