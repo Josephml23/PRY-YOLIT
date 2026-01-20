@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, FileText, DollarSign, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import GestionDocumentos from '@/components/GestionDocumentos';
+import GestionPagos from '@/components/GestionPagos';
 import api from '@/services/api';
 
 interface Oportunidad {
@@ -107,6 +108,17 @@ export default function DetalleOportunidad() {
       })
       .catch((error) => {
         console.error('Error al recargar documentos:', error);
+      });
+  };
+
+  const handlePagosChange = () => {
+    if (!id) return;
+    api.get(`/v1/oportunidades/${id}/pagos`)
+      .then((res) => {
+        setPagos(Array.isArray(res.data) ? res.data : res.data.data || []);
+      })
+      .catch((error) => {
+        console.error('Error al recargar pagos:', error);
       });
   };
 
@@ -318,21 +330,11 @@ export default function DetalleOportunidad() {
         </TabsContent>
 
         <TabsContent value="pagos">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8 text-muted-foreground">
-                <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p className="mb-4">Módulo de pagos en desarrollo</p>
-                <div className="text-sm">
-                  {pagos.length > 0 ? (
-                    <div>Se encontraron {pagos.length} pago(s) registrado(s)</div>
-                  ) : (
-                    <div>No hay pagos registrados</div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <GestionPagos
+            oportunidadId={oportunidad.id}
+            pagos={pagos}
+            onPagosChange={handlePagosChange}
+          />
         </TabsContent>
 
         <TabsContent value="historial">
