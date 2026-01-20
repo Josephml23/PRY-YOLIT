@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { emitirComprobante, TIPOS_COMPROBANTE, TIPOS_DOCUMENTO, TIPOS_IGV, MONEDAS, UNIDADES_MEDIDA, type EmitirComprobanteRequest } from '@/services/nubefact';
+import { api, type Serie } from '@/lib/api';
 import { Plus, Trash2, Receipt, Loader2 } from 'lucide-react';
 
 const itemSchema = z.object({
@@ -50,6 +51,8 @@ type BoletaFormValues = z.infer<typeof boletaSchema>;
 export default function EmitirBoleta() {
   const [loading, setLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [loadingSeries, setLoadingSeries] = useState(false);
 
   const form = useForm<BoletaFormValues>({
     resolver: zodResolver(boletaSchema),
@@ -84,6 +87,31 @@ export default function EmitirBoleta() {
     control: form.control,
     name: 'items',
   });
+
+  useEffect(() => {
+    const cargarSeries = async () => {
+      try {
+        setLoadingSeries(true);
+        const empresaId = form.getValues('empresa_id') || 1;
+        const res = await api.series.listar({ empresa_id: empresaId, tipo_comprobante: '03' });
+        const lista = res.data.data;
+        setSeries(lista);
+
+        if (lista.length > 0) {
+          const serieDefecto = lista.find((s) => s.por_defecto) ?? lista[0];
+          form.setValue('serie', serieDefecto.serie);
+          form.setValue('numero', (serieDefecto.correlativo_actual ?? 0) + 1);
+        }
+      } catch {
+        // Mantener modo manual si falla
+      } finally {
+        setLoadingSeries(false);
+      }
+    };
+
+    void cargarSeries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const calcularItem = (index: number) => {
     const item = form.getValues(`items.${index}`);
@@ -206,11 +234,36 @@ export default function EmitirBoleta() {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Serie</label>
-                <Input
-                  {...form.register('serie')}
-                  placeholder="B001"
-                  maxLength={4}
-                />
+                {series.length > 0 ? (
+                  <Select
+                    value={form.watch('serie')}
+                    onValueChange={(value) => {
+                      form.setValue('serie', value);
+                      const encontrada = series.find((s) => s.serie === value);
+                      if (encontrada) {
+                        form.setValue('numero', (encontrada.correlativo_actual ?? 0) + 1);
+                      }
+                    }}
+                    disabled={loadingSeries}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingSeries ? 'Cargando series...' : 'Seleccione serie'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {series.map((s) => (
+                        <SelectItem key={s.id} value={s.serie}>
+                          {s.serie}{s.por_defecto ? ' (por defecto)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    {...form.register('serie')}
+                    placeholder="B001"
+                    maxLength={4}
+                  />
+                )}
                 {form.formState.errors.serie && (
                   <p className="text-sm text-destructive">{form.formState.errors.serie.message}</p>
                 )}
