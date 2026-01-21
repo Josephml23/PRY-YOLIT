@@ -64,6 +64,8 @@ export default function Dashboard() {
     tasaAceptacion: 0,
   });
 
+  const [totalClientesRegistrados, setTotalClientesRegistrados] = useState(0);
+
   const [slaResumen, setSlaResumen] = useState<SlaResumen>({
     total: 0,
     en_plazo: 0,
@@ -149,6 +151,8 @@ export default function Dashboard() {
 
       const topClientes = Array.isArray(clientes.top_clientes) ? clientes.top_clientes : [];
       setClientesTop(topClientes);
+
+      setTotalClientesRegistrados(clientes.total_clientes ?? 0);
 
       const ventasDataRaw = ventasMesRes.data?.data || ventasMesRes.data || [];
       const ventasNormalizadas: VentaMes[] = Array.isArray(ventasDataRaw)
@@ -264,7 +268,7 @@ export default function Dashboard() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{empresas.length}</div>
+            <div className="text-2xl font-bold">{totalClientesRegistrados}</div>
             <p className="text-xs text-muted-foreground">
               Registros en el sistema
             </p>

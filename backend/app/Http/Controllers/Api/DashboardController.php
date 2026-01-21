@@ -140,6 +140,7 @@ class DashboardController extends Controller
             $query->where('empresa_id', $empresaId);
         }
 
+        // Top clientes según facturación real (a partir de comprobantes)
         $clientes = $query
             ->selectRaw('cliente_tipo_doc, cliente_num_doc, cliente_razon_social, COUNT(*) as cantidad, SUM(mto_imp_venta) as total')
             ->groupBy('cliente_tipo_doc', 'cliente_num_doc', 'cliente_razon_social')
@@ -147,8 +148,22 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // Total de clientes/proveedores registrados en la tabla entidades
+        $entidadesQuery = Entidad::query();
+
+        if ($empresaId) {
+            $entidadesQuery->where('empresa_id', $empresaId);
+        }
+
+        $totalRegistros = $entidadesQuery
+            ->where(function ($q) {
+                $q->where('es_cliente', true)
+                  ->orWhere('es_proveedor', true);
+            })
+            ->count();
+
         return [
-            'total_clientes' => $clientes->count(),
+            'total_clientes' => $totalRegistros,
             'top_clientes' => $clientes,
         ];
     }
