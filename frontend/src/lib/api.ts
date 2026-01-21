@@ -60,6 +60,26 @@ export interface EmpresaFormData {
   activo: boolean;
 }
 
+export interface ComprobanteItem {
+  id: number;
+  comprobante_id: number;
+  item: number;
+  codigo_producto: string;
+  descripcion: string;
+  unidad: string;
+  cantidad: number;
+  mto_valor_unitario: number;
+  mto_precio_unitario: number;
+  mto_valor_venta: number;
+  mto_base_igv: number;
+  porcentaje_igv: number;
+  igv: number;
+  tip_afe_igv: string;
+  isc: number;
+  total_impuestos: number;
+  descuento: number;
+}
+
 export interface ComprobanteEmitido {
   id: number;
   empresa_id: number;
@@ -82,6 +102,8 @@ export interface ComprobanteEmitido {
   pagado?: boolean; // Si está pagado
   anulado?: boolean; // Si está anulado
   enviado_cliente?: boolean; // Si fue enviado al cliente
+  empresa?: Empresa;
+  items?: ComprobanteItem[];
 }
 
 export interface ClientePayload {

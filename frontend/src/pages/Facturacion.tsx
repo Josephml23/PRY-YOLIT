@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ export default function Facturacion() {
 
   const [comprobantes, setComprobantes] = useState<ComprobanteEmitido[]>([]);
   const [loadingComprobantes, setLoadingComprobantes] = useState(true);
+  const [comprobanteExpandido, setComprobanteExpandido] = useState<number | null>(null);
   const [pagina, setPagina] = useState(1);
   const [ultimaPagina, setUltimaPagina] = useState(1);
   const [filtroEmpresaListado, setFiltroEmpresaListado] = useState<string>('all');
@@ -587,18 +588,22 @@ export default function Facturacion() {
                 </thead>
                 <tbody>
                   {comprobantes.map((c) => (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
-                      <td className="py-2 pr-4 whitespace-nowrap">
-                        {new Date(c.fecha_emision).toLocaleDateString()}
-                      </td>
-                      <td className="py-2 pr-4 whitespace-nowrap">
-                        <div className="font-mono text-xs">
-                          {c.serie}-{c.correlativo}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {c.tipo_doc === '01' ? 'Factura' : c.tipo_doc === '03' ? 'Boleta' : c.tipo_doc}
-                        </div>
-                      </td>
+                    <React.Fragment key={c.id}>
+                      <tr 
+                        className="border-b last:border-0 hover:bg-muted/40 cursor-pointer"
+                        onClick={() => setComprobanteExpandido(comprobanteExpandido === c.id ? null : c.id)}
+                      >
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          {new Date(c.fecha_emision).toLocaleDateString()}
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          <div className="font-mono text-xs">
+                            {c.serie}-{c.correlativo}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {c.tipo_doc === '01' ? 'Factura' : c.tipo_doc === '03' ? 'Boleta' : c.tipo_doc}
+                          </div>
+                        </td>
                       <td className="py-2 pr-4 max-w-55">
                         <div className="truncate" title={c.cliente_razon_social}>
                           {c.cliente_razon_social}
@@ -681,7 +686,62 @@ export default function Facturacion() {
                           </Button>
                         </div>
                       </td>
-                    </tr>
+                    </tr>                    {comprobanteExpandido === c.id && (
+                      <tr>
+                        <td colSpan={11} className="py-4 px-4 bg-muted/20 border-b">
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-sm">Items del comprobante:</h4>
+                            {c.items && c.items.length > 0 ? (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-left text-muted-foreground border-b">
+                                      <th className="py-2 pr-4">Código</th>
+                                      <th className="py-2 pr-4">Descripción</th>
+                                      <th className="py-2 pr-2 text-center">Und</th>
+                                      <th className="py-2 pr-2 text-right">Cant.</th>
+                                      <th className="py-2 pr-2 text-right">P.Unit</th>
+                                      <th className="py-2 pr-2 text-right">Subtotal</th>
+                                      <th className="py-2 pr-2 text-right">IGV</th>
+                                      <th className="py-2 pr-0 text-right">Total</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {c.items.map((item) => (
+                                      <tr key={item.id} className="border-b last:border-0">
+                                        <td className="py-1 pr-4 font-mono">{item.codigo_producto}</td>
+                                        <td className="py-1 pr-4">{item.descripcion}</td>
+                                        <td className="py-1 pr-2 text-center">{item.unidad}</td>
+                                        <td className="py-1 pr-2 text-right font-mono">{item.cantidad}</td>
+                                        <td className="py-1 pr-2 text-right font-mono">
+                                          {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                                          {Number(item.mto_precio_unitario).toFixed(2)}
+                                        </td>
+                                        <td className="py-1 pr-2 text-right font-mono">
+                                          {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                                          {Number(item.mto_valor_venta).toFixed(2)}
+                                        </td>
+                                        <td className="py-1 pr-2 text-right font-mono">
+                                          {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                                          {Number(item.igv).toFixed(2)}
+                                        </td>
+                                        <td className="py-1 pr-0 text-right font-mono font-medium">
+                                          {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                                          {Number(item.mto_valor_venta + item.igv).toFixed(2)}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <p className="text-muted-foreground text-sm">No hay items disponibles para este comprobante.</p>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
