@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\SerieController;
 Route::prefix('facturacion')->group(function () {
     // Listar y buscar comprobantes
     Route::get('/comprobantes', [FacturacionController::class, 'index']);
+    Route::get('/comprobantes/export', [FacturacionController::class, 'exportarExcel']);
     Route::get('/comprobantes/{id}', [FacturacionController::class, 'show']);
     
     // Emitir comprobantes
@@ -46,7 +47,6 @@ Route::prefix('facturacion')->group(function () {
     // Estadísticas y reportes
     Route::get('/estadisticas', [FacturacionController::class, 'estadisticas']);
     Route::get('/reporte/ventas', [FacturacionController::class, 'reporteVentas']);
-    Route::get('/comprobantes/export', [FacturacionController::class, 'exportarExcel']);
 });
 
 // Rutas de emisión y sincronización con NubeFact
