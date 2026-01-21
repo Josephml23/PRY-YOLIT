@@ -302,6 +302,17 @@ export default function ListaComprobantes() {
                               </a>
                             </Button>
                           )}
+                          {comprobante.nubefact_cdr_url && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={comprobante.nubefact_cdr_url} download>
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

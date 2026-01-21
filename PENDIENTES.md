@@ -1,6 +1,6 @@
 # 📋 PENDIENTES - Plataforma Operativa y Comercial con Facturación Electrónica
 
-**Fecha de actualización:** 20 de enero de 2026  
+**Fecha de actualización:** 21 de enero de 2026  
 **Estado Backend:** ✅ 100% Completado  
 **Estado Frontend:** 🟢 90% - MVP casi completo  
 **MVP Operativo:** 🟢 80% - Faltan solo extras (Excel, histórico, notificaciones)
@@ -126,7 +126,7 @@
 ## 📌 PENDIENTES INMEDIATOS (SOBRE EL MVP ACTUAL)
 
 ### 1️⃣ Exportación a Excel / CSV
-- [ ] Exportar lista de **comprobantes emitidos** a Excel/CSV (con filtros aplicados).
+- [x] Exportar lista de **comprobantes emitidos** a Excel/CSV (con filtros aplicados).
 - [ ] Exportar lista de **documentos** a Excel/CSV.
 - [ ] Exportar lista de **pagos** a Excel/CSV.
 - [ ] Definir formato estándar (cabeceras y tipos de dato) alineado a contabilidad.
