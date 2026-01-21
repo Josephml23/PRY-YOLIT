@@ -590,25 +590,38 @@ class FacturacionController extends Controller
 
             $comprobantes = $query->orderBy('fecha_emision', 'desc')->get();
 
-            // Crear contenido CSV
-            $csvContent = "FECHA,TIPO,SERIE,NUMERO,RUC_DNI,DENOMINACION,MONEDA,TOTAL_GRAVADA,TOTAL_GRATUITA,TOTAL_OPERACIONES,PAGADO,ANULADO,ENVIADO_CLIENTE,ESTADO_SUNAT\n";
+            // Crear contenido CSV compatible con formato NubeFact (separador ;)
+            $csvContent = "FECHA EMISIÓN;FECHA VENCIMIENTO;TIPO;SERIE;NÚMERO;DOC ENTIDAD;RUC;DENOMINACIÓN;MONEDA;GRAVADA;EXONERADA;INAFECTA;IGV;TOTAL;TOTAL GRATUITA;PAGADO;ENVIADO AL CLIENTE;ANULADO;ESTADO SUNAT\n";
 
             foreach ($comprobantes as $c) {
+                $tipoDesc = match($c->tipo_doc) {
+                    '01' => 'FACTURA',
+                    '03' => 'BOLETA',
+                    '07' => 'NOTA CREDITO',
+                    '08' => 'NOTA DEBITO',
+                    default => $c->tipo_doc
+                };
+
                 $csvContent .= sprintf(
-                    "%s,%s,%s,%s,%s,\"%s\",%s,%s,%s,%s,%s,%s,%s,%s\n",
-                    $c->fecha_emision,
-                    $c->tipo_doc === '01' ? 'FACTURA' : ($c->tipo_doc === '03' ? 'BOLETA' : $c->tipo_doc),
+                    "%s;%s;%s;%s;%s;%s;%s;\"%s\";%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                    $c->fecha_emision ? date('d/m/Y', strtotime($c->fecha_emision)) : '',
+                    $c->fecha_vencimiento ? date('d/m/Y', strtotime($c->fecha_vencimiento)) : '',
+                    $tipoDesc,
                     $c->serie,
                     $c->correlativo,
+                    $c->cliente_tipo_doc === '6' ? 'RUC' : 'DNI',
                     $c->cliente_num_doc,
-                    str_replace('"', '""', $c->cliente_razon_social), // Escapar comillas
+                    str_replace('"', '""', $c->cliente_razon_social ?? ''), // Escapar comillas dobles
                     $c->moneda,
-                    number_format($c->mto_base_imp ?? $c->mto_imp_venta ?? 0, 2, '.', ''),
-                    number_format($c->mto_oper_gratuitas ?? 0, 2, '.', ''),
+                    number_format($c->mto_oper_gravadas ?? 0, 2, '.', ''),
+                    number_format($c->mto_oper_exoneradas ?? 0, 2, '.', ''),
+                    number_format($c->mto_oper_inafectas ?? 0, 2, '.', ''),
+                    number_format($c->mto_igv ?? 0, 2, '.', ''),
                     number_format($c->mto_imp_venta ?? 0, 2, '.', ''),
+                    number_format($c->mto_oper_gratuitas ?? 0, 2, '.', ''),
                     $c->pagado ? 'SI' : 'NO',
-                    $c->anulado ? 'SI' : 'NO',
                     $c->enviado_cliente ? 'SI' : 'NO',
+                    $c->anulado ? 'SI' : 'NO',
                     strtoupper($c->estado_sunat ?? 'PENDIENTE')
                 );
             }
