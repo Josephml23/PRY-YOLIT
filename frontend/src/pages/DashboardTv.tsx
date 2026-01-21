@@ -6,10 +6,10 @@ import { Receipt, TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react';
 import api from '@/services/api';
 
 interface FacturacionStats {
-  total_mes: number;
-  total_aceptados: number;
-  total_rechazados: number;
-  total_pendientes: number;
+  total_mes: number | string | null;
+  total_aceptados: number | string | null;
+  total_rechazados: number | string | null;
+  total_pendientes: number | string | null;
 }
 
 interface OportunidadesStats {
@@ -33,7 +33,7 @@ interface TvComprobante {
   serie: string;
   correlativo: string | number;
   cliente_razon_social: string;
-  mto_imp_venta: number;
+  mto_imp_venta: number | string | null;
   estado_sunat: string;
   created_at: string;
 }
@@ -43,7 +43,7 @@ interface TvOportunidad {
   titulo: string;
   estado: string;
   fecha_vencimiento: string;
-  monto_estimado: number;
+  monto_estimado: number | string | null;
 }
 
 interface DashboardTvResponse {
@@ -53,6 +53,19 @@ interface DashboardTvResponse {
   ultimas_facturas: TvComprobante[];
   proximas_vencer: TvOportunidad[];
 }
+
+const parseMonto = (valor: unknown): number => {
+  if (valor === null || valor === undefined) return 0;
+  if (typeof valor === 'number') {
+    return Number.isNaN(valor) ? 0 : valor;
+  }
+  if (typeof valor === 'string') {
+    const cleaned = valor.replace(/[^0-9.-]/g, '');
+    const num = Number(cleaned);
+    return Number.isNaN(num) ? 0 : num;
+  }
+  return 0;
+};
 
 export default function DashboardTv() {
   const [data, setData] = useState<DashboardTvResponse | null>(null);
@@ -101,6 +114,8 @@ export default function DashboardTv() {
 
   const { facturacion, oportunidades, sla, ultimas_facturas, proximas_vencer } = data;
 
+  const totalMes = parseMonto(facturacion.total_mes);
+
   return (
     <div className="min-h-screen bg-background text-foreground p-6 md:p-8 lg:p-10 space-y-6">
       {/* Header */}
@@ -128,9 +143,9 @@ export default function DashboardTv() {
             <Receipt className="h-6 w-6 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl md:text-4xl font-bold">S/ {facturacion.total_mes?.toFixed(2) ?? '0.00'}</div>
+            <div className="text-3xl md:text-4xl font-bold">S/ {totalMes.toFixed(2)}</div>
             <p className="text-sm md:text-base text-muted-foreground mt-1">
-              Aceptados: {facturacion.total_aceptados} · Pendientes: {facturacion.total_pendientes}
+              Aceptados: {parseMonto(facturacion.total_aceptados)} · Pendientes: {parseMonto(facturacion.total_pendientes)}
             </p>
           </CardContent>
         </Card>
@@ -205,7 +220,7 @@ export default function DashboardTv() {
                       {f.cliente_razon_social}
                     </div>
                     <div className="col-span-2 text-right font-semibold">
-                      S/ {f.mto_imp_venta.toFixed(2)}
+                      S/ {parseMonto(f.mto_imp_venta).toFixed(2)}
                     </div>
                     <div className="col-span-2 text-center">
                       <span
@@ -263,7 +278,7 @@ export default function DashboardTv() {
                       })}
                     </div>
                     <div className="col-span-2 text-right font-semibold">
-                      S/ {o.monto_estimado.toFixed(2)}
+                      S/ {parseMonto(o.monto_estimado).toFixed(2)}
                     </div>
                     <div className="col-span-3 text-center">
                       <span className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold bg-sky-500/10 text-sky-500 border border-sky-500/40">
