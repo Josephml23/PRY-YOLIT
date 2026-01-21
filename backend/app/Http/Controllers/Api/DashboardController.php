@@ -28,9 +28,12 @@ class DashboardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $empresaId = $request->get('empresa_id');
+        $fechaDesde = $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta');
+        $clienteNumDoc = $request->get('cliente_num_doc');
 
         // Estadísticas de facturación
-        $facturacion = $this->estadisticasFacturacion($empresaId);
+        $facturacion = $this->estadisticasFacturacion($empresaId, $fechaDesde, $fechaHasta, $clienteNumDoc);
 
         // Estadísticas de oportunidades
         $oportunidades = $this->estadisticasOportunidades($empresaId);
@@ -42,7 +45,7 @@ class DashboardController extends Controller
         $alertas = $this->estadisticasAlertas();
 
         // Clientes (a partir de comprobantes reales)
-        $clientes = $this->estadisticasClientes($empresaId);
+        $clientes = $this->estadisticasClientes($empresaId, $fechaDesde, $fechaHasta, $clienteNumDoc);
 
         return response()->json([
             'success' => true,
@@ -59,32 +62,49 @@ class DashboardController extends Controller
     /**
      * Estadísticas de facturación
      */
-    private function estadisticasFacturacion($empresaId = null): array
+    private function estadisticasFacturacion($empresaId = null, $fechaDesde = null, $fechaHasta = null, $clienteNumDoc = null): array
     {
-        $query = Comprobante::query();
+        $baseQuery = Comprobante::query();
 
         if ($empresaId) {
-            $query->where('empresa_id', $empresaId);
+            $baseQuery->where('empresa_id', $empresaId);
         }
 
-        $hoy = now();
-        $inicioMes = $hoy->copy()->startOfMonth();
-        $finMes = $hoy->copy()->endOfMonth();
+        if ($clienteNumDoc) {
+            $baseQuery->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%");
+        }
+
+        if ($fechaDesde) {
+            $baseQuery->whereDate('fecha_emision', '>=', $fechaDesde);
+        }
+
+        if ($fechaHasta) {
+            $baseQuery->whereDate('fecha_emision', '<=', $fechaHasta);
+        }
+
+        $totalMes = (clone $baseQuery)->sum('mto_imp_venta');
+        $totalAceptados = (clone $baseQuery)->where('estado_sunat', 'aceptado')->count();
+        $totalRechazados = (clone $baseQuery)->where('estado_sunat', 'rechazado')->count();
+        $totalPendientes = (clone $baseQuery)->where('estado_sunat', 'pendiente')->count();
+
+        $porTipo = Comprobante::selectRaw('tipo_doc, count(*) as cantidad, sum(mto_imp_venta) as total')
+            ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
+            ->when($clienteNumDoc, fn($q) => $q->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%"))
+            ->when($fechaDesde, fn($q) => $q->whereDate('fecha_emision', '>=', $fechaDesde))
+            ->when($fechaHasta, fn($q) => $q->whereDate('fecha_emision', '<=', $fechaHasta))
+            ->groupBy('tipo_doc')
+            ->get()
+            ->mapWithKeys(fn($item) => [$item->tipo_doc => [
+                'cantidad' => $item->cantidad,
+                'total' => $item->total
+            ]]);
 
         return [
-            'total_mes' => $query->whereBetween('fecha_emision', [$inicioMes, $finMes])
-                ->sum('mto_imp_venta'),
-            'total_aceptados' => $query->where('estado_sunat', 'aceptado')->count(),
-            'total_rechazados' => $query->where('estado_sunat', 'rechazado')->count(),
-            'total_pendientes' => $query->where('estado_sunat', 'pendiente')->count(),
-            'por_tipo' => Comprobante::selectRaw('tipo_doc, count(*) as cantidad, sum(mto_imp_venta) as total')
-                ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
-                ->groupBy('tipo_doc')
-                ->get()
-                ->mapWithKeys(fn($item) => [$item->tipo_doc => [
-                    'cantidad' => $item->cantidad,
-                    'total' => $item->total
-                ]]),
+            'total_mes' => $totalMes,
+            'total_aceptados' => $totalAceptados,
+            'total_rechazados' => $totalRechazados,
+            'total_pendientes' => $totalPendientes,
+            'por_tipo' => $porTipo,
         ];
     }
 
@@ -132,12 +152,24 @@ class DashboardController extends Controller
     /**
      * Estadísticas de clientes basadas en comprobantes y entidades
      */
-    private function estadisticasClientes($empresaId = null): array
+    private function estadisticasClientes($empresaId = null, $fechaDesde = null, $fechaHasta = null, $clienteNumDoc = null): array
     {
         $query = Comprobante::query();
 
         if ($empresaId) {
             $query->where('empresa_id', $empresaId);
+        }
+
+        if ($clienteNumDoc) {
+            $query->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%");
+        }
+
+        if ($fechaDesde) {
+            $query->whereDate('fecha_emision', '>=', $fechaDesde);
+        }
+
+        if ($fechaHasta) {
+            $query->whereDate('fecha_emision', '<=', $fechaHasta);
         }
 
         // Top clientes según facturación real (a partir de comprobantes)
@@ -210,6 +242,9 @@ class DashboardController extends Controller
     public function ventasPorMes(Request $request): JsonResponse
     {
         $empresaId = $request->get('empresa_id');
+        $fechaDesde = $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta');
+        $clienteNumDoc = $request->get('cliente_num_doc');
 
         // PostgreSQL: usamos TO_CHAR para agrupar por año-mes
         $ventas = Comprobante::selectRaw("
@@ -218,8 +253,11 @@ class DashboardController extends Controller
             COUNT(*) as cantidad
             ")
             ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
+            ->when($clienteNumDoc, fn($q) => $q->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%"))
+            ->when($fechaDesde, fn($q) => $q->whereDate('fecha_emision', '>=', $fechaDesde))
+            ->when($fechaHasta, fn($q) => $q->whereDate('fecha_emision', '<=', $fechaHasta))
+            ->when(!$fechaDesde && !$fechaHasta, fn($q) => $q->where('fecha_emision', '>=', now()->subMonths(12)))
             ->where('estado_sunat', 'aceptado')
-            ->where('fecha_emision', '>=', now()->subMonths(12))
             ->groupBy('mes')
             ->orderBy('mes')
             ->get();

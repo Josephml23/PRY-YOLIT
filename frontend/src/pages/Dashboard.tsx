@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
@@ -88,6 +90,10 @@ export default function Dashboard() {
   const [clientesTop, setClientesTop] = useState<ClienteResumen[]>([]);
   const [ventasMes, setVentasMes] = useState<VentaMes[]>([]);
 
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [clienteDocumento, setClienteDocumento] = useState('');
+
   const parseMonto = (valor: unknown): number => {
     if (valor === null || valor === undefined) return 0;
     if (typeof valor === 'number') {
@@ -104,10 +110,29 @@ export default function Dashboard() {
   const cargarDatos = useCallback(async () => {
     try {
       const [comprobantesRes, empresasRes, dashboardRes, ventasMesRes] = await Promise.all([
-        api.get('/facturacion/comprobantes', { params: { per_page: 5000 } }),
+        api.get('/facturacion/comprobantes', {
+          params: {
+            per_page: 5000,
+            fecha_desde: fechaDesde || undefined,
+            fecha_hasta: fechaHasta || undefined,
+            cliente_num_doc: clienteDocumento || undefined,
+          },
+        }),
         api.get('/v1/empresas'),
-        api.get('/v1/dashboard'),
-        api.get('/v1/dashboard/ventas-mes'),
+        api.get('/v1/dashboard', {
+          params: {
+            fecha_desde: fechaDesde || undefined,
+            fecha_hasta: fechaHasta || undefined,
+            cliente_num_doc: clienteDocumento || undefined,
+          },
+        }),
+        api.get('/v1/dashboard/ventas-mes', {
+          params: {
+            fecha_desde: fechaDesde || undefined,
+            fecha_hasta: fechaHasta || undefined,
+            cliente_num_doc: clienteDocumento || undefined,
+          },
+        }),
       ]);
 
       const comprobantesData = Array.isArray(comprobantesRes.data)
@@ -171,11 +196,17 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fechaDesde, fechaHasta, clienteDocumento]);
 
   useEffect(() => {
     cargarDatos();
   }, [cargarDatos]);
+
+  const limpiarFiltros = () => {
+    setFechaDesde('');
+    setFechaHasta('');
+    setClienteDocumento('');
+  };
 
   const datosFacturacionMensual = ventasMes.length > 0
     ? ventasMes.map((v) => ({ mes: v.mes, monto: v.total }))
@@ -240,6 +271,56 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Filtros */}
+      <Card className="border-dashed bg-muted/40">
+        <CardContent className="pt-4 pb-3">
+          <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 items-end">
+            <div>
+              <Label htmlFor="fecha-desde" className="text-xs font-medium text-muted-foreground">Fecha desde</Label>
+              <Input
+                id="fecha-desde"
+                type="date"
+                value={fechaDesde}
+                onChange={(e) => setFechaDesde(e.target.value)}
+                className="mt-1 h-9 text-xs"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fecha-hasta" className="text-xs font-medium text-muted-foreground">Fecha hasta</Label>
+              <Input
+                id="fecha-hasta"
+                type="date"
+                value={fechaHasta}
+                onChange={(e) => setFechaHasta(e.target.value)}
+                className="mt-1 h-9 text-xs"
+              />
+            </div>
+            <div className="md:col-span-2 lg:col-span-2">
+              <Label htmlFor="cliente-doc" className="text-xs font-medium text-muted-foreground">Cliente (RUC / DNI)</Label>
+              <Input
+                id="cliente-doc"
+                type="text"
+                placeholder="Ingrese N° de documento del cliente"
+                value={clienteDocumento}
+                onChange={(e) => setClienteDocumento(e.target.value)}
+                className="mt-1 h-9 text-xs"
+              />
+            </div>
+            <div className="flex gap-2 md:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4 h-9 text-xs"
+                onClick={limpiarFiltros}
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tarjetas de estadísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
