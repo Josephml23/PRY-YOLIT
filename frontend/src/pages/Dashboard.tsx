@@ -4,10 +4,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell } from 'lucide-react';
+import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell, Search } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import api from '@/services/api';
+
+const DIAS = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, '0'));
+
+const MESES = [
+  { value: '01', label: 'enero' },
+  { value: '02', label: 'febrero' },
+  { value: '03', label: 'marzo' },
+  { value: '04', label: 'abril' },
+  { value: '05', label: 'mayo' },
+  { value: '06', label: 'junio' },
+  { value: '07', label: 'julio' },
+  { value: '08', label: 'agosto' },
+  { value: '09', label: 'setiembre' },
+  { value: '10', label: 'octubre' },
+  { value: '11', label: 'noviembre' },
+  { value: '12', label: 'diciembre' },
+];
+
+const ANIOS = (() => {
+  const currentYear = new Date().getFullYear();
+  const startYear = currentYear - 2;
+  const endYear = currentYear + 1;
+  const years: string[] = [];
+  for (let year = startYear; year <= endYear; year += 1) {
+    years.push(String(year));
+  }
+  return years;
+})();
 
 interface Comprobante {
   id: number;
@@ -49,6 +77,12 @@ interface ClienteResumen {
   cliente_razon_social: string;
   cantidad: number;
   total: number;
+}
+
+interface ClienteEntidadFiltro {
+  id: number;
+  num_doc: string;
+  denominacion: string;
 }
 
 interface VentaMes {
@@ -94,6 +128,16 @@ export default function Dashboard() {
   const [fechaHasta, setFechaHasta] = useState('');
   const [clienteDocumento, setClienteDocumento] = useState('');
 
+  const [desdeDia, setDesdeDia] = useState('');
+  const [desdeMes, setDesdeMes] = useState('');
+  const [desdeAnio, setDesdeAnio] = useState('');
+  const [hastaDia, setHastaDia] = useState('');
+  const [hastaMes, setHastaMes] = useState('');
+  const [hastaAnio, setHastaAnio] = useState('');
+
+  const [clientesFiltro, setClientesFiltro] = useState<ClienteEntidadFiltro[]>([]);
+  const [clienteBusqueda, setClienteBusqueda] = useState('');
+
   const parseMonto = (valor: unknown): number => {
     if (valor === null || valor === undefined) return 0;
     if (typeof valor === 'number') {
@@ -106,6 +150,36 @@ export default function Dashboard() {
     }
     return 0;
   };
+
+  useEffect(() => {
+    if (desdeDia && desdeMes && desdeAnio) {
+      setFechaDesde(`${desdeAnio}-${desdeMes}-${desdeDia}`);
+    } else {
+      setFechaDesde('');
+    }
+  }, [desdeDia, desdeMes, desdeAnio]);
+
+  useEffect(() => {
+    if (hastaDia && hastaMes && hastaAnio) {
+      setFechaHasta(`${hastaAnio}-${hastaMes}-${hastaDia}`);
+    } else {
+      setFechaHasta('');
+    }
+  }, [hastaDia, hastaMes, hastaAnio]);
+
+  useEffect(() => {
+    const obtenerClientesFiltro = async () => {
+      try {
+        const res = await api.get('/v1/clientes', { params: { per_page: 1000 } });
+        const raw = Array.isArray(res.data) ? res.data : (res.data.data || []);
+        setClientesFiltro(raw as ClienteEntidadFiltro[]);
+      } catch (error) {
+        console.error('Error al cargar clientes para filtro:', error);
+      }
+    };
+
+    obtenerClientesFiltro();
+  }, []);
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -206,6 +280,13 @@ export default function Dashboard() {
     setFechaDesde('');
     setFechaHasta('');
     setClienteDocumento('');
+    setClienteBusqueda('');
+    setDesdeDia('');
+    setDesdeMes('');
+    setDesdeAnio('');
+    setHastaDia('');
+    setHastaMes('');
+    setHastaAnio('');
   };
 
   const datosFacturacionMensual = ventasMes.length > 0
@@ -278,34 +359,118 @@ export default function Dashboard() {
           <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 items-end">
             <div>
               <Label htmlFor="fecha-desde" className="text-xs font-medium text-muted-foreground">Fecha desde</Label>
-              <Input
-                id="fecha-desde"
-                type="date"
-                value={fechaDesde}
-                onChange={(e) => setFechaDesde(e.target.value)}
-                className="mt-1 h-9 text-xs"
-              />
+              <div className="mt-1 flex gap-2">
+                <select
+                  aria-label="Día desde"
+                  className="h-9 rounded-full border bg-background px-3 text-xs"
+                  value={desdeDia}
+                  onChange={(e) => setDesdeDia(e.target.value)}
+                >
+                  <option value="">Día</option>
+                  {DIAS.map((dia) => (
+                    <option key={dia} value={dia}>{parseInt(dia, 10)}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Mes desde"
+                  className="h-9 rounded-full border bg-background px-3 text-xs flex-1"
+                  value={desdeMes}
+                  onChange={(e) => setDesdeMes(e.target.value)}
+                >
+                  <option value="">Mes</option>
+                  {MESES.map((mes) => (
+                    <option key={mes.value} value={mes.value}>{mes.label}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Año desde"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-20"
+                  value={desdeAnio}
+                  onChange={(e) => setDesdeAnio(e.target.value)}
+                >
+                  <option value="">Año</option>
+                  {ANIOS.map((anio) => (
+                    <option key={anio} value={anio}>{anio}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div>
               <Label htmlFor="fecha-hasta" className="text-xs font-medium text-muted-foreground">Fecha hasta</Label>
-              <Input
-                id="fecha-hasta"
-                type="date"
-                value={fechaHasta}
-                onChange={(e) => setFechaHasta(e.target.value)}
-                className="mt-1 h-9 text-xs"
-              />
+              <div className="mt-1 flex gap-2">
+                <select
+                  aria-label="Día hasta"
+                  className="h-9 rounded-full border bg-background px-3 text-xs"
+                  value={hastaDia}
+                  onChange={(e) => setHastaDia(e.target.value)}
+                >
+                  <option value="">Día</option>
+                  {DIAS.map((dia) => (
+                    <option key={dia} value={dia}>{parseInt(dia, 10)}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Mes hasta"
+                  className="h-9 rounded-full border bg-background px-3 text-xs flex-1"
+                  value={hastaMes}
+                  onChange={(e) => setHastaMes(e.target.value)}
+                >
+                  <option value="">Mes</option>
+                  {MESES.map((mes) => (
+                    <option key={mes.value} value={mes.value}>{mes.label}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Año hasta"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-20"
+                  value={hastaAnio}
+                  onChange={(e) => setHastaAnio(e.target.value)}
+                >
+                  <option value="">Año</option>
+                  {ANIOS.map((anio) => (
+                    <option key={anio} value={anio}>{anio}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="md:col-span-2 lg:col-span-2">
-              <Label htmlFor="cliente-doc" className="text-xs font-medium text-muted-foreground">Cliente (RUC / DNI)</Label>
-              <Input
-                id="cliente-doc"
-                type="text"
-                placeholder="Ingrese N° de documento del cliente"
-                value={clienteDocumento}
-                onChange={(e) => setClienteDocumento(e.target.value)}
-                className="mt-1 h-9 text-xs"
-              />
+              <Label htmlFor="cliente-doc" className="text-xs font-medium text-muted-foreground">Cliente (RUC / Razón social)</Label>
+              <div className="mt-1 space-y-1">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    id="cliente-doc"
+                    type="text"
+                    placeholder="Buscar cliente por RUC o nombre"
+                    value={clienteBusqueda}
+                    onChange={(e) => setClienteBusqueda(e.target.value)}
+                    className="h-8 pl-7 pr-2 text-xs"
+                  />
+                </div>
+                <select
+                  aria-label="Seleccionar cliente"
+                  className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-xs max-h-32 overflow-y-auto"
+                  size={5}
+                  value={clienteDocumento}
+                  onChange={(e) => setClienteDocumento(e.target.value)}
+                >
+                  <option value="">Todos los clientes</option>
+                  {clientesFiltro
+                    .filter((cliente) => {
+                      const term = clienteBusqueda.toLowerCase();
+                      if (!term) return true;
+                      return (
+                        cliente.num_doc.toLowerCase().includes(term) ||
+                        cliente.denominacion.toLowerCase().includes(term)
+                      );
+                    })
+                    .map((cliente) => (
+                      <option key={cliente.id} value={cliente.num_doc}>
+                        {cliente.num_doc} {cliente.denominacion}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
             <div className="flex gap-2 md:justify-end">
               <Button
