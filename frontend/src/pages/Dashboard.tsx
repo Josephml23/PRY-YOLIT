@@ -16,6 +16,9 @@ interface Comprobante {
   mto_imp_venta: number | string;
   estado_sunat: string;
   fecha_emision: string;
+  pagado?: boolean;
+  anulado?: boolean;
+  enviado_cliente?: boolean;
 }
 
 interface Empresa {
@@ -183,9 +186,8 @@ export default function Dashboard() {
   ].filter(t => t.cantidad > 0);
 
   const estadosSunat = [
-    { estado: 'Aceptado', cantidad: comprobantes.filter(c => c.estado_sunat?.toLowerCase() === 'aceptado').length },
-    { estado: 'Pendiente', cantidad: comprobantes.filter(c => !c.estado_sunat || c.estado_sunat === 'pendiente').length },
-    { estado: 'Rechazado', cantidad: comprobantes.filter(c => c.estado_sunat?.toLowerCase() === 'rechazado').length },
+    { estado: 'Anulado', cantidad: comprobantes.filter(c => c.anulado).length },
+    { estado: 'Aceptado', cantidad: comprobantes.filter(c => !c.anulado).length },
   ].filter(e => e.cantidad > 0);
 
   const ultimosComprobantes = comprobantes
@@ -487,25 +489,21 @@ export default function Dashboard() {
         {estadosSunat.length > 0 && (
           <Card className="hover:shadow-lg transition-shadow overflow-hidden">
             <CardHeader>
-              <CardTitle>Estados SUNAT</CardTitle>
+              <CardTitle>Comprobantes Anulados</CardTitle>
               <CardDescription>
-                Respuestas de validación SUNAT
+                Distribución de comprobantes anulados vs no anulados
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-0">
               <ChartContainer
                 config={{
-                  Aceptado: {
-                    label: "Aceptado",
+                  Anulado: {
+                    label: "Anulado",
                     color: "hsl(var(--chart-2))",
                   },
-                  Pendiente: {
-                    label: "Pendiente",
+                  Aceptado: {
+                    label: "Aceptado",
                     color: "hsl(var(--chart-4))",
-                  },
-                  Rechazado: {
-                    label: "Rechazado",
-                    color: "hsl(var(--chart-5))",
                   },
                 }}
                 className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
