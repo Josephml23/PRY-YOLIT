@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,8 @@ interface Comprobante {
   serie: string;
   correlativo: number | string;
   cliente_razon_social: string;
-  mto_imp_venta: number | string;
+  mto_imp_venta?: number | string;
+  total?: number | string;
   estado_sunat: string;
   fecha_emision: string;
   pagado?: boolean;
@@ -54,6 +55,12 @@ interface VentaMes {
   cantidad: number;
 }
 
+interface VentaMesApi {
+  mes: string;
+  total: number | string;
+  cantidad: number | string;
+}
+
 export default function Dashboard() {
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -81,10 +88,6 @@ export default function Dashboard() {
   const [clientesTop, setClientesTop] = useState<ClienteResumen[]>([]);
   const [ventasMes, setVentasMes] = useState<VentaMes[]>([]);
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
   const parseMonto = (valor: unknown): number => {
     if (valor === null || valor === undefined) return 0;
     if (typeof valor === 'number') {
@@ -98,7 +101,7 @@ export default function Dashboard() {
     return 0;
   };
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       const [comprobantesRes, empresasRes, dashboardRes, ventasMesRes] = await Promise.all([
         api.get('/facturacion/comprobantes', { params: { per_page: 5000 } }),
@@ -107,8 +110,8 @@ export default function Dashboard() {
         api.get('/v1/dashboard/ventas-mes'),
       ]);
 
-      const comprobantesData = Array.isArray(comprobantesRes.data) 
-        ? comprobantesRes.data 
+      const comprobantesData = Array.isArray(comprobantesRes.data)
+        ? comprobantesRes.data
         : (comprobantesRes.data.data || []);
       const empresasData = Array.isArray(empresasRes.data)
         ? empresasRes.data
@@ -119,7 +122,7 @@ export default function Dashboard() {
 
       // Calcular estadísticas
       const totalFacturado = comprobantesData.reduce(
-        (sum: number, c: Comprobante) => sum + parseMonto((c as any).mto_imp_venta ?? (c as any).total ?? 0),
+        (sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0),
         0
       );
       const aceptados = comprobantesData.filter((c: Comprobante) => c.estado_sunat?.toLowerCase() === 'aceptado').length;
@@ -156,7 +159,7 @@ export default function Dashboard() {
 
       const ventasDataRaw = ventasMesRes.data?.data || ventasMesRes.data || [];
       const ventasNormalizadas: VentaMes[] = Array.isArray(ventasDataRaw)
-        ? ventasDataRaw.map((v: any) => ({
+        ? (ventasDataRaw as VentaMesApi[]).map((v) => ({
             mes: v.mes,
             total: Number(v.total) || 0,
             cantidad: Number(v.cantidad) || 0,
@@ -168,7 +171,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
   const datosFacturacionMensual = ventasMes.length > 0
     ? ventasMes.map((v) => ({ mes: v.mes, monto: v.total }))
