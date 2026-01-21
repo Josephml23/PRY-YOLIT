@@ -196,10 +196,11 @@ class DashboardController extends Controller
     {
         $empresaId = $request->get('empresa_id');
 
+        // PostgreSQL: usamos TO_CHAR para agrupar por año-mes
         $ventas = Comprobante::selectRaw("
-                DATE_FORMAT(fecha_emision, '%Y-%m') as mes,
-                SUM(mto_imp_venta) as total,
-                COUNT(*) as cantidad
+            TO_CHAR(fecha_emision, 'YYYY-MM') as mes,
+            SUM(mto_imp_venta) as total,
+            COUNT(*) as cantidad
             ")
             ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
             ->where('estado_sunat', 'aceptado')

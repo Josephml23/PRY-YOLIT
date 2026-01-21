@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, type JSX } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -587,9 +587,12 @@ export default function Facturacion() {
                   </tr>
                 </thead>
                 <tbody>
-                  {comprobantes.map((c) => (
-                    <React.Fragment key={c.id}>
-                      <tr 
+                  {comprobantes.map((c) => {
+                    const filas: JSX.Element[] = [];
+
+                    filas.push(
+                      <tr
+                        key={c.id}
                         className="border-b last:border-0 hover:bg-muted/40 cursor-pointer"
                         onClick={() => setComprobanteExpandido(comprobanteExpandido === c.id ? null : c.id)}
                       >
@@ -686,8 +689,12 @@ export default function Facturacion() {
                           </Button>
                         </div>
                       </td>
-                    </tr>                    {comprobanteExpandido === c.id && (
-                      <tr>
+                    </tr>
+                    );
+
+                    if (comprobanteExpandido === c.id) {
+                      filas.push(
+                      <tr key={`${c.id}-detalle`}>
                         <td colSpan={11} className="py-4 px-4 bg-muted/20 border-b">
                           <div className="space-y-3">
                             <h4 className="font-medium text-sm">Items del comprobante:</h4>
@@ -727,7 +734,7 @@ export default function Facturacion() {
                                         </td>
                                         <td className="py-1 pr-0 text-right font-mono font-medium">
                                           {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
-                                          {Number(item.mto_valor_venta + item.igv).toFixed(2)}
+                                          {(Number(item.mto_valor_venta) + Number(item.igv)).toFixed(2)}
                                         </td>
                                       </tr>
                                     ))}
@@ -740,9 +747,11 @@ export default function Facturacion() {
                           </div>
                         </td>
                       </tr>
-                    )}
-                    </React.Fragment>
-                  ))}
+                      );
+                    }
+
+                    return filas;
+                  })}
                 </tbody>
               </table>
             </div>

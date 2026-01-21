@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\CatalogoSunatController;
 use App\Http\Controllers\Api\AlertaController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\EntidadController;
 use App\Http\Controllers\Api\NubefactController;
 use App\Http\Controllers\Api\SerieController;
 
@@ -119,6 +120,13 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('dashboard/tv', [DashboardController::class, 'tv']);
     Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
+
+    // Clientes (entidades marcadas como clientes)
+    Route::get('clientes', [EntidadController::class, 'index']);
+    Route::post('clientes', [EntidadController::class, 'store']);
+    Route::get('clientes/{id}', [EntidadController::class, 'show']);
+    Route::put('clientes/{id}', [EntidadController::class, 'update']);
+    Route::delete('clientes/{id}', [EntidadController::class, 'destroy']);
 
     // Series de facturación
     Route::get('/series', [SerieController::class, 'index']);

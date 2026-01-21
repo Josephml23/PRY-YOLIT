@@ -10,20 +10,22 @@ class EmpresaPruebaSeeder extends Seeder
     public function run()
     {
         // Crear empresa de prueba compatible con NubeFact
-        // El RUC key está configurado en .env (NUBEFACT_RUC)
-        Empresa::create([
-            'ruc' => '20000000001',
-            'razon_social' => 'EMPRESA DE PRUEBA NUBEFACT SAC',
-            'nombre_comercial' => 'NUBEFACT TEST',
-            'ubigeo' => '150101',
-            'departamento' => 'LIMA',
-            'provincia' => 'LIMA',
-            'distrito' => 'LIMA',
-            'direccion' => 'Av. Prueba 123, Oficina 456',
-            'sol_user' => null, // No usa SOL, usa NubeFact API
-            'sol_password' => null,
-            'modo' => 'beta', // MODO BETA
-            'activo' => true,
-        ]);
+        // Usar updateOrCreate para evitar duplicados por RUC
+        Empresa::updateOrCreate(
+            ['ruc' => '20434906301'],
+            [
+                'razon_social' => 'GRUPO MOSS S.R.L.',
+                'nombre_comercial' => null,
+                'ubigeo' => '040122',
+                'departamento' => 'AREQUIPA',
+                'provincia' => 'AREQUIPA',
+                'distrito' => 'CERRO COLORADO',
+                'direccion' => 'LT. 2 MZ. G ---- ASC.VILLA CORPAC',
+                'sol_user' => null, // No usa SOL, usa NubeFact API directa
+                'sol_password' => null,
+                'modo' => 'beta', // MODO BETA por defecto
+                'activo' => true,
+            ]
+        );
     }
 }

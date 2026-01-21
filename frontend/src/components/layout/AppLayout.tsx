@@ -6,6 +6,7 @@ import {
   Receipt, 
   FolderOpen, 
   CreditCard,
+  Users,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -26,6 +27,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 const menuItems = [
   { title: 'Dashboard', icon: Home, url: '/' },
   { title: 'Empresas', icon: Building2, url: '/empresas' },
+  { title: 'Clientes', icon: Users, url: '/clientes' },
   { title: 'Oportunidades', icon: FileText, url: '/oportunidades' },
   { title: 'Facturación', icon: Receipt, url: '/facturacion' },
   { title: 'Documentos', icon: FolderOpen, url: '/documentos' },

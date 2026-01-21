@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import DashboardTv from '@/pages/DashboardTv';
 import Empresas from '@/pages/Empresas';
+import Clientes from '@/pages/Clientes';
 import Facturacion from '@/pages/Facturacion';
 import FacturacionNubefact from '@/pages/FacturacionNubefact';
 import Oportunidades from '@/pages/Oportunidades';
@@ -22,6 +23,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard-tv" element={<DashboardTv />} />
             <Route path="empresas" element={<Empresas />} />
+            <Route path="clientes" element={<Clientes />} />
             <Route path="oportunidades" element={<Oportunidades />} />
             <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
             <Route path="facturacion" element={<Facturacion />} />

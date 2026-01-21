@@ -9,11 +9,11 @@ import api from '@/services/api';
 
 interface Comprobante {
   id: number;
-  tipo_comprobante: string;
+  tipo_doc: string;
   serie: string;
-  numero: number;
-  cliente_denominacion: string;
-  total: number;
+  correlativo: number | string;
+  cliente_razon_social: string;
+  mto_imp_venta: number | string;
   estado_sunat: string;
   fecha_emision: string;
 }
@@ -80,6 +80,19 @@ export default function Dashboard() {
     cargarDatos();
   }, []);
 
+  const parseMonto = (valor: unknown): number => {
+    if (valor === null || valor === undefined) return 0;
+    if (typeof valor === 'number') {
+      return Number.isNaN(valor) ? 0 : valor;
+    }
+    if (typeof valor === 'string') {
+      const cleaned = valor.replace(/[^0-9.-]/g, '');
+      const num = Number(cleaned);
+      return Number.isNaN(num) ? 0 : num;
+    }
+    return 0;
+  };
+
   const cargarDatos = async () => {
     try {
       const [comprobantesRes, empresasRes, dashboardRes, ventasMesRes] = await Promise.all([
@@ -100,7 +113,10 @@ export default function Dashboard() {
       setEmpresas(empresasData);
 
       // Calcular estadísticas
-      const totalFacturado = comprobantesData.reduce((sum: number, c: Comprobante) => sum + parseFloat(c.total?.toString() || '0'), 0);
+      const totalFacturado = comprobantesData.reduce(
+        (sum: number, c: Comprobante) => sum + parseMonto((c as any).mto_imp_venta ?? (c as any).total ?? 0),
+        0
+      );
       const aceptados = comprobantesData.filter((c: Comprobante) => c.estado_sunat?.toLowerCase() === 'aceptado').length;
       const tasaAceptacion = comprobantesData.length > 0 ? (aceptados / comprobantesData.length) * 100 : 0;
 
@@ -160,10 +176,10 @@ export default function Dashboard() {
 
   // Datos para gráficos basados en comprobantes reales
   const tiposComprobantes = [
-    { tipo: 'Facturas', cantidad: comprobantes.filter(c => c.tipo_comprobante === '01').length },
-    { tipo: 'Boletas', cantidad: comprobantes.filter(c => c.tipo_comprobante === '03').length },
-    { tipo: 'NC', cantidad: comprobantes.filter(c => c.tipo_comprobante === '07').length },
-    { tipo: 'ND', cantidad: comprobantes.filter(c => c.tipo_comprobante === '08').length },
+    { tipo: 'Facturas', cantidad: comprobantes.filter(c => c.tipo_doc === '01').length },
+    { tipo: 'Boletas', cantidad: comprobantes.filter(c => c.tipo_doc === '03').length },
+    { tipo: 'NC', cantidad: comprobantes.filter(c => c.tipo_doc === '07').length },
+    { tipo: 'ND', cantidad: comprobantes.filter(c => c.tipo_doc === '08').length },
   ].filter(t => t.cantidad > 0);
 
   const estadosSunat = [
@@ -540,11 +556,11 @@ export default function Dashboard() {
                 {ultimosComprobantes.map((doc) => (
                   <div key={doc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2">
                     <div className="space-y-1 flex-1">
-                      <p className="text-sm font-medium leading-none">{doc.serie}-{doc.numero}</p>
-                      <p className="text-sm text-muted-foreground truncate">{doc.cliente_denominacion}</p>
+                      <p className="text-sm font-medium leading-none">{doc.serie}-{doc.correlativo}</p>
+                      <p className="text-sm text-muted-foreground truncate">{doc.cliente_razon_social}</p>
                     </div>
                     <div className="text-left sm:text-right space-y-1 shrink-0">
-                      <p className="text-sm font-medium">S/ {parseFloat(doc.total?.toString() || '0').toFixed(2)}</p>
+                      <p className="text-sm font-medium">S/ {Number(doc.mto_imp_venta ?? 0).toFixed(2)}</p>
                       <p className={`text-xs font-medium ${
                         doc.estado_sunat?.toLowerCase() === 'aceptado' 
                           ? 'text-green-600 dark:text-green-400' 
