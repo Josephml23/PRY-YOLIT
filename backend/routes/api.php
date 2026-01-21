@@ -46,6 +46,7 @@ Route::prefix('facturacion')->group(function () {
     // Estadísticas y reportes
     Route::get('/estadisticas', [FacturacionController::class, 'estadisticas']);
     Route::get('/reporte/ventas', [FacturacionController::class, 'reporteVentas']);
+    Route::get('/comprobantes/export', [FacturacionController::class, 'exportarExcel']);
 });
 
 // Rutas de emisión y sincronización con NubeFact

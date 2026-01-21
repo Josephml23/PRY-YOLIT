@@ -78,6 +78,11 @@ class Comprobante extends Model
         'anulado',
         'anulado_at',
         'motivo_anulacion',
+        // Campos panel NubeFact
+        'mto_base_imp',
+        'pagado',
+        'enviado_cliente',
+        'enviado_cliente_at',
     ];
 
     protected $casts = [
@@ -108,6 +113,11 @@ class Comprobante extends Model
         'nubefact_consultado_at' => 'datetime',
         'anulado' => 'boolean',
         'anulado_at' => 'datetime',
+        // Casts campos panel NubeFact
+        'mto_base_imp' => 'decimal:2',
+        'pagado' => 'boolean',
+        'enviado_cliente' => 'boolean',
+        'enviado_cliente_at' => 'datetime',
     ];
 
     /**

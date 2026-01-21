@@ -551,6 +551,87 @@ class FacturacionController extends Controller
     }
 
     /**
+     * Exportar comprobantes a Excel
+     */
+    public function exportarExcel(Request $request)
+    {
+        try {
+            $query = Comprobante::with(['empresa']);
+
+            // Aplicar los mismos filtros que en index()
+            if ($request->has('empresa_id')) {
+                $query->where('empresa_id', $request->empresa_id);
+            }
+
+            if ($request->has('tipo_doc')) {
+                $query->where('tipo_doc', $request->tipo_doc);
+            }
+
+            if ($request->has('estado_sunat')) {
+                $query->where('estado_sunat', $request->estado_sunat);
+            }
+
+            if ($request->has('numero')) {
+                $numero = $request->numero;
+                $query->where(function($q) use ($numero) {
+                    $q->where('serie', 'like', "%{$numero}%")
+                      ->orWhere('correlativo', 'like', "%{$numero}%")
+                      ->orWhere('cliente_razon_social', 'like', "%{$numero}%");
+                });
+            }
+
+            if ($request->has('fecha_desde')) {
+                $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
+            }
+
+            if ($request->has('fecha_hasta')) {
+                $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+            }
+
+            $comprobantes = $query->orderBy('fecha_emision', 'desc')->get();
+
+            // Crear contenido CSV
+            $csvContent = "FECHA,TIPO,SERIE,NUMERO,RUC_DNI,DENOMINACION,MONEDA,TOTAL_GRAVADA,TOTAL_GRATUITA,TOTAL_OPERACIONES,PAGADO,ANULADO,ENVIADO_CLIENTE,ESTADO_SUNAT\n";
+
+            foreach ($comprobantes as $c) {
+                $csvContent .= sprintf(
+                    "%s,%s,%s,%s,%s,\"%s\",%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    $c->fecha_emision,
+                    $c->tipo_doc === '01' ? 'FACTURA' : ($c->tipo_doc === '03' ? 'BOLETA' : $c->tipo_doc),
+                    $c->serie,
+                    $c->correlativo,
+                    $c->cliente_num_doc,
+                    str_replace('"', '""', $c->cliente_razon_social), // Escapar comillas
+                    $c->moneda,
+                    number_format($c->mto_base_imp ?? $c->mto_imp_venta ?? 0, 2, '.', ''),
+                    number_format($c->mto_oper_gratuitas ?? 0, 2, '.', ''),
+                    number_format($c->mto_imp_venta ?? 0, 2, '.', ''),
+                    $c->pagado ? 'SI' : 'NO',
+                    $c->anulado ? 'SI' : 'NO',
+                    $c->enviado_cliente ? 'SI' : 'NO',
+                    strtoupper($c->estado_sunat ?? 'PENDIENTE')
+                );
+            }
+
+            // Generar nombre de archivo
+            $filename = 'comprobantes_' . date('Y-m-d_H-i-s') . '.csv';
+
+            return response($csvContent, 200)
+                ->header('Content-Type', 'text/csv; charset=UTF-8')
+                ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
+                ->header('Pragma', 'no-cache')
+                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+                ->header('Expires', '0');
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al exportar: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Generar HTML de un comprobante (NUEVO - Según tutorial)
      */
     public function descargarHtml(string $id)

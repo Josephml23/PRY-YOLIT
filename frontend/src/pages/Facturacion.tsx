@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Send, FileText, FileDown } from 'lucide-react';
+import { Plus, Trash2, Send, FileText, FileDown, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api, apiBaseUrl, type Empresa, type EmisionFacturaPayload, type ComprobanteEmitido } from '@/lib/api';
 
@@ -238,6 +238,23 @@ export default function Facturacion() {
     if (!apiBaseUrl) return;
     const url = `${apiBaseUrl}/facturacion/descargar/${tipo}/${id}`;
     window.open(url, '_blank');
+  };
+
+  const exportarExcel = () => {
+    // Construir URL con los filtros actuales
+    const params = new URLSearchParams();
+    if (filtroEmpresaListado !== 'all') params.append('empresa_id', filtroEmpresaListado);
+    if (filtroEstado !== 'all') params.append('estado_sunat', filtroEstado);
+    if (filtroNumero) params.append('numero', filtroNumero);
+    params.append('format', 'excel');
+    
+    const url = `${apiBaseUrl}/facturacion/comprobantes/export?${params.toString()}`;
+    window.open(url, '_blank');
+    
+    toast({
+      title: 'Exportando...',
+      description: 'Se está generando el archivo Excel con los datos filtrados.',
+    });
   };
 
   return (
@@ -519,7 +536,18 @@ export default function Facturacion() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => exportarExcel()}
+              disabled={loadingComprobantes || comprobantes.length === 0}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Descarga para Excel
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -547,7 +575,12 @@ export default function Facturacion() {
                     <th className="py-2 pr-4">Fecha</th>
                     <th className="py-2 pr-4">Comprobante</th>
                     <th className="py-2 pr-4">Cliente</th>
-                    <th className="py-2 pr-4 text-right">Total</th>
+                    <th className="py-2 pr-2 text-right">Gravada</th>
+                    <th className="py-2 pr-2 text-right">Gratuita</th>
+                    <th className="py-2 pr-2 text-right">Total</th>
+                    <th className="py-2 pr-2 text-center">Pagado?</th>
+                    <th className="py-2 pr-2 text-center">Anulado?</th>
+                    <th className="py-2 pr-2 text-center">Enviado?</th>
                     <th className="py-2 pr-4">Estado SUNAT</th>
                     <th className="py-2 pr-0 text-right">Archivos</th>
                   </tr>
@@ -574,9 +607,32 @@ export default function Facturacion() {
                           {c.cliente_num_doc}
                         </div>
                       </td>
-                      <td className="py-2 pr-4 text-right font-mono">
+                      <td className="py-2 pr-2 text-right font-mono text-xs">
+                        {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                        {Number(c.mto_base_imp ?? c.mto_imp_venta ?? 0).toFixed(2)}
+                      </td>
+                      <td className="py-2 pr-2 text-right font-mono text-xs">
+                        {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
+                        {Number(c.mto_oper_gratuitas ?? 0).toFixed(2)}
+                      </td>
+                      <td className="py-2 pr-2 text-right font-mono">
                         {c.moneda === 'PEN' ? 'S/ ' : c.moneda === 'USD' ? '$ ' : '€ '}
                         {Number(c.mto_imp_venta ?? 0).toFixed(2)}
+                      </td>
+                      <td className="py-2 pr-2 text-center">
+                        <span className={`inline-flex h-2 w-2 rounded-full ${
+                          c.pagado ? 'bg-green-500' : 'bg-red-500'
+                        }`} title={c.pagado ? 'Pagado' : 'Pendiente'}></span>
+                      </td>
+                      <td className="py-2 pr-2 text-center">
+                        <span className={`inline-flex h-2 w-2 rounded-full ${
+                          c.anulado ? 'bg-red-500' : 'bg-green-500'
+                        }`} title={c.anulado ? 'Anulado' : 'Activo'}></span>
+                      </td>
+                      <td className="py-2 pr-2 text-center">
+                        <span className={`inline-flex h-2 w-2 rounded-full ${
+                          c.enviado_cliente ? 'bg-blue-500' : 'bg-gray-400'
+                        }`} title={c.enviado_cliente ? 'Enviado' : 'No enviado'}></span>
                       </td>
                       <td className="py-2 pr-4">
                         <span

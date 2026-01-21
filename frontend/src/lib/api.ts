@@ -71,12 +71,17 @@ export interface ComprobanteEmitido {
   cliente_razon_social: string;
   moneda: string;
   mto_imp_venta: number;
+  mto_base_imp?: number; // Total gravada
+  mto_oper_gratuitas?: number; // Total gratuita
   estado_sunat: string;
   mensaje_sunat?: string;
   xml_path?: string;
   cdr_path?: string;
   pdf_path?: string;
   fecha_emision: string;
+  pagado?: boolean; // Si está pagado
+  anulado?: boolean; // Si está anulado
+  enviado_cliente?: boolean; // Si fue enviado al cliente
 }
 
 export interface ClientePayload {
@@ -274,6 +279,8 @@ export const api = {
       apiClient.post<EmisionResponse>('/facturacion/emitir/boleta', data),
     listarComprobantes: (params?: Record<string, unknown>) =>
       apiClient.get<PaginatedResponse<ComprobanteEmitido>>('/facturacion/comprobantes', { params }),
+    exportarExcel: (params?: Record<string, unknown>) =>
+      window.open(`${apiBaseUrl}/facturacion/comprobantes/export?${new URLSearchParams(params as Record<string, string>).toString()}`, '_blank'),
   },
 
   // Oportunidades
