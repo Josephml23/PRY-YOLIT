@@ -37,6 +37,20 @@ interface AlertasResumen {
   por_prioridad: Record<string, number>;
 }
 
+interface ClienteResumen {
+  cliente_tipo_doc: string;
+  cliente_num_doc: string;
+  cliente_razon_social: string;
+  cantidad: number;
+  total: number;
+}
+
+interface VentaMes {
+  mes: string;
+  total: number;
+  cantidad: number;
+}
+
 export default function Dashboard() {
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -59,16 +73,20 @@ export default function Dashboard() {
     por_prioridad: {},
   });
 
+  const [clientesTop, setClientesTop] = useState<ClienteResumen[]>([]);
+  const [ventasMes, setVentasMes] = useState<VentaMes[]>([]);
+
   useEffect(() => {
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
     try {
-      const [comprobantesRes, empresasRes, dashboardRes] = await Promise.all([
-        api.get('/facturacion/comprobantes'),
+      const [comprobantesRes, empresasRes, dashboardRes, ventasMesRes] = await Promise.all([
+        api.get('/facturacion/comprobantes', { params: { per_page: 5000 } }),
         api.get('/v1/empresas'),
         api.get('/v1/dashboard'),
+        api.get('/v1/dashboard/ventas-mes'),
       ]);
 
       const comprobantesData = Array.isArray(comprobantesRes.data) 
@@ -96,6 +114,7 @@ export default function Dashboard() {
       const dashboardData = dashboardRes.data?.data || dashboardRes.data || {};
       const sla = dashboardData.sla || {};
       const alertas = dashboardData.alertas || {};
+      const clientes = dashboardData.clientes || {};
 
       setSlaResumen({
         total: sla.total ?? 0,
@@ -108,12 +127,36 @@ export default function Dashboard() {
         total_no_leidas: alertas.total_no_leidas ?? 0,
         por_prioridad: alertas.por_prioridad ?? {},
       });
+
+      const topClientes = Array.isArray(clientes.top_clientes) ? clientes.top_clientes : [];
+      setClientesTop(topClientes);
+
+      const ventasDataRaw = ventasMesRes.data?.data || ventasMesRes.data || [];
+      const ventasNormalizadas: VentaMes[] = Array.isArray(ventasDataRaw)
+        ? ventasDataRaw.map((v: any) => ({
+            mes: v.mes,
+            total: Number(v.total) || 0,
+            cantidad: Number(v.cantidad) || 0,
+          }))
+        : [];
+      setVentasMes(ventasNormalizadas);
     } catch (error) {
       console.error('Error al cargar datos:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const datosFacturacionMensual = ventasMes.length > 0
+    ? ventasMes.map((v) => ({ mes: v.mes, monto: v.total }))
+    : [
+        { mes: 'Ene', monto: 0 },
+        { mes: 'Feb', monto: 0 },
+        { mes: 'Mar', monto: 0 },
+        { mes: 'Abr', monto: 0 },
+        { mes: 'May', monto: 0 },
+        { mes: 'Jun', monto: 0 },
+      ];
 
   // Datos para gráficos basados en comprobantes reales
   const tiposComprobantes = [
@@ -332,14 +375,7 @@ export default function Dashboard() {
               className="aspect-4/3 w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
             >
               <BarChart
-                data={[
-                  { mes: 'Ene', monto: 0 },
-                  { mes: 'Feb', monto: 0 },
-                  { mes: 'Mar', monto: 0 },
-                  { mes: 'Abr', monto: 0 },
-                  { mes: 'May', monto: 0 },
-                  { mes: 'Jun', monto: 0 },
-                ]}
+                data={datosFacturacionMensual}
                 margin={{ top: 5, right: 5, bottom: 0, left: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
@@ -532,6 +568,47 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Clientes principales */}
+      {clientesTop.length > 0 && (
+        <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle>Top Clientes por Facturación</CardTitle>
+              <CardDescription>
+                Basado en comprobantes importados desde NubeFact
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
+                {clientesTop.map((cliente) => (
+                  <div
+                    key={`${cliente.cliente_tipo_doc}-${cliente.cliente_num_doc}`}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2"
+                  >
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-none truncate">
+                        {cliente.cliente_razon_social}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {cliente.cliente_tipo_doc} {cliente.cliente_num_doc}
+                      </p>
+                    </div>
+                    <div className="text-left sm:text-right space-y-1 shrink-0">
+                      <p className="text-sm font-medium">
+                        S/ {parseFloat(cliente.total?.toString() || '0').toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {cliente.cantidad} comprobante(s)
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Tercera fila - Empresas */}
       {empresas.length > 0 && (

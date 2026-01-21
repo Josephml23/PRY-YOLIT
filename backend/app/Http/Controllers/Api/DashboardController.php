@@ -7,6 +7,7 @@ use App\Models\Comprobante;
 use App\Models\Oportunidad;
 use App\Models\Empresa;
 use App\Models\Alerta;
+use App\Models\Entidad;
 use App\Services\SlaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +41,9 @@ class DashboardController extends Controller
         // Alertas
         $alertas = $this->estadisticasAlertas();
 
+        // Clientes (a partir de comprobantes reales)
+        $clientes = $this->estadisticasClientes($empresaId);
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -47,6 +51,7 @@ class DashboardController extends Controller
                 'oportunidades' => $oportunidades,
                 'sla' => $sla,
                 'alertas' => $alertas,
+                'clientes' => $clientes,
             ]
         ]);
     }
@@ -121,6 +126,30 @@ class DashboardController extends Controller
                 ->groupBy('prioridad')
                 ->get()
                 ->pluck('cantidad', 'prioridad'),
+        ];
+    }
+
+    /**
+     * Estadísticas de clientes basadas en comprobantes y entidades
+     */
+    private function estadisticasClientes($empresaId = null): array
+    {
+        $query = Comprobante::query();
+
+        if ($empresaId) {
+            $query->where('empresa_id', $empresaId);
+        }
+
+        $clientes = $query
+            ->selectRaw('cliente_tipo_doc, cliente_num_doc, cliente_razon_social, COUNT(*) as cantidad, SUM(mto_imp_venta) as total')
+            ->groupBy('cliente_tipo_doc', 'cliente_num_doc', 'cliente_razon_social')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        return [
+            'total_clientes' => $clientes->count(),
+            'top_clientes' => $clientes,
         ];
     }
 

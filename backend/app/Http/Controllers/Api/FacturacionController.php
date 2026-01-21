@@ -587,11 +587,10 @@ class FacturacionController extends Controller
             if ($request->has('fecha_hasta')) {
                 $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
             }
-
             $comprobantes = $query->orderBy('fecha_emision', 'desc')->get();
 
             // Crear contenido CSV compatible con formato NubeFact (separador ;)
-            $csvContent = "FECHA EMISIÓN;FECHA VENCIMIENTO;TIPO;SERIE;NÚMERO;DOC ENTIDAD;RUC;DENOMINACIÓN;MONEDA;GRAVADA;EXONERADA;INAFECTA;IGV;TOTAL;TOTAL GRATUITA;PAGADO;ENVIADO AL CLIENTE;ANULADO;ESTADO SUNAT\n";
+            $csvContent = "FECHA EMISION;FECHA VENCIMIENTO;TIPO;SERIE;NUMERO;DOC ENTIDAD;RUC;DENOMINACION;MONEDA;GRAVADA;EXONERADA;INAFECTA;IGV;TOTAL;TOTAL GRATUITA;PAGADO;ENVIADO AL CLIENTE;ANULADO;ESTADO SUNAT\n";
 
             foreach ($comprobantes as $c) {
                 $tipoDesc = match($c->tipo_doc) {
@@ -640,6 +639,105 @@ class FacturacionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al exportar: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Exportar items de comprobantes a CSV
+     */
+    public function exportarItems(Request $request)
+    {
+        try {
+            $query = Comprobante::with(['items']);
+
+            // Aplicar los mismos filtros que en index()
+            if ($request->has('empresa_id')) {
+                $query->where('empresa_id', $request->empresa_id);
+            }
+
+            if ($request->has('tipo_doc')) {
+                $query->where('tipo_doc', $request->tipo_doc);
+            }
+
+            if ($request->has('estado_sunat')) {
+                $query->where('estado_sunat', $request->estado_sunat);
+            }
+
+            if ($request->has('numero')) {
+                $numero = $request->numero;
+                $query->where(function ($q) use ($numero) {
+                    $q->where('serie', 'like', "%{$numero}%")
+                        ->orWhere('correlativo', 'like', "%{$numero}%")
+                        ->orWhere('cliente_razon_social', 'like', "%{$numero}%");
+                });
+            }
+
+            if ($request->has('fecha_desde')) {
+                $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
+            }
+
+            if ($request->has('fecha_hasta')) {
+                $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+            }
+
+            $comprobantes = $query
+                ->orderBy('fecha_emision', 'desc')
+                ->get();
+
+            // Cabeceras CSV para items
+            $csvContent = "FECHA EMISION;TIPO;SERIE;NUMERO;ITEM;CODIGO;DESCRIPCION;UNIDAD;CANTIDAD;VALOR UNITARIO;PRECIO UNITARIO;SUBTOTAL;IGV;TOTAL;DOC CLIENTE;DENOMINACION CLIENTE\n";
+
+            foreach ($comprobantes as $c) {
+                if (!$c->items || $c->items->isEmpty()) {
+                    continue;
+                }
+
+                $tipoDesc = match ($c->tipo_doc) {
+                    '01' => 'FACTURA',
+                    '03' => 'BOLETA',
+                    '07' => 'NOTA CREDITO',
+                    '08' => 'NOTA DEBITO',
+                    default => $c->tipo_doc,
+                };
+
+                foreach ($c->items as $item) {
+                    $descripcion = $item->descripcion ?? '';
+                    // Normalizar saltos de línea y comillas en la descripción
+                    $descripcion = str_replace(["\r", "\n"], ' ', $descripcion);
+                    $descripcion = str_replace('"', '""', $descripcion);
+
+                    $totalItem = (float)($item->mto_valor_venta ?? 0) + (float)($item->total_impuestos ?? 0);
+
+                    $csvContent .= sprintf(
+                        "%s;%s;%s;%s;%s;%s;\"%s\";%s;%s;%s;%s;%s;%s;%s;%s;\"%s\"\n",
+                        optional($c->fecha_emision)?->format('d/m/Y'),
+                        $tipoDesc,
+                        $c->serie,
+                        $c->correlativo,
+                        $item->item,
+                        $item->codigo_producto,
+                        $descripcion,
+                        $item->unidad,
+                        number_format((float)$item->cantidad, 3, '.', ''),
+                        number_format((float)$item->mto_valor_unitario, 6, '.', ''),
+                        number_format((float)$item->mto_precio_unitario, 6, '.', ''),
+                        number_format((float)$item->mto_valor_venta, 2, '.', ''),
+                        number_format((float)$item->igv, 2, '.', ''),
+                        number_format($totalItem, 2, '.', ''),
+                        $c->cliente_num_doc,
+                        $c->cliente_razon_social,
+                    );
+                }
+            }
+
+            return response($csvContent)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', 'attachment; filename="items_comprobantes.csv"');
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

@@ -6,20 +6,22 @@ use Illuminate\Console\Command;
 use App\Models\Comprobante;
 use App\Models\ComprobanteItem;
 use App\Models\Empresa;
+use App\Models\Entidad;
 use Carbon\Carbon;
 
 class ImportNubefactCsv extends Command
 {
-    protected $signature = 'import:nubefact-csv {comprobantes_file} {items_file}';
-    protected $description = 'Importa datos de CSV de NubeFact (comprobantes e items)';
+    protected $signature = 'import:nubefact-csv {comprobantes_file} {items_file} {entidades_file?}';
+    protected $description = 'Importa datos de CSV de NubeFact (comprobantes, items y entidades)';
 
     public function handle()
     {
         $comprobantesFile = $this->argument('comprobantes_file');
         $itemsFile = $this->argument('items_file');
+        $entidadesFile = $this->argument('entidades_file');
 
         if (!file_exists($comprobantesFile) || !file_exists($itemsFile)) {
-            $this->error('Los archivos CSV no existen.');
+            $this->error('Los archivos CSV de comprobantes o items no existen.');
             return 1;
         }
 
@@ -43,9 +45,22 @@ class ImportNubefactCsv extends Command
         $this->info("Importando items desde: {$itemsFile}");
         $itemsImportados = $this->importarItems($itemsFile);
 
+        $entidadesImportadas = 0;
+        if ($entidadesFile) {
+            if (!file_exists($entidadesFile)) {
+                $this->warn("El archivo de ENTIDADES no existe: {$entidadesFile}. Se omite su importación.");
+            } else {
+                $this->info("Importando entidades desde: {$entidadesFile}");
+                $entidadesImportadas = $this->importarEntidades($entidadesFile, $empresa);
+            }
+        }
+
         $this->info("Importación completada:");
         $this->info("- Comprobantes: {$comprobantesImportados}");
         $this->info("- Items: {$itemsImportados}");
+        if ($entidadesFile) {
+            $this->info("- Entidades: {$entidadesImportadas}");
+        }
 
         return 0;
     }
@@ -134,8 +149,8 @@ class ImportNubefactCsv extends Command
                     'mto_oper_inafectas' => isset($headerMap['INAFECTA']) ? (float)($row[$headerMap['INAFECTA']] ?: 0) : 0,
                     'mto_base_imp' => isset($headerMap['GRAVADA']) ? (float)($row[$headerMap['GRAVADA']] ?: 0) : 0,
                     'mto_igv' => isset($headerMap['IGV']) ? (float)($row[$headerMap['IGV']] ?: 0) : 0,
-                    'mto_total' => isset($headerMap['TOTAL']) ? (float)($row[$headerMap['TOTAL']] ?: 0) : 0,
-                    'mto_total_gratuitas' => isset($headerMap['TOTAL_GRATUITA']) ? (float)($row[$headerMap['TOTAL_GRATUITA']] ?: 0) : 0,
+                    'mto_imp_venta' => isset($headerMap['TOTAL']) ? (float)($row[$headerMap['TOTAL']] ?: 0) : 0,
+                    'mto_oper_gratuitas' => isset($headerMap['TOTAL_GRATUITA']) ? (float)($row[$headerMap['TOTAL_GRATUITA']] ?: 0) : 0,
                     'pagado' => isset($headerMap['PAGADO']) ? (($row[$headerMap['PAGADO']] ?? '') === 'SI') : false,
                     'anulado' => isset($headerMap['ANULADO']) ? (($row[$headerMap['ANULADO']] ?? '') === 'SI') : false,
                     'enviado_cliente' => false,
@@ -217,6 +232,87 @@ class ImportNubefactCsv extends Command
                 
             } catch (\Exception $e) {
                 $this->error("Error procesando item {$data['DESCRIPCIÓN']}: " . $e->getMessage());
+                continue;
+            }
+        }
+
+        fclose($handle);
+        return $count;
+    }
+
+    private function importarEntidades($file, Empresa $empresa)
+    {
+        $handle = fopen($file, 'r');
+        $header = fgetcsv($handle, 0, ';'); // Solo para saltar la primera fila
+
+        if (!$header) {
+            $this->warn('El archivo de ENTIDADES está vacío.');
+            fclose($handle);
+            return 0;
+        }
+
+        $count = 0;
+
+        while (($row = fgetcsv($handle, 0, ';')) !== false) {
+            if (empty($row)) {
+                continue;
+            }
+
+            // El archivo de ENTIDADES tiene un orden fijo de columnas
+            $row = array_pad($row, 12, null);
+
+            $tipoDoc = trim($row[0] ?? '');
+            $numDoc = trim($row[1] ?? '');
+            $denominacion = trim($row[2] ?? '');
+            $razonComercial = $row[3] ?? null;
+            $direccion = $row[4] ?? null;
+            $email = $row[5] ?? null;
+            $email2 = $row[6] ?? null;
+            $email3 = $row[7] ?? null;
+            $telefono = $row[8] ?? null;
+            $codigoCliente = $row[9] ?? null;
+            $licencia = $row[10] ?? null;
+            $placa = $row[11] ?? null;
+
+            if ($tipoDoc === '' && $numDoc === '' && $denominacion === '') {
+                continue;
+            }
+
+            // Saltar filas de leyenda/cabecera que describen los tipos de documento
+            // (por ejemplo: "6 = RUC", "1 = DNI", "- = VARIOS ...").
+            if (strlen($tipoDoc) !== 1 || !preg_match('/^[0-9A-Z\-]$/', $tipoDoc)) {
+                continue;
+            }
+
+            try {
+                Entidad::updateOrCreate(
+                    [
+                        'empresa_id' => $empresa->id,
+                        'tipo_doc' => $tipoDoc,
+                        'num_doc' => $numDoc,
+                    ],
+                    [
+                        'denominacion' => $denominacion ?: 'Sin denominación',
+                        'razon_comercial' => $razonComercial ?: null,
+                        'direccion' => $direccion ?: null,
+                        'email' => $email ?: null,
+                        'email_2' => $email2 ?: null,
+                        'email_3' => $email3 ?: null,
+                        'telefono' => $telefono ?: null,
+                        'codigo_cliente' => $codigoCliente ?: null,
+                        'licencia_conducir' => $licencia ?: null,
+                        'placa_vehiculo' => $placa ?: null,
+                        'es_cliente' => true,
+                        'es_proveedor' => false,
+                    ]
+                );
+
+                $count++;
+                if ($count % 20 === 0) {
+                    $this->info("Procesadas {$count} entidades...");
+                }
+            } catch (\Exception $e) {
+                $this->error('Error procesando entidad ' . $denominacion . ': ' . $e->getMessage());
                 continue;
             }
         }

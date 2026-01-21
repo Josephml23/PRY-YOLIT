@@ -24,6 +24,7 @@ Route::prefix('facturacion')->group(function () {
     // Listar y buscar comprobantes
     Route::get('/comprobantes', [FacturacionController::class, 'index']);
     Route::get('/comprobantes/export', [FacturacionController::class, 'exportarExcel']);
+    Route::get('/items/export', [FacturacionController::class, 'exportarItems']);
     Route::get('/comprobantes/{id}', [FacturacionController::class, 'show']);
     
     // Emitir comprobantes
