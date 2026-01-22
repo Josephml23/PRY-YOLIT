@@ -356,13 +356,13 @@ export default function Dashboard() {
       {/* Filtros */}
       <Card className="border-dashed bg-muted/40">
         <CardContent className="pt-4 pb-3">
-          <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 items-end">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5 items-end">
             <div>
               <Label htmlFor="fecha-desde" className="text-xs font-medium text-muted-foreground">Fecha desde</Label>
-              <div className="mt-1 flex gap-2">
+              <div className="mt-1 flex flex-wrap gap-2">
                 <select
                   aria-label="Día desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-16"
                   value={desdeDia}
                   onChange={(e) => setDesdeDia(e.target.value)}
                 >
@@ -373,7 +373,7 @@ export default function Dashboard() {
                 </select>
                 <select
                   aria-label="Mes desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs flex-1"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:flex-1"
                   value={desdeMes}
                   onChange={(e) => setDesdeMes(e.target.value)}
                 >
@@ -384,7 +384,7 @@ export default function Dashboard() {
                 </select>
                 <select
                   aria-label="Año desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-20"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-20"
                   value={desdeAnio}
                   onChange={(e) => setDesdeAnio(e.target.value)}
                 >
@@ -397,10 +397,10 @@ export default function Dashboard() {
             </div>
             <div>
               <Label htmlFor="fecha-hasta" className="text-xs font-medium text-muted-foreground">Fecha hasta</Label>
-              <div className="mt-1 flex gap-2">
+              <div className="mt-1 flex flex-wrap gap-2">
                 <select
                   aria-label="Día hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-16"
                   value={hastaDia}
                   onChange={(e) => setHastaDia(e.target.value)}
                 >
@@ -411,7 +411,7 @@ export default function Dashboard() {
                 </select>
                 <select
                   aria-label="Mes hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs flex-1"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:flex-1"
                   value={hastaMes}
                   onChange={(e) => setHastaMes(e.target.value)}
                 >
@@ -422,7 +422,7 @@ export default function Dashboard() {
                 </select>
                 <select
                   aria-label="Año hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-20"
+                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-20"
                   value={hastaAnio}
                   onChange={(e) => setHastaAnio(e.target.value)}
                 >
@@ -472,12 +472,12 @@ export default function Dashboard() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-2 md:justify-end">
+            <div className="flex gap-2 md:justify-end md:self-end mt-2 md:mt-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mt-4 h-9 text-xs"
+                className="h-9 text-xs"
                 onClick={limpiarFiltros}
               >
                 Limpiar filtros
