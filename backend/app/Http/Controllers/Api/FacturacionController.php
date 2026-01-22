@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 class FacturacionController extends Controller
 {
@@ -331,17 +332,31 @@ class FacturacionController extends Controller
     {
         $comprobante = Comprobante::findOrFail($id);
 
-        if (!$comprobante->xml_path || !Storage::disk('public')->exists($comprobante->xml_path)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Archivo XML no disponible.',
-            ], 404);
+        // Primero intentamos servir el archivo local si existe
+        if ($comprobante->xml_path && Storage::disk('public')->exists($comprobante->xml_path)) {
+            $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.xml';
+            $path = Storage::disk('public')->path($comprobante->xml_path);
+
+            return response()->download($path, $fileName);
         }
 
-        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.xml';
-        $path = Storage::disk('public')->path($comprobante->xml_path);
+        // Si no hay archivo local, usamos el enlace de NubeFact si está disponible
+        if ($comprobante->nubefact_xml_url) {
+            $response = Http::get($comprobante->nubefact_xml_url);
 
-        return response()->download($path, $fileName);
+            if ($response->successful()) {
+                $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.xml';
+
+                return response($response->body(), 200)
+                    ->header('Content-Type', $response->header('Content-Type') ?: 'application/xml')
+                    ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Archivo XML no disponible.',
+        ], 404);
     }
 
     /**
@@ -351,17 +366,31 @@ class FacturacionController extends Controller
     {
         $comprobante = Comprobante::findOrFail($id);
 
-        if (!$comprobante->cdr_path || !Storage::disk('public')->exists($comprobante->cdr_path)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Archivo CDR no disponible.',
-            ], 404);
+        // Primero intentamos servir el archivo local si existe
+        if ($comprobante->cdr_path && Storage::disk('public')->exists($comprobante->cdr_path)) {
+            $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.zip';
+            $path = Storage::disk('public')->path($comprobante->cdr_path);
+
+            return response()->download($path, $fileName);
         }
 
-        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.zip';
-        $path = Storage::disk('public')->path($comprobante->cdr_path);
+        // Si no hay archivo local, usamos el enlace de NubeFact si está disponible
+        if ($comprobante->nubefact_cdr_url) {
+            $response = Http::get($comprobante->nubefact_cdr_url);
 
-        return response()->download($path, $fileName);
+            if ($response->successful()) {
+                $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.zip';
+
+                return response($response->body(), 200)
+                    ->header('Content-Type', $response->header('Content-Type') ?: 'application/zip')
+                    ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Archivo CDR no disponible.',
+        ], 404);
     }
 
     /**
@@ -371,17 +400,31 @@ class FacturacionController extends Controller
     {
         $comprobante = Comprobante::findOrFail($id);
 
-        if (!$comprobante->pdf_path || !Storage::disk('public')->exists($comprobante->pdf_path)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Archivo PDF no disponible.',
-            ], 404);
+        // Primero intentamos servir el archivo local si existe
+        if ($comprobante->pdf_path && Storage::disk('public')->exists($comprobante->pdf_path)) {
+            $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
+            $path = Storage::disk('public')->path($comprobante->pdf_path);
+
+            return response()->download($path, $fileName);
         }
 
-        $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
-        $path = Storage::disk('public')->path($comprobante->pdf_path);
+        // Si no hay archivo local, usamos el enlace de NubeFact si está disponible
+        if ($comprobante->nubefact_pdf_url) {
+            $response = Http::get($comprobante->nubefact_pdf_url);
 
-        return response()->download($path, $fileName);
+            if ($response->successful()) {
+                $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
+
+                return response($response->body(), 200)
+                    ->header('Content-Type', $response->header('Content-Type') ?: 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Archivo PDF no disponible.',
+        ], 404);
     }
 
     /**
