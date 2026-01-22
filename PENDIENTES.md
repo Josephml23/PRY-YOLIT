@@ -1,13 +1,35 @@
 # 📋 PENDIENTES - Plataforma Operativa y Comercial con Facturación Electrónica
 
-**Fecha de actualización:** 21 de enero de 2026  
-**Estado Backend:** ✅ 100% Completado  
-**Estado Frontend:** 🟢 90% - MVP casi completo  
-**MVP Operativo:** 🟢 80% - Faltan solo extras (Excel, histórico, notificaciones)
+**Fecha de actualización:** 22 de enero de 2026  
+**Estado Backend:** ✅ Completo para el alcance del MVP  
+**Estado Frontend:** 🟢 Muy avanzado – faltan solo extras y refinamientos  
+**MVP Operativo:** 🟢 En uso inicial – restan tareas de exportación, histórico y notificaciones
 
 ---
 
 ## 🎯 ESTADO DEL MVP - RESUMEN
+
+### Cobertura vs Requerimientos MVP
+
+- **2.1 Facturación electrónica (core tributario)**  
+  ✅ Emisión de facturas y boletas vía NubeFact, listado con filtros, estado SUNAT y descargas PDF/XML/CDR.  
+  🟡 Pendiente revisar/completar flujos de notas de crédito/débito y GRE contra los catálogos SUNAT y casos reales.
+- **2.2 Multiempresa (multi-RUC)**  
+  ✅ Gestión de empresas emisoras (backend + pantalla Empresas), selección de empresa emisora en facturación y uso de sus credenciales.
+- **2.3 Oportunidades**  
+  ✅ Modelo y API listos, vistas de listado/detalle operativas e integración con documentos y pagos según MVP.
+- **2.4 Documentos y adjuntos**  
+  ✅ Almacenamiento en MinIO, carga/descarga desde frontend y asociación a oportunidades.  
+  🟡 Pendiente refinar filtros globales y exportaciones.
+- **2.5 Pagos (MVP)**  
+  ✅ Registro manual de pagos, asociación a oportunidades/comprobantes y vistas de listado.  
+  🟡 Pendiente exportaciones y algunos KPIs adicionales en dashboard.
+- **2.6 SLA y alertas**  
+  ✅ Cálculo automático de vencimientos y visualización básica en dashboard/listados.  
+  🟡 Notificaciones externas (email/WhatsApp) quedan como post-MVP.
+- **2.7 Dashboards (web y TV)**  
+  ✅ Dashboards web y TV funcionando con datos reales (ventas, oportunidades, alertas).  
+  🟡 Ajustes finos de visualización y nuevos KPIs podrán añadirse en fases posteriores.
 
 ### ✅ MÓDULO 1: FACTURACIÓN ELECTRÓNICA (100%)
 **Backend:**
