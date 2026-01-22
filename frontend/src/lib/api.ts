@@ -367,12 +367,12 @@ export const api = {
   // Clientes (entidades)
   clientes: {
     listar: (params?: Record<string, unknown>) =>
-      apiClient.get<PaginatedResponse<any>>('/v1/clientes', { params }),
-    obtener: (id: number) => apiClient.get<ApiResponse<any>>(`/v1/clientes/${id}`),
+      apiClient.get<PaginatedResponse<unknown>>('/v1/clientes', { params }),
+    obtener: (id: number) => apiClient.get<ApiResponse<unknown>>(`/v1/clientes/${id}`),
     crear: (data: unknown) =>
-      apiClient.post<ApiResponse<any>>('/v1/clientes', data),
+      apiClient.post<ApiResponse<unknown>>('/v1/clientes', data),
     actualizar: (id: number, data: unknown) =>
-      apiClient.put<ApiResponse<any>>(`/v1/clientes/${id}`, data),
+      apiClient.put<ApiResponse<unknown>>(`/v1/clientes/${id}`, data),
     eliminar: (id: number) =>
       apiClient.delete<ApiResponse<unknown>>(`/v1/clientes/${id}`),
   },
@@ -388,3 +388,5 @@ export const api = {
     eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/series/${id}`),
   },
 };
+
+export default api;
