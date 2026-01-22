@@ -400,12 +400,13 @@ class FacturacionController extends Controller
     {
         $comprobante = Comprobante::findOrFail($id);
 
-        // Primero intentamos servir el archivo local si existe
+        // Primero intentamos servir el archivo local si existe, en modo inline para permitir vista previa
         if ($comprobante->pdf_path && Storage::disk('public')->exists($comprobante->pdf_path)) {
-            $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
             $path = Storage::disk('public')->path($comprobante->pdf_path);
 
-            return response()->download($path, $fileName);
+            return response()->file($path, [
+                'Content-Type' => 'application/pdf',
+            ]);
         }
 
         // Si no hay archivo local, usamos el enlace de NubeFact si está disponible
@@ -413,11 +414,9 @@ class FacturacionController extends Controller
             $response = Http::get($comprobante->nubefact_pdf_url);
 
             if ($response->successful()) {
-                $fileName = ($comprobante->serie . '-' . $comprobante->correlativo) . '.pdf';
-
                 return response($response->body(), 200)
                     ->header('Content-Type', $response->header('Content-Type') ?: 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+                    ->header('Content-Disposition', 'inline');
             }
         }
 

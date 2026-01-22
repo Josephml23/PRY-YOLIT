@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Send, FileText, FileDown, Download } from 'lucide-react';
+import { Plus, Trash2, Send, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api, apiBaseUrl, type Empresa, type EmisionFacturaPayload, type ComprobanteEmitido } from '@/lib/api';
+import apiClient from '@/services/api';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface ItemForm {
   descripcion: string;
@@ -45,6 +48,8 @@ export default function Facturacion() {
   }]);
 
   const [enviando, setEnviando] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // URL blob: para vista previa
+  const [previewPdfId, setPreviewPdfId] = useState<number | null>(null);
 
   useEffect(() => {
     const cargarEmpresas = async () => {
@@ -241,6 +246,30 @@ export default function Facturacion() {
     window.open(url, '_blank');
   };
 
+  const abrirVistaPreviaPdf = async (id: number) => {
+    setPreviewPdfId(id);
+
+    // Descargar el PDF como blob y generar una URL local para evitar problemas de cross-origin
+    try {
+      const response = await apiClient.get(`/facturacion/descargar/pdf/${id}`, {
+        responseType: 'blob',
+      });
+
+      const blobUrl = URL.createObjectURL(response.data);
+      // Liberar URL anterior si existe
+      if (previewPdfUrl) {
+        URL.revokeObjectURL(previewPdfUrl);
+      }
+      setPreviewPdfUrl(blobUrl);
+    } catch {
+      toast({
+        title: 'No se pudo cargar el PDF',
+        description: 'Ocurrió un error al obtener el PDF desde el servidor.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const exportarExcel = () => {
     // Construir URL con los filtros actuales
     const params = new URLSearchParams();
@@ -263,10 +292,17 @@ export default function Facturacion() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Emisión de Comprobantes</h1>
         <p className="text-muted-foreground">
-          Emite facturas y boletas electrónicas utilizando las empresas configuradas.
+          Emite y gestiona facturas y boletas electrónicas utilizando las empresas configuradas.
         </p>
       </div>
 
+      <Tabs defaultValue="emitir" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="emitir">Emitir comprobante</TabsTrigger>
+          <TabsTrigger value="emitidos">Comprobantes emitidos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="emitir" className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Datos del comprobante</CardTitle>
@@ -479,7 +515,9 @@ export default function Facturacion() {
           </form>
         </CardContent>
       </Card>
+        </TabsContent>
 
+        <TabsContent value="emitidos" className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Comprobantes emitidos</CardTitle>
@@ -583,7 +621,10 @@ export default function Facturacion() {
                     <th className="py-2 pr-2 text-center">Anulado?</th>
                     <th className="py-2 pr-2 text-center">Enviado?</th>
                     <th className="py-2 pr-4">Estado SUNAT</th>
-                    <th className="py-2 pr-0 text-right">Archivos</th>
+                    <th className="py-2 px-2 text-center">IMPRIMIR</th>
+                    <th className="py-2 px-2 text-center">PDF</th>
+                    <th className="py-2 px-2 text-center">XML</th>
+                    <th className="py-2 px-2 text-center">CDR</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -655,39 +696,49 @@ export default function Facturacion() {
                           {c.estado_sunat}
                         </span>
                       </td>
-                      <td className="py-2 pr-0 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            disabled={!c.xml_path}
-                            onClick={() => abrirDescarga(c.id, 'xml')}
-                            title="Descargar XML"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            disabled={!c.cdr_path}
-                            onClick={() => abrirDescarga(c.id, 'cdr')}
-                            title="Descargar CDR"
-                          >
-                            <FileDown className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            disabled={!c.pdf_path}
-                            onClick={() => abrirDescarga(c.id, 'pdf')}
-                            title="Descargar PDF"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <td className="py-2 px-2 text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full px-3 py-1 text-[11px] font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+                          disabled={!c.pdf_path && !c.nubefact_pdf_url}
+                          onClick={() => abrirVistaPreviaPdf(c.id)}
+                        >
+                          IMPRIMIR
+                        </Button>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full px-3 py-1 text-[11px] font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                          disabled={!c.pdf_path && !c.nubefact_pdf_url}
+                          onClick={() => abrirVistaPreviaPdf(c.id)}
+                        >
+                          PDF
+                        </Button>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full px-3 py-1 text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
+                          disabled={!c.xml_path && !c.nubefact_xml_url}
+                          onClick={() => abrirDescarga(c.id, 'xml')}
+                        >
+                          XML
+                        </Button>
+                      </td>
+                      <td className="py-2 px-2 text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full px-3 py-1 text-[11px] font-semibold bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40"
+                          disabled={!c.cdr_path && !c.nubefact_cdr_url}
+                          onClick={() => abrirDescarga(c.id, 'cdr')}
+                        >
+                          CDR
+                        </Button>
                       </td>
                     </tr>
                     );
@@ -695,7 +746,7 @@ export default function Facturacion() {
                     if (comprobanteExpandido === c.id) {
                       filas.push(
                       <tr key={`${c.id}-detalle`}>
-                        <td colSpan={11} className="py-4 px-4 bg-muted/20 border-b">
+                        <td colSpan={14} className="py-4 px-4 bg-muted/20 border-b">
                           <div className="space-y-3">
                             <h4 className="font-medium text-sm">Items del comprobante:</h4>
                             {c.items && c.items.length > 0 ? (
@@ -784,6 +835,72 @@ export default function Facturacion() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={!!previewPdfUrl} onOpenChange={(open) => { if (!open) { if (previewPdfUrl) { URL.revokeObjectURL(previewPdfUrl); } setPreviewPdfUrl(null); setPreviewPdfId(null); } }}>
+        <DialogContent className="w-full h-[90vh] flex flex-col">
+          <DialogHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <DialogTitle className="text-base font-semibold">
+                Vista previa del comprobante (PDF)
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Vista previa ampliada del comprobante en formato PDF con opciones para imprimir, abrir en una nueva pestaña o cerrar.
+              </DialogDescription>
+              <div className="flex flex-wrap gap-2">
+                {previewPdfUrl && previewPdfId !== null && (
+                  <>
+                    <Button
+                      type="button"
+                      className="rounded-full px-4 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        const iframe = document.getElementById('pdf-preview-iframe') as HTMLIFrameElement | null;
+                        if (iframe && iframe.contentWindow) {
+                          iframe.contentWindow.focus();
+                          iframe.contentWindow.print();
+                        }
+                      }}
+                    >
+                      IMPRIMIR
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full px-4"
+                      onClick={() => {
+                        if (previewPdfUrl) {
+                          window.open(previewPdfUrl, '_blank');
+                        }
+                      }}
+                    >
+                      Abrir en navegador
+                    </Button>
+                  </>
+                )}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="rounded-full px-4"
+                  onClick={() => setPreviewPdfUrl(null)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 border rounded-md overflow-hidden mt-2">
+            {previewPdfUrl && (
+              <iframe
+                src={previewPdfUrl}
+                title="Vista previa PDF"
+                id="pdf-preview-iframe"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

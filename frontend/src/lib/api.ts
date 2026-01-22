@@ -98,6 +98,11 @@ export interface ComprobanteEmitido {
   xml_path?: string;
   cdr_path?: string;
   pdf_path?: string;
+  // Enlaces proporcionados por NubeFact (sin depender de archivos locales)
+  nubefact_enlace?: string;
+  nubefact_pdf_url?: string;
+  nubefact_xml_url?: string;
+  nubefact_cdr_url?: string;
   fecha_emision: string;
   pagado?: boolean; // Si está pagado
   anulado?: boolean; // Si está anulado
