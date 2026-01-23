@@ -1,9 +1,9 @@
 # 📋 PENDIENTES - Plataforma Operativa y Comercial con Facturación Electrónica
 
-**Fecha de actualización:** 22 de enero de 2026  
+**Fecha de actualización:** 23 de enero de 2026  
 **Estado Backend:** ✅ Completo para el alcance del MVP  
 **Estado Frontend:** 🟢 Muy avanzado – faltan solo extras y refinamientos  
-**MVP Operativo:** 🟢 En uso inicial – restan tareas de exportación, histórico y notificaciones
+**MVP Operativo:** 🟢 En uso inicial – restan módulos de productos, guías y notificaciones
 
 ---
 
@@ -147,28 +147,45 @@
 
 ## 📌 PENDIENTES INMEDIATOS (SOBRE EL MVP ACTUAL)
 
-### 1️⃣ Exportación a Excel / CSV
+### 1️⃣ Módulo de Productos
+- [ ] **Backend**: Modelo Product/Producto con campos: código, descripción, unidad_medida, precio_unitario, tipo_igv, stock (opcional).
+- [ ] **Backend**: ProductController con CRUD completo (API `/api/v1/productos`).
+- [ ] **Frontend**: Vista de gestión de productos (listado, crear, editar, eliminar).
+- [ ] **Frontend**: Sincronización con formulario de comprobantes (búsqueda y selección de productos desde catálogo).
+- [ ] **Frontend**: Productos destacados/favoritos para acceso rápido en emisión.
+- [ ] Importación/exportación de catálogo de productos (Excel/CSV).
+
+### 2️⃣ Guías de Remisión (GRE)
+- [ ] **Backend**: Completar flujo de emisión GRE con todos los campos SUNAT.
+- [ ] **Backend**: Validaciones específicas para GRE (motivo traslado, datos transportista, ubigeos).
+- [ ] **Frontend**: Formulario completo de emisión de GRE sincronizado con comprobantes.
+- [ ] **Frontend**: Listado de guías emitidas con filtros y búsqueda.
+- [ ] **Frontend**: Descarga de PDF/XML de guías desde NubeFact.
+- [ ] Relación automática GRE ↔ Comprobantes de venta.
+
+### 3️⃣ Exportación a Excel / CSV
 - [x] Exportar lista de **comprobantes emitidos** a Excel/CSV (con filtros aplicados).
 - [ ] Exportar lista de **documentos** a Excel/CSV.
 - [ ] Exportar lista de **pagos** a Excel/CSV.
+- [ ] Exportar catálogo de **productos** a Excel/CSV.
 - [ ] Definir formato estándar (cabeceras y tipos de dato) alineado a contabilidad.
 
-### 2️⃣ Histórico desde NubeFact
+### 4️⃣ Histórico desde NubeFact
 - [ ] Definir estrategia para **importar comprobantes históricos** existentes solo en NubeFact.
 - [ ] Comando/endpoint que, dado un rango de fechas / tipo / serie, cree registros locales de solo lectura.
 - [ ] Marcar claramente qué comprobantes vienen como histórico vs emitidos desde la plataforma.
 
-### 3️⃣ Entorno de pruebas NubeFact
+### 5️⃣ Entorno de pruebas NubeFact
 - [ ] Solicitar/definir **credenciales demo** de NubeFact para pruebas sin impacto en SUNAT.
 - [ ] Permitir elegir modo `demo` / `producción` por empresa.
 - [ ] Documentar buenas prácticas para pruebas de emisión.
 
-### 4️⃣ Notificaciones y correos (Post-MVP ligero)
+### 6️⃣ Notificaciones y correos (Post-MVP ligero)
 - [ ] Enviar PDF + XML por email al cliente al emitir comprobante (opcional).
 - [ ] Plantilla básica de correo con datos del comprobante.
 - [ ] Registro de envíos en la base de datos.
 
-### 5️⃣ Testing y endurecimiento
+### 7️⃣ Testing y endurecimiento
 - [ ] Tests E2E básicos (backend + frontend) para el flujo completo de emisión.
 - [ ] Verificación de cargas y descargas de archivos (MinIO + NubeFact).
 - [ ] Revisión de validaciones front/back para evitar emisiones inconsistentes.
@@ -189,6 +206,31 @@
 1. Laravel y frontend se ejecutan localmente (fuera de Docker) en desarrollo.  
 2. Para producción, considerar Nginx + PHP-FPM en contenedores dedicados.  
 3. Mantener la configuración de `.env` alineada con los puertos y credenciales de Docker.
+
+---
+
+## 📝 ACTUALIZACIONES RECIENTES (23/01/2026)
+
+### ✅ Corrección de sincronización API de comprobantes
+- ✅ Modificado `NubefactController::emitirComprobante` para aceptar datos completos del frontend
+- ✅ Backend ahora crea comprobante en BD antes de emitir a NubeFact (flujo completo)
+- ✅ Corregidas rutas de API en frontend (`/facturacion/comprobantes`, `/facturacion/descargar/*`)
+- ✅ Implementado soporte para transacciones DB con rollback automático en errores
+- ✅ Mejorado manejo de errores y logging detallado
+
+### ✅ Validación contra Manual Oficial NubeFact
+- ✅ Corregido mapeo de campos: `codigo_tipo_moneda` (PEN/USD/EUR)
+- ✅ Corregido campo IGV: `mto_igv` en lugar de `suma_igv`
+- ✅ Corregido tipo de afectación: `tip_afe_igv` (10=Gravado, 20=Exonerado, 30=Inafecto)
+- ✅ Agregado campo `tipo_de_cambio` al mapper
+- ✅ Agregado campo `descuento` de items al mapper
+- ✅ Todos los campos ahora coinciden con estructura de BD y manual NubeFact
+- ✅ Formato de fechas DD-MM-YYYY según especificación
+- ✅ Validación de estructura JSON enviada a NubeFact API
+
+### ✅ Corrección de bugs frontend
+- ✅ Fixed error `toFixed()` en ListaComprobantes convirtiendo `mto_imp_venta` a Number
+- ✅ Corregido loop infinito de re-renders en EmitirComprobante usando `useMemo`
 
 ---
 
