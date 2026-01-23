@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -333,7 +333,8 @@ export default function EmitirComprobante() {
     setItemEditandoIndex(null);
   };
 
-  const calcularItem = (index: number) => {
+  // Calcular item sin side effects (para lecturas)
+  const calcularItemSolo = (index: number) => {
     const item = form.getValues(`items.${index}`);
     const { cantidad, valor_unitario, descuento = 0 } = item;
 
@@ -343,9 +344,14 @@ export default function EmitirComprobante() {
     const total = subtotal + igv;
     const precio_unitario = cantidad > 0 ? (subtotal + igv) / cantidad : 0;
 
-    form.setValue(`items.${index}.precio_unitario`, parseFloat(precio_unitario.toFixed(2)));
+    return { subtotal, igv, total, precio_unitario };
+  };
 
-    return { subtotal, igv, total };
+  // Calcular y actualizar item (para onChange)
+  const calcularItem = (index: number) => {
+    const calc = calcularItemSolo(index);
+    form.setValue(`items.${index}.precio_unitario`, parseFloat(calc.precio_unitario.toFixed(2)));
+    return calc;
   };
 
   const calcularTotales = () => {
@@ -355,7 +361,7 @@ export default function EmitirComprobante() {
     let total = 0;
 
     items.forEach((_, index) => {
-      const calc = calcularItem(index);
+      const calc = calcularItemSolo(index);
       total_gravada += calc.subtotal;
       total_igv += calc.igv;
       total += calc.total;
@@ -433,7 +439,14 @@ export default function EmitirComprobante() {
     }
   };
 
-  const totales = calcularTotales();
+  // Observar cambios en items y porcentaje IGV
+  const items = form.watch('items');
+  const porcentajeIgv = form.watch('porcentaje_de_igv');
+  
+  const totales = useMemo(() => {
+    return calcularTotales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, porcentajeIgv]);
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">

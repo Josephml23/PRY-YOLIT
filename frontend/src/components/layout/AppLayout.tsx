@@ -29,7 +29,7 @@ const menuItems = [
   { title: 'Empresas', icon: Building2, url: '/empresas' },
   { title: 'Clientes', icon: Users, url: '/clientes' },
   { title: 'Oportunidades', icon: FileText, url: '/oportunidades' },
-  { title: 'Facturación', icon: Receipt, url: '/facturacion-nubefact' },
+  { title: 'Facturación', icon: Receipt, url: '/facturacion' },
   { title: 'Documentos', icon: FolderOpen, url: '/documentos' },
   { title: 'Pagos', icon: CreditCard, url: '/pagos' },
 ];
