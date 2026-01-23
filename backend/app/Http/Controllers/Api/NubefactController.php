@@ -24,30 +24,129 @@ class NubefactController extends Controller
     /**
      * Emitir un comprobante (factura/boleta/nota) mediante NubeFact
      * POST /api/nubefact/comprobantes
+     * 
+     * Acepta dos modos:
+     * 1. Con comprobante_id: Emite un comprobante ya existente en BD
+     * 2. Con datos completos: Crea el comprobante en BD y luego lo emite
      */
     public function emitirComprobante(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'comprobante_id' => 'required|exists:comprobantes,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
+        DB::beginTransaction();
+        
         try {
-            $comprobante = Comprobante::with(['items', 'empresa', 'cuotas'])->findOrFail($request->comprobante_id);
+            // Modo 1: Comprobante existente
+            if ($request->has('comprobante_id')) {
+                $comprobante = Comprobante::with(['items', 'empresa', 'cuotas'])
+                    ->findOrFail($request->comprobante_id);
 
-            // Verificar si ya fue emitido
-            if ($comprobante->nubefact_enlace) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Este comprobante ya fue emitido mediante NubeFact',
-                    'enlace' => $comprobante->nubefact_enlace,
-                ], 400);
+                // Verificar si ya fue emitido
+                if ($comprobante->nubefact_enlace) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Este comprobante ya fue emitido mediante NubeFact',
+                        'enlace' => $comprobante->nubefact_enlace,
+                    ], 400);
+                }
+            } 
+            // Modo 2: Crear comprobante desde datos
+            else {
+                // Validar datos completos del comprobante
+                $validator = Validator::make($request->all(), [
+                    'empresa_id' => 'required|exists:empresas,id',
+                    'tipo_de_comprobante' => 'required|integer|in:1,2,3,4',
+                    'serie' => 'required|string',
+                    'numero' => 'required|integer',
+                    'cliente_numero_de_documento' => 'required|string',
+                    'cliente_denominacion' => 'required|string',
+                    'fecha_de_emision' => 'required|date',
+                    'moneda' => 'required|integer|in:1,2',
+                    'total' => 'required|numeric',
+                    'items' => 'required|array|min:1',
+                    'items.*.descripcion' => 'required|string',
+                    'items.*.cantidad' => 'required|numeric',
+                    'items.*.precio_unitario' => 'required|numeric',
+                ]);
+
+                if ($validator->fails()) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+
+                // Mapear tipo de comprobante NubeFact a SUNAT
+                $tipoDocMap = [
+                    1 => '01', // Factura
+                    2 => '03', // Boleta
+                    3 => '07', // Nota de Crédito
+                    4 => '08', // Nota de Débito
+                ];
+
+                // Crear el comprobante en la BD
+                $comprobante = new Comprobante();
+                $comprobante->empresa_id = $request->empresa_id;
+                $comprobante->tipo_doc = $tipoDocMap[$request->tipo_de_comprobante];
+                $comprobante->serie = $request->serie;
+                $comprobante->correlativo = $request->numero;
+                $comprobante->fecha_emision = $request->fecha_de_emision;
+                $comprobante->fecha_vencimiento = $request->fecha_de_vencimiento ?? $request->fecha_de_emision;
+                $comprobante->hora_emision = now()->format('H:i:s');
+                $comprobante->codigo_tipo_operacion = $request->sunat_transaction ?? '0101';
+                
+                // Cliente
+                $comprobante->cliente_tipo_doc = $request->cliente_tipo_de_documento ?? '1';
+                $comprobante->cliente_num_doc = $request->cliente_numero_de_documento;
+                $comprobante->cliente_razon_social = $request->cliente_denominacion;
+                $comprobante->cliente_direccion = $request->cliente_direccion;
+                $comprobante->cliente_email = $request->cliente_email;
+                
+                // Moneda y tipo de cambio
+                $comprobante->codigo_tipo_moneda = $request->moneda == 1 ? 'PEN' : 'USD';
+                $comprobante->tipo_de_cambio = $request->tipo_de_cambio;
+                
+                // Totales
+                $comprobante->suma_igv = $request->total_igv ?? 0;
+                $comprobante->mto_oper_gravadas = $request->total_gravada ?? 0;
+                $comprobante->mto_oper_inafectas = $request->total_inafecta ?? 0;
+                $comprobante->mto_oper_exoneradas = $request->total_exonerada ?? 0;
+                $comprobante->mto_oper_gratuitas = $request->total_gratuita ?? 0;
+                $comprobante->mto_imp_venta = $request->total;
+                $comprobante->total_descuentos = $request->total_descuento ?? 0;
+                $comprobante->mto_otros_cargos = $request->total_otros_cargos ?? 0;
+                
+                // Campos opcionales
+                $comprobante->observaciones = $request->observaciones;
+                $comprobante->orden_compra = $request->orden_compra_servicio;
+                
+                // Estados
+                $comprobante->estado = 'PENDIENTE';
+                $comprobante->estado_sunat = 'PENDIENTE';
+                
+                $comprobante->save();
+                
+                // Guardar items
+                foreach ($request->items as $index => $itemData) {
+                    $item = new \App\Models\ComprobanteItem();
+                    $item->comprobante_id = $comprobante->id;
+                    $item->item = $index + 1;
+                    $item->codigo_producto = $itemData['codigo'] ?? '';
+                    $item->descripcion = $itemData['descripcion'];
+                    $item->unidad = $itemData['unidad_de_medida'] ?? 'NIU';
+                    $item->cantidad = $itemData['cantidad'];
+                    $item->mto_valor_unitario = $itemData['valor_unitario'] ?? 0;
+                    $item->mto_precio_unitario = $itemData['precio_unitario'];
+                    $item->codigo_tipo_tributo = $itemData['tipo_de_igv'] ?? '10';
+                    $item->igv = $itemData['igv'] ?? 0;
+                    $item->mto_valor_venta = $itemData['subtotal'] ?? 0;
+                    $item->total_impuestos = $itemData['igv'] ?? 0;
+                    $item->descuento = $itemData['descuento'] ?? 0;
+                    $item->save();
+                }
+                
+                // Recargar con relaciones
+                $comprobante->load(['items', 'empresa']);
             }
 
             // Convertir a formato NubeFact
@@ -59,11 +158,15 @@ class NubefactController extends Controller
             // Actualizar comprobante con respuesta
             NubefactMapper::updateComprobanteFromNubefact($comprobante, $response);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Comprobante emitido exitosamente',
                 'data' => [
                     'comprobante_id' => $comprobante->id,
+                    'serie' => $comprobante->serie,
+                    'numero' => $comprobante->correlativo,
                     'enlace' => $response['enlace'] ?? null,
                     'aceptada_por_sunat' => $response['aceptada_por_sunat'] ?? false,
                     'pdf_url' => $response['enlace_del_pdf'] ?? null,
@@ -76,8 +179,10 @@ class NubefactController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::channel('nubefact')->error('Error al emitir comprobante', [
-                'comprobante_id' => $request->comprobante_id,
+                'request_data' => $request->all(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

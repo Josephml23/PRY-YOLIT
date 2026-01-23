@@ -177,13 +177,13 @@ export const listarComprobantes = async (filtros?: {
   fecha_inicio?: string;
   fecha_fin?: string;
 }) => {
-  const response = await api.get('/comprobantes', { params: filtros });
+  const response = await api.get('/facturacion/comprobantes', { params: filtros });
   return response.data;
 };
 
 // Descargar PDF
 export const descargarPDF = async (comprobanteId: number) => {
-  const response = await api.get(`/comprobantes/${comprobanteId}/pdf`, {
+  const response = await api.get(`/facturacion/descargar/pdf/${comprobanteId}`, {
     responseType: 'blob',
   });
   return response.data;
@@ -191,7 +191,7 @@ export const descargarPDF = async (comprobanteId: number) => {
 
 // Descargar XML
 export const descargarXML = async (comprobanteId: number) => {
-  const response = await api.get(`/comprobantes/${comprobanteId}/xml`, {
+  const response = await api.get(`/facturacion/descargar/xml/${comprobanteId}`, {
     responseType: 'blob',
   });
   return response.data;
@@ -199,7 +199,7 @@ export const descargarXML = async (comprobanteId: number) => {
 
 // Descargar CDR
 export const descargarCDR = async (comprobanteId: number) => {
-  const response = await api.get(`/comprobantes/${comprobanteId}/cdr`, {
+  const response = await api.get(`/facturacion/descargar/cdr/${comprobanteId}`, {
     responseType: 'blob',
   });
   return response.data;
