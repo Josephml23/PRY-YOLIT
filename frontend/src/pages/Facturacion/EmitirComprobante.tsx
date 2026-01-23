@@ -153,7 +153,6 @@ export default function EmitirComprobante() {
   // Estados para modal de item
   const [modalItemAbierto, setModalItemAbierto] = useState(false);
   const [itemEditandoIndex, setItemEditandoIndex] = useState<number | null>(null);
-  const [modalTipoAbierto, setModalTipoAbierto] = useState(true);
 
   const tipoConfig = TIPOS_CONFIG[tipoActivo];
   const IconoTipo = tipoConfig.icono;
@@ -1093,34 +1092,6 @@ export default function EmitirComprobante() {
           </CardContent>
         </Card>
       )}
-
-      {/* Modal de Selección de Tipo de Comprobante */}
-      <Dialog open={modalTipoAbierto} onOpenChange={setModalTipoAbierto}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl">Elegir el tipo de comprobante</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            {(Object.keys(TIPOS_CONFIG) as TipoComprobante[]).map((tipo) => {
-              const config = TIPOS_CONFIG[tipo];
-              return (
-                <Button
-                  key={tipo}
-                  type="button"
-                  variant="default"
-                  className="w-full h-12 text-base"
-                  onClick={() => {
-                    cambiarTipo(tipo);
-                    setModalTipoAbierto(false);
-                  }}
-                >
-                  Nueva {config.titulo.toUpperCase()}
-                </Button>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Modal de Detalle de Item */}
       <Dialog open={modalItemAbierto} onOpenChange={(open) => !open && cerrarModalItem(false)}>
