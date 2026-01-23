@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
   emitirComprobante,
@@ -22,10 +23,56 @@ import {
   type EmitirComprobanteRequest,
 } from '@/services/nubefact';
 import { api, type Serie } from '@/lib/api';
-import { Plus, Trash2, Receipt, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
 
-// --- Esquemas de Validación ---
+// Tipos de comprobante disponibles
+type TipoComprobante = 'factura' | 'boleta' | 'nota_credito' | 'nota_debito';
 
+interface TipoConfig {
+  codigo: string;
+  titulo: string;
+  descripcion: string;
+  icono: typeof Receipt;
+  seriePrefix: string;
+  requiereDocumento: boolean;
+}
+
+const TIPOS_CONFIG: Record<TipoComprobante, TipoConfig> = {
+  factura: {
+    codigo: String(TIPOS_COMPROBANTE.FACTURA),
+    titulo: 'Factura Electrónica',
+    descripcion: 'Emitir factura para ventas con RUC',
+    icono: FileText,
+    seriePrefix: 'F',
+    requiereDocumento: true,
+  },
+  boleta: {
+    codigo: String(TIPOS_COMPROBANTE.BOLETA),
+    titulo: 'Boleta de Venta',
+    descripcion: 'Emitir boleta para ventas al consumidor final',
+    icono: Receipt,
+    seriePrefix: 'B',
+    requiereDocumento: false,
+  },
+  nota_credito: {
+    codigo: String(TIPOS_COMPROBANTE.NOTA_CREDITO),
+    titulo: 'Nota de Crédito',
+    descripcion: 'Anular o modificar comprobantes emitidos',
+    icono: CreditCard,
+    seriePrefix: 'FC',
+    requiereDocumento: true,
+  },
+  nota_debito: {
+    codigo: String(TIPOS_COMPROBANTE.NOTA_DEBITO),
+    titulo: 'Nota de Débito',
+    descripcion: 'Aumentar el valor de un comprobante',
+    icono: FileX,
+    seriePrefix: 'FD',
+    requiereDocumento: true,
+  },
+};
+
+// Schema de validación
 const itemSchema = z.object({
   unidad_de_medida: z.string().min(1, 'Requerido'),
   codigo: z.string().min(1, 'Requerido'),
@@ -37,9 +84,10 @@ const itemSchema = z.object({
   tipo_de_igv: z.string().min(1, 'Requerido'),
 });
 
-const boletaSchema = z
+const comprobanteSchema = z
   .object({
     empresa_id: z.number().min(1, 'Seleccione una empresa'),
+    tipo_comprobante: z.string().min(1, 'Seleccione tipo'),
     serie: z.string().min(4, 'Serie debe tener 4 caracteres').max(4),
     numero: z.number().min(1, 'Número debe ser mayor a 0'),
     cliente_tipo_de_documento: z.string().min(1, 'Requerido'),
@@ -62,7 +110,6 @@ const boletaSchema = z
   })
   .refine(
     (data) => {
-      // Si es DNI (1), RUC (6) o CE (4), el número es obligatorio
       if (['1', '4', '6'].includes(data.cliente_tipo_de_documento)) {
         return !!data.cliente_numero_de_documento && data.cliente_numero_de_documento.length > 0;
       }
@@ -74,23 +121,26 @@ const boletaSchema = z
     }
   );
 
-type BoletaFormValues = z.infer<typeof boletaSchema>;
+type ComprobanteFormValues = z.infer<typeof comprobanteSchema>;
 
-// --- Componente Principal ---
-
-export default function EmitirBoleta() {
+export default function EmitirComprobante() {
+  const [tipoActivo, setTipoActivo] = useState<TipoComprobante>('factura');
   const [loading, setLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [series, setSeries] = useState<Serie[]>([]);
   const [loadingSeries, setLoadingSeries] = useState(false);
 
-  const form = useForm<BoletaFormValues>({
-    resolver: zodResolver(boletaSchema),
+  const tipoConfig = TIPOS_CONFIG[tipoActivo];
+  const IconoTipo = tipoConfig.icono;
+
+  const form = useForm<ComprobanteFormValues>({
+    resolver: zodResolver(comprobanteSchema),
     defaultValues: {
       empresa_id: 1,
-      serie: 'B001',
+      tipo_comprobante: tipoConfig.codigo,
+      serie: `${tipoConfig.seriePrefix}001`,
       numero: 1,
-      cliente_tipo_de_documento: TIPOS_DOCUMENTO.DNI,
+      cliente_tipo_de_documento: tipoConfig.requiereDocumento ? TIPOS_DOCUMENTO.RUC : TIPOS_DOCUMENTO.DNI,
       cliente_numero_de_documento: '',
       cliente_denominacion: '',
       cliente_direccion: '',
@@ -123,29 +173,44 @@ export default function EmitirBoleta() {
     name: 'items',
   });
 
-  // Cargar series al montar
-  useEffect(() => {
-    const cargarSeries = async () => {
-      try {
-        setLoadingSeries(true);
-        const empresaId = form.getValues('empresa_id') || 1;
-        const res = await api.series.listar({ empresa_id: empresaId, tipo_comprobante: '03' }); // 03 es Boleta
-        const lista = res.data.data;
-        setSeries(lista);
+  // Cambiar tipo de comprobante
+  const cambiarTipo = (nuevoTipo: TipoComprobante) => {
+    setTipoActivo(nuevoTipo);
+    const config = TIPOS_CONFIG[nuevoTipo];
+    form.setValue('tipo_comprobante', config.codigo);
+    form.setValue('serie', `${config.seriePrefix}001`);
+    if (config.requiereDocumento) {
+      form.setValue('cliente_tipo_de_documento', TIPOS_DOCUMENTO.RUC);
+    } else {
+      form.setValue('cliente_tipo_de_documento', TIPOS_DOCUMENTO.DNI);
+    }
+    setPdfUrl(null);
+    cargarSeries(config.codigo);
+  };
 
-        if (lista.length > 0) {
-          const serieDefecto = lista.find((s) => s.por_defecto) ?? lista[0];
-          form.setValue('serie', serieDefecto.serie);
-          form.setValue('numero', (serieDefecto.correlativo_actual ?? 0) + 1);
-        }
-      } catch {
-        // Mantener modo manual si falla
-        console.error("Error cargando series");
-      } finally {
-        setLoadingSeries(false);
+  // Cargar series
+  const cargarSeries = async (tipoCodigoParam?: string) => {
+    try {
+      setLoadingSeries(true);
+      const empresaId = form.getValues('empresa_id') || 1;
+      const tipoCodigo = tipoCodigoParam || form.getValues('tipo_comprobante');
+      const res = await api.series.listar({ empresa_id: empresaId, tipo_comprobante: tipoCodigo });
+      const lista = res.data.data;
+      setSeries(lista);
+
+      if (lista.length > 0) {
+        const serieDefecto = lista.find((s) => s.por_defecto) ?? lista[0];
+        form.setValue('serie', serieDefecto.serie);
+        form.setValue('numero', (serieDefecto.correlativo_actual ?? 0) + 1);
       }
-    };
+    } catch {
+      // Mantener modo manual
+    } finally {
+      setLoadingSeries(false);
+    }
+  };
 
+  useEffect(() => {
     void cargarSeries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -158,8 +223,6 @@ export default function EmitirBoleta() {
     const igvRate = (form.getValues('porcentaje_de_igv') || 18) / 100;
     const igv = subtotal * igvRate;
     const total = subtotal + igv;
-    
-    // Cálculo inverso para mostrar precio unitario con IGV (informativo)
     const precio_unitario = cantidad > 0 ? (subtotal + igv) / cantidad : 0;
 
     form.setValue(`items.${index}.precio_unitario`, parseFloat(precio_unitario.toFixed(2)));
@@ -187,12 +250,12 @@ export default function EmitirBoleta() {
     };
   };
 
-  const onSubmit = async (data: BoletaFormValues) => {
+  const onSubmit = async (data: ComprobanteFormValues) => {
     try {
       setLoading(true);
-      const totalesCalculados = calcularTotales();
+      const totales = calcularTotales();
 
-      const itemsProcesados = data.items.map((item, index) => {
+      const items = data.items.map((item, index) => {
         const calc = calcularItem(index);
         return {
           ...item,
@@ -202,35 +265,32 @@ export default function EmitirBoleta() {
         };
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { pagado: _pagado, fecha_de_vencimiento: _fv, ...rest } = data;
-
       const payload: EmitirComprobanteRequest = {
-        ...rest,
-        cliente_numero_de_documento: rest.cliente_numero_de_documento || '',
+        ...data,
+        cliente_numero_de_documento: data.cliente_numero_de_documento || '',
         operacion: 'generar_comprobante',
-        tipo_de_comprobante: TIPOS_COMPROBANTE.BOLETA,
-        sunat_transaction: rest.sunat_transaction,
-        porcentaje_de_igv: rest.porcentaje_de_igv,
-        total_gravada: totalesCalculados.total_gravada,
-        total_igv: totalesCalculados.total_igv,
-        total: totalesCalculados.total,
+        tipo_de_comprobante: Number(data.tipo_comprobante),
+        sunat_transaction: Number(data.sunat_transaction),
+        porcentaje_de_igv: Number(data.porcentaje_de_igv),
+        total_gravada: totales.total_gravada,
+        total_igv: totales.total_igv,
+        total: totales.total,
         enviar_automaticamente_a_la_sunat: true,
-        enviar_automaticamente_al_cliente: !!rest.cliente_email,
-        items: itemsProcesados,
+        enviar_automaticamente_al_cliente: !!data.cliente_email,
+        items,
       };
 
       const response = await emitirComprobante(payload);
 
       if (response.errors) {
-        toast.error('Error al emitir boleta', {
+        toast.error(`Error al emitir ${tipoConfig.titulo.toLowerCase()}`, {
           description: response.sunat_description || 'Error desconocido',
         });
         return;
       }
 
       if (response.aceptada_por_sunat) {
-        toast.success('¡Boleta emitida exitosamente!', {
+        toast.success(`¡${tipoConfig.titulo} emitida exitosamente!`, {
           description: `Código de respuesta SUNAT: ${response.sunat_responsecode}`,
         });
 
@@ -240,14 +300,14 @@ export default function EmitirBoleta() {
 
         form.reset();
       } else {
-        toast.warning('Boleta enviada pero no aceptada', {
+        toast.warning(`${tipoConfig.titulo} enviada pero no aceptada`, {
           description: response.sunat_description || response.sunat_soap_error,
         });
       }
     } catch (error) {
       console.error('Error:', error);
       const err = error as { response?: { data?: { message?: string } }; message?: string };
-      toast.error('Error al procesar la boleta', {
+      toast.error(`Error al procesar ${tipoConfig.titulo.toLowerCase()}`, {
         description: err.response?.data?.message || err.message || 'Error desconocido',
       });
     } finally {
@@ -255,22 +315,45 @@ export default function EmitirBoleta() {
     }
   };
 
-  // Se calculan en cada render para actualizar la UI en tiempo real
   const totales = calcularTotales();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Emitir Boleta de Venta</h1>
-          <p className="text-muted-foreground">Complete los datos para generar una boleta electrónica</p>
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <IconoTipo className="w-7 h-7 sm:w-8 sm:h-8" />
+            Emitir Comprobante
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">{tipoConfig.descripcion}</p>
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        
-        {/* Barra de herramientas / Dialogos */}
-        <div className="flex flex-wrap items-center gap-4 text-sm">
+      {/* Selector de Tipo de Comprobante */}
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs value={tipoActivo} onValueChange={(val) => cambiarTipo(val as TipoComprobante)}>
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+              {(Object.keys(TIPOS_CONFIG) as TipoComprobante[]).map((tipo) => {
+                const config = TIPOS_CONFIG[tipo];
+                const Icono = config.icono;
+                return (
+                  <TabsTrigger key={tipo} value={tipo} className="flex items-center gap-2">
+                    <Icono className="w-4 h-4" />
+                    <span className="hidden sm:inline">{config.titulo}</span>
+                    <span className="sm:hidden">{config.seriePrefix}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+        {/* Barra de Herramientas */}
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
           <Dialog>
             <DialogTrigger asChild>
               <button type="button" className="text-primary font-medium flex items-center gap-1 hover:underline">
@@ -282,10 +365,10 @@ export default function EmitirBoleta() {
               <DialogHeader>
                 <DialogTitle>Datos generales</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2 col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2 sm:col-span-2">
                   <label className="text-sm font-medium">Tipo documento</label>
-                  <Input value="BOLETA DE VENTA" disabled className="bg-muted" />
+                  <Input value={tipoConfig.titulo.toUpperCase()} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Fecha emisión</label>
@@ -303,7 +386,7 @@ export default function EmitirBoleta() {
                   <label className="text-sm font-medium">Número</label>
                   <Input type="number" {...form.register('numero', { valueAsNumber: true })} />
                 </div>
-                <div className="flex items-center gap-2 col-span-2 mt-2">
+                <div className="flex items-center gap-2 sm:col-span-2 mt-2">
                   <span className="text-sm font-medium">¿Pagado?</span>
                   <Switch
                     checked={!!form.watch('pagado')}
@@ -343,24 +426,25 @@ export default function EmitirBoleta() {
             </DialogContent>
           </Dialog>
 
-          <button type="button" className="text-primary flex items-center gap-1 opacity-70 cursor-default">
+          <button type="button" className="text-primary flex items-center gap-1 opacity-70 cursor-default text-xs sm:text-sm">
             <span>📄</span>
-            <span>Guía de remisión Física</span>
+            <span className="hidden sm:inline">Guía de remisión Física</span>
+            <span className="sm:hidden">Guía</span>
           </button>
-          <button type="button" className="text-primary flex items-center gap-1 opacity-70 cursor-default">
+          <button type="button" className="text-primary flex items-center gap-1 opacity-70 cursor-default text-xs sm:text-sm">
             <span>🧾</span>
-            <span>Formato de PDF</span>
+            <span>PDF</span>
           </button>
         </div>
 
-        {/* Datos del Comprobante (Card superior) */}
+        {/* Datos del Comprobante */}
         <Card>
           <CardHeader>
             <CardTitle>Datos del Comprobante</CardTitle>
-            <CardDescription>Información básica de la boleta</CardDescription>
+            <CardDescription>Información básica del comprobante</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
                   IGV %
@@ -451,7 +535,7 @@ export default function EmitirBoleta() {
                 <p className="text-xs text-muted-foreground">Obligatorio cuando la moneda es distinta a Soles.</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Serie</label>
                 {series.length > 0 ? (
@@ -478,7 +562,7 @@ export default function EmitirBoleta() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input {...form.register('serie')} placeholder="B001" maxLength={4} />
+                  <Input {...form.register('serie')} placeholder={`${tipoConfig.seriePrefix}001`} maxLength={4} />
                 )}
                 {form.formState.errors.serie && (
                   <p className="text-sm text-destructive">{form.formState.errors.serie.message}</p>
@@ -507,11 +591,13 @@ export default function EmitirBoleta() {
           <CardHeader>
             <CardTitle>Datos del Cliente</CardTitle>
             <CardDescription>
-              Información del receptor (opcional para montos menores a S/ 700)
+              {tipoConfig.requiereDocumento
+                ? 'Información del receptor (obligatorio)'
+                : 'Información del receptor (opcional para montos menores a S/ 700)'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo de Documento</label>
                 <Select
@@ -525,19 +611,26 @@ export default function EmitirBoleta() {
                     <SelectItem value={TIPOS_DOCUMENTO.DNI}>DNI</SelectItem>
                     <SelectItem value={TIPOS_DOCUMENTO.RUC}>RUC</SelectItem>
                     <SelectItem value={TIPOS_DOCUMENTO.CARNET_EXTRANJERIA}>Carnet Extranjería</SelectItem>
-                    <SelectItem value={TIPOS_DOCUMENTO.SIN_DOCUMENTO}>Sin Documento</SelectItem>
+                    {!tipoConfig.requiereDocumento && (
+                      <SelectItem value={TIPOS_DOCUMENTO.SIN_DOCUMENTO}>Sin Documento</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Número de Documento {totales.total >= 700 && <span className="text-destructive">*</span>}
+                  Número de Documento{' '}
+                  {(tipoConfig.requiereDocumento || totales.total >= 700) && (
+                    <span className="text-destructive">*</span>
+                  )}
                 </label>
                 <Input
                   {...form.register('cliente_numero_de_documento')}
                   placeholder={
                     form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO
                       ? 'No requerido'
+                      : form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.RUC
+                      ? '20123456789'
                       : '12345678'
                   }
                   disabled={form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO}
@@ -553,9 +646,7 @@ export default function EmitirBoleta() {
               <label className="text-sm font-medium">Razón Social / Nombre</label>
               <Input {...form.register('cliente_denominacion')} placeholder="Cliente Varios" />
               {form.formState.errors.cliente_denominacion && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.cliente_denominacion.message}
-                </p>
+                <p className="text-sm text-destructive">{form.formState.errors.cliente_denominacion.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -569,12 +660,12 @@ export default function EmitirBoleta() {
           </CardContent>
         </Card>
 
-        {/* Sección de Items y Resumen */}
+        {/* Items y Resumen */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle>Items de la Boleta</CardTitle>
+                <CardTitle>Items del Comprobante</CardTitle>
                 <CardDescription>Productos o servicios vendidos</CardDescription>
               </div>
               <Button
@@ -600,35 +691,25 @@ export default function EmitirBoleta() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Layout Grid: Items a la izquierda, Totales a la derecha */}
-            <div className="space-y-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] lg:gap-6">
-              
-              {/* Columna Izquierda: Lista de Items */}
+            <div className="space-y-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
+              {/* Columna Izquierda: Items */}
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                  <div key={field.id} className="p-3 sm:p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Item {index + 1}</h4>
+                      <h4 className="font-medium text-sm sm:text-base">Item {index + 1}</h4>
                       {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => remove(index)}
-                        >
+                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Código</label>
-                        <Input
-                          {...form.register(`items.${index}.codigo`)}
-                          placeholder="PROD001"
-                        />
+                        <Input {...form.register(`items.${index}.codigo`)} placeholder="PROD001" />
                       </div>
-                      <div className="col-span-3 space-y-2">
+                      <div className="sm:col-span-3 space-y-2">
                         <label className="text-sm font-medium">Descripción</label>
                         <Input
                           {...form.register(`items.${index}.descripcion`)}
@@ -636,7 +717,7 @@ export default function EmitirBoleta() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Unidad</label>
                         <Select
@@ -647,15 +728,15 @@ export default function EmitirBoleta() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={UNIDADES_MEDIDA.NIU}>NIU - Unidad</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.ZZ}>ZZ - Servicio</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.KGM}>KGM - Kilogramo</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.LTR}>LTR - Litro</SelectItem>
+                            <SelectItem value={UNIDADES_MEDIDA.NIU}>NIU</SelectItem>
+                            <SelectItem value={UNIDADES_MEDIDA.ZZ}>ZZ</SelectItem>
+                            <SelectItem value={UNIDADES_MEDIDA.KGM}>KGM</SelectItem>
+                            <SelectItem value={UNIDADES_MEDIDA.LTR}>LTR</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Cantidad</label>
+                        <label className="text-sm font-medium">Cant.</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -666,7 +747,7 @@ export default function EmitirBoleta() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Valor Unitario</label>
+                        <label className="text-sm font-medium">V. Unit.</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -677,7 +758,7 @@ export default function EmitirBoleta() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Descuento</label>
+                        <label className="text-sm font-medium">Desc.</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -688,7 +769,7 @@ export default function EmitirBoleta() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Precio Unit. (c/IGV)</label>
+                        <label className="text-sm font-medium">P. Unit. c/IGV</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -702,20 +783,17 @@ export default function EmitirBoleta() {
                 ))}
               </div>
 
-              {/* Columna Derecha: Resumen de Totales y Destacados */}
+              {/* Columna Derecha: Resumen */}
               <div className="space-y-4">
                 <Card className="border-dashed">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base">Productos destacados</CardTitle>
-                    <CardDescription>
-                      Placeholder para un listado rápido de productos frecuentes.
+                    <CardDescription className="text-xs">
+                      Placeholder para productos frecuentes
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-xs">
-                    <p className="text-muted-foreground">
-                      Aquí se mostrará un carrusel o tarjetas clicables para agregar productos comunes.
-                    </p>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                  <CardContent className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" className="text-xs">
                         PROD001 · S/ 0.00
                       </Button>
@@ -731,7 +809,6 @@ export default function EmitirBoleta() {
                     <CardTitle className="text-base">Resumen de totales</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-xs sm:text-sm">
-                    {/* Filas de totales simplificadas */}
                     <div className="flex justify-between">
                       <span>Gravada S/</span>
                       <span>{totales.total_gravada.toFixed(2)}</span>
@@ -759,6 +836,11 @@ export default function EmitirBoleta() {
                         onCheckedChange={(checked) => form.setValue('detraccion', checked)}
                       />
                     </div>
+                    {!tipoConfig.requiereDocumento && totales.total >= 700 && (
+                      <p className="text-xs text-amber-600 pt-2">
+                        ⚠ Para montos ≥ S/ 700 se requiere documento del cliente
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -766,25 +848,22 @@ export default function EmitirBoleta() {
           </CardContent>
         </Card>
 
-        {/* Observaciones Finales */}
+        {/* Observaciones */}
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Observaciones</label>
-              <Input
-                {...form.register('observaciones')}
-                placeholder="Notas adicionales (opcional)"
-              />
+              <Input {...form.register('observaciones')} placeholder="Notas adicionales (opcional)" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Botones de Acción */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
+        {/* Acciones */}
+        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+          <Button type="button" variant="outline" onClick={() => form.reset()} className="w-full sm:w-auto">
             Limpiar
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="w-full sm:w-auto">
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -792,26 +871,29 @@ export default function EmitirBoleta() {
               </>
             ) : (
               <>
-                <Receipt className="w-4 h-4 mr-2" />
-                Emitir Boleta
+                <IconoTipo className="w-4 h-4 mr-2" />
+                Emitir {tipoConfig.titulo}
               </>
             )}
           </Button>
         </div>
       </form>
 
-      {/* Visualización del PDF tras éxito */}
+      {/* Vista Previa PDF */}
       {pdfUrl && (
         <Card>
           <CardHeader>
             <CardTitle>Comprobante Generado</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Button asChild>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button asChild className="w-full sm:w-auto">
                 <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
                   Ver PDF
                 </a>
+              </Button>
+              <Button variant="outline" onClick={() => setPdfUrl(null)} className="w-full sm:w-auto">
+                Cerrar vista
               </Button>
             </div>
           </CardContent>

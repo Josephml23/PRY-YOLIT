@@ -233,6 +233,8 @@ export const TIPOS_IGV = {
 export const MONEDAS = {
   PEN: '1',
   USD: '2',
+  EUR: '3',
+  GBP: '4',
 } as const;
 
 export const UNIDADES_MEDIDA = {
@@ -269,8 +271,10 @@ export const TIPOS_IGV_SELECT = [
 ];
 
 export const MONEDAS_SELECT = [
-  { value: '1', label: 'PEN - Soles' },
-  { value: '2', label: 'USD - Dólares' },
+  { value: '1', label: 'S/ PEN - Soles' },
+  { value: '2', label: 'US$ USD - Dólares Americanos' },
+  { value: '3', label: '€ EUR - Euros' },
+  { value: '4', label: '£ GBP - Libra Esterlina' },
 ];
 
 export const UNIDADES_MEDIDA_SELECT = [
@@ -286,4 +290,25 @@ export const UNIDADES_MEDIDA_SELECT = [
   { value: 'GRM', label: 'GRM - Gramo' },
   { value: 'DAY', label: 'DAY - Día' },
   { value: 'HUR', label: 'HUR - Hora' },
+];
+
+// Tipos de operación (sunat_transaction) según manual NubeFact
+export const TIPOS_OPERACION_SELECT = [
+  { value: '1', label: '01 - Venta interna' },
+  { value: '2', label: '02 - Exportación' },
+  { value: '4', label: '04 - Venta interna – anticipos' },
+  { value: '29', label: '29 - Ventas no domiciliados que no califican como exportación' },
+  { value: '30', label: '30 - Operación sujeta a detracción' },
+  { value: '33', label: '33 - Detracción - servicios de transporte carga' },
+  { value: '32', label: '32 - Detracción - servicios de transporte de pasajeros' },
+  { value: '31', label: '31 - Detracción - recursos hidrobiológicos' },
+  { value: '34', label: '34 - Operación sujeta a percepción' },
+  { value: '35', label: '35 - Venta nacional a turistas - Tax Free' },
+];
+
+// Porcentajes de IGV soportados en cabecera
+export const IGV_PORCENTAJES_SELECT = [
+  { value: 18, label: '18%' },
+  { value: 10, label: '10% (Ley 31556)' },
+  { value: 4, label: '4% (IVAP)' },
 ];
