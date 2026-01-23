@@ -25,7 +25,8 @@ import {
 import { api, type Serie } from '@/lib/api';
 import { Plus, Trash2, Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
 
-// Tipos de comprobante disponibles
+// --- Tipos y Configuración ---
+
 type TipoComprobante = 'factura' | 'boleta' | 'nota_credito' | 'nota_debito';
 
 interface TipoConfig {
@@ -83,7 +84,8 @@ const TIPOS_CONFIG: Record<TipoComprobante, TipoConfig> = {
   },
 };
 
-// Schema de validación
+// --- Schemas de Validación ---
+
 const itemSchema = z.object({
   unidad_de_medida: z.string().min(1, 'Requerido'),
   codigo: z.string().min(1, 'Requerido'),
@@ -133,6 +135,8 @@ const comprobanteSchema = z
   );
 
 type ComprobanteFormValues = z.infer<typeof comprobanteSchema>;
+
+// --- Componente Principal ---
 
 export default function EmitirComprobante() {
   const [tipoActivo, setTipoActivo] = useState<TipoComprobante>('factura');
@@ -333,9 +337,12 @@ export default function EmitirComprobante() {
     setItemEditandoIndex(null);
   };
 
-  // Calcular item sin side effects (para lecturas)
+  // Calcular item sin side effects (para lecturas en render y calculos)
   const calcularItemSolo = (index: number) => {
     const item = form.getValues(`items.${index}`);
+    // Validación por si el item fue borrado mientras se calculaba
+    if (!item) return { subtotal: 0, igv: 0, total: 0, precio_unitario: 0 };
+
     const { cantidad, valor_unitario, descuento = 0 } = item;
 
     const subtotal = cantidad * valor_unitario - descuento;
@@ -347,7 +354,7 @@ export default function EmitirComprobante() {
     return { subtotal, igv, total, precio_unitario };
   };
 
-  // Calcular y actualizar item (para onChange)
+  // Calcular y actualizar item (para onChange - SIDE EFFECTS PERMITIDOS)
   const calcularItem = (index: number) => {
     const calc = calcularItemSolo(index);
     form.setValue(`items.${index}.precio_unitario`, parseFloat(calc.precio_unitario.toFixed(2)));
@@ -361,7 +368,7 @@ export default function EmitirComprobante() {
     let total = 0;
 
     items.forEach((_, index) => {
-      const calc = calcularItemSolo(index);
+      const calc = calcularItemSolo(index); // Usamos la versión segura
       total_gravada += calc.subtotal;
       total_igv += calc.igv;
       total += calc.total;
@@ -380,7 +387,7 @@ export default function EmitirComprobante() {
       const totales = calcularTotales();
 
       const items = data.items.map((item, index) => {
-        const calc = calcularItem(index);
+        const calc = calcularItemSolo(index); // Usamos la versión segura
         return {
           ...item,
           subtotal: calc.subtotal,
@@ -439,7 +446,7 @@ export default function EmitirComprobante() {
     }
   };
 
-  // Observar cambios en items y porcentaje IGV
+  // Observar cambios en items y porcentaje IGV para recalcular totales generales
   const items = form.watch('items');
   const porcentajeIgv = form.watch('porcentaje_de_igv');
   
@@ -939,8 +946,11 @@ export default function EmitirComprobante() {
                   </div>
                 ) : (
                   fields.map((field, index) => {
+                    // AQUÍ ESTABA EL ERROR: Usar watch para reactividad sin disparar re-render masivo
                     const item = form.watch(`items.${index}`);
-                    const calc = calcularItem(index);
+                    
+                    // CORRECCIÓN CLAVE: Usamos calcularItemSolo, que NO ejecuta form.setValue
+                    const calc = calcularItemSolo(index);
                     
                     return (
                       <div
@@ -1215,7 +1225,7 @@ export default function EmitirComprobante() {
                   <Input
                     type="number"
                     disabled
-                    value={calcularItem(itemEditandoIndex).igv.toFixed(2)}
+                    value={calcularItemSolo(itemEditandoIndex).igv.toFixed(2)}
                     className="bg-muted"
                   />
                 </div>
@@ -1228,7 +1238,7 @@ export default function EmitirComprobante() {
                   <Input
                     type="number"
                     disabled
-                    value={calcularItem(itemEditandoIndex).subtotal.toFixed(2)}
+                    value={calcularItemSolo(itemEditandoIndex).subtotal.toFixed(2)}
                     className="bg-muted"
                   />
                 </div>
@@ -1239,7 +1249,7 @@ export default function EmitirComprobante() {
                   <Input
                     type="number"
                     disabled
-                    value={calcularItem(itemEditandoIndex).total.toFixed(2)}
+                    value={calcularItemSolo(itemEditandoIndex).total.toFixed(2)}
                     className="bg-muted"
                   />
                 </div>
