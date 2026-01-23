@@ -107,6 +107,13 @@ export default function Dashboard() {
     tasaAceptacion: 0,
   });
 
+  const [totalesPorTipo, setTotalesPorTipo] = useState({
+    facturas: 0,
+    boletas: 0,
+    notasCredito: 0,
+    notasDebito: 0,
+  });
+
   const [totalClientesRegistrados, setTotalClientesRegistrados] = useState(0);
 
   const [slaResumen, setSlaResumen] = useState<SlaResumen>({
@@ -219,8 +226,13 @@ export default function Dashboard() {
       setComprobantes(comprobantesData);
       setEmpresas(empresasData);
 
-      // Calcular estadísticas
-      const totalFacturado = comprobantesData.reduce(
+      // Considerar solo comprobantes vigentes (no anulados y aceptados por SUNAT)
+      const comprobantesVigentes = comprobantesData.filter((c: Comprobante) =>
+        !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado'
+      );
+
+      // Calcular estadísticas de facturación solo con comprobantes vigentes
+      const totalFacturado = comprobantesVigentes.reduce(
         (sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0),
         0
       );
@@ -231,6 +243,27 @@ export default function Dashboard() {
         totalFacturado,
         totalComprobantes: comprobantesData.length,
         tasaAceptacion,
+      });
+
+      // Totales por tipo de comprobante (solo vigentes)
+      const totalFacturas = comprobantesVigentes
+        .filter((c: Comprobante) => c.tipo_doc === '01')
+        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
+      const totalBoletas = comprobantesVigentes
+        .filter((c: Comprobante) => c.tipo_doc === '03')
+        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
+      const totalNotasCredito = comprobantesVigentes
+        .filter((c: Comprobante) => c.tipo_doc === '07')
+        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
+      const totalNotasDebito = comprobantesVigentes
+        .filter((c: Comprobante) => c.tipo_doc === '08')
+        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
+
+      setTotalesPorTipo({
+        facturas: totalFacturas,
+        boletas: totalBoletas,
+        notasCredito: totalNotasCredito,
+        notasDebito: totalNotasDebito,
       });
 
       // SLA y alertas desde el endpoint de dashboard
@@ -497,8 +530,26 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">S/ {stats.totalFacturado.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {comprobantes.length} comprobantes emitidos
+              {comprobantes.filter(c => !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado').length} comprobantes vigentes (aceptados)
             </p>
+            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>Total de FACTURAS</span>
+                <span>S/ {totalesPorTipo.facturas.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total de BOLETAS DE VENTA</span>
+                <span>S/ {totalesPorTipo.boletas.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total de NOTAS DE CRÉDITO</span>
+                <span>S/ {totalesPorTipo.notasCredito.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total de NOTAS DE DÉBITO</span>
+                <span>S/ {totalesPorTipo.notasDebito.toFixed(2)}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
