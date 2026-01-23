@@ -43,8 +43,8 @@ class NubefactMapper
             'fecha_de_vencimiento' => $comprobante->fecha_vencimiento?->format('d-m-Y') ?? '',
             
             // Moneda e IGV
-            'moneda' => (string) self::mapMoneda($comprobante->moneda),
-            'tipo_de_cambio' => '',
+            'moneda' => (string) self::mapMoneda($comprobante->codigo_tipo_moneda ?? 'PEN'),
+            'tipo_de_cambio' => $comprobante->tipo_de_cambio ?? '',
             'porcentaje_de_igv' => '18.00',
             
             // Totales
@@ -121,15 +121,15 @@ class NubefactMapper
         foreach ($items as $item) {
             $result[] = [
                 'unidad_de_medida' => $item->unidad ?? 'NIU',
-                'codigo' => $item->cod_producto ?? '',
+                'codigo' => $item->codigo_producto ?? '',
                 'codigo_producto_sunat' => $item->codigo_producto_sunat ?? '',
                 'descripcion' => $item->descripcion,
                 'cantidad' => number_format($item->cantidad, 2, '.', ''),
                 'valor_unitario' => number_format($item->mto_valor_unitario, 10, '.', ''),
                 'precio_unitario' => number_format($item->mto_precio_unitario, 10, '.', ''),
-                'descuento' => '',
+                'descuento' => number_format($item->descuento ?? 0, 2, '.', ''),
                 'subtotal' => number_format($item->mto_valor_venta, 2, '.', ''),
-                'tipo_de_igv' => (int) ($item->tipo_afectacion_igv ?? 1),
+                'tipo_de_igv' => (int) ($item->tip_afe_igv ?? 10),
                 'igv' => number_format($item->igv, 2, '.', ''),
                 'total' => number_format($item->mto_valor_venta + $item->igv, 2, '.', ''),
                 'anticipo_regularizacion' => 'false',

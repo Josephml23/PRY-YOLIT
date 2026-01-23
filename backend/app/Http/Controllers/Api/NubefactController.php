@@ -107,7 +107,7 @@ class NubefactController extends Controller
                 $comprobante->tipo_de_cambio = $request->tipo_de_cambio;
                 
                 // Totales
-                $comprobante->suma_igv = $request->total_igv ?? 0;
+                $comprobante->mto_igv = $request->total_igv ?? 0;
                 $comprobante->mto_oper_gravadas = $request->total_gravada ?? 0;
                 $comprobante->mto_oper_inafectas = $request->total_inafecta ?? 0;
                 $comprobante->mto_oper_exoneradas = $request->total_exonerada ?? 0;
@@ -137,7 +137,7 @@ class NubefactController extends Controller
                     $item->cantidad = $itemData['cantidad'];
                     $item->mto_valor_unitario = $itemData['valor_unitario'] ?? 0;
                     $item->mto_precio_unitario = $itemData['precio_unitario'];
-                    $item->codigo_tipo_tributo = $itemData['tipo_de_igv'] ?? '10';
+                    $item->tip_afe_igv = $itemData['tipo_de_igv'] ?? 10;
                     $item->igv = $itemData['igv'] ?? 0;
                     $item->mto_valor_venta = $itemData['subtotal'] ?? 0;
                     $item->total_impuestos = $itemData['igv'] ?? 0;
