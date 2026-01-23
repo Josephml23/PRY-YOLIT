@@ -263,7 +263,7 @@ export default function ListaComprobantes() {
                       <TableCell>{comprobante.cliente_num_doc}</TableCell>
                       <TableCell className="text-right">
                         {comprobante.moneda === 'PEN' ? 'S/ ' : '$ '}
-                        {comprobante.mto_imp_venta?.toFixed(2)}
+                        {Number(comprobante.mto_imp_venta || 0).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         {comprobante.anulado ? (
