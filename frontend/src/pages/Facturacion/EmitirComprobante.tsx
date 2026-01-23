@@ -37,6 +37,17 @@ interface TipoConfig {
   requiereDocumento: boolean;
 }
 
+interface ClienteSimulado {
+  ruc: string;
+  razon_social: string;
+}
+
+interface ProductoSimulado {
+  codigo: string;
+  descripcion: string;
+  precio: number;
+}
+
 const TIPOS_CONFIG: Record<TipoComprobante, TipoConfig> = {
   factura: {
     codigo: String(TIPOS_COMPROBANTE.FACTURA),
@@ -129,6 +140,20 @@ export default function EmitirComprobante() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [series, setSeries] = useState<Serie[]>([]);
   const [loadingSeries, setLoadingSeries] = useState(false);
+  
+  // Estados para búsquedas
+  const [busquedaCliente, setBusquedaCliente] = useState('');
+  const [clientesEncontrados, setClientesEncontrados] = useState<ClienteSimulado[]>([]);
+  const [mostrarDropdownClientes, setMostrarDropdownClientes] = useState(false);
+  
+  const [busquedaProducto, setBusquedaProducto] = useState('');
+  const [productosEncontrados, setProductosEncontrados] = useState<ProductoSimulado[]>([]);
+  const [mostrarDropdownProductos, setMostrarDropdownProductos] = useState(false);
+  
+  // Estados para modal de item
+  const [modalItemAbierto, setModalItemAbierto] = useState(false);
+  const [itemEditandoIndex, setItemEditandoIndex] = useState<number | null>(null);
+  const [modalTipoAbierto, setModalTipoAbierto] = useState(true);
 
   const tipoConfig = TIPOS_CONFIG[tipoActivo];
   const IconoTipo = tipoConfig.icono;
@@ -214,6 +239,100 @@ export default function EmitirComprobante() {
     void cargarSeries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Buscar clientes (simulado - integrar con API real)
+  const buscarClientes = (termino: string) => {
+    setBusquedaCliente(termino);
+    if (termino.length < 3) {
+      setClientesEncontrados([]);
+      setMostrarDropdownClientes(false);
+      return;
+    }
+    
+    // Simulación - reemplazar con API real
+    const clientesSimulados = [
+      { ruc: '20131295955', razon_social: 'SUNAT - SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACIÓN TRIBUTARIA' },
+      { ruc: '2019803341', razon_social: 'MUNICIPALIDAD PROVINCIAL DE CAYLLOMA' },
+      { ruc: '20434906301', razon_social: 'GRUPO MOSS S.R.L.' },
+      { ruc: '20442847071', razon_social: 'TRANSPORTES LIBERTAD S.A.C.' },
+      { ruc: '2051978720', razon_social: '"ANSUS" EMP.IND.RESP.LTDA' },
+      { ruc: '20602667244', razon_social: 'FIBERTEL NETWORKS S.A.C.' },
+    ];
+    
+    const resultados = clientesSimulados.filter(c => 
+      c.ruc.includes(termino) || c.razon_social.toLowerCase().includes(termino.toLowerCase())
+    );
+    
+    setClientesEncontrados(resultados);
+    setMostrarDropdownClientes(true);
+  };
+
+  const seleccionarCliente = (cliente: ClienteSimulado) => {
+    form.setValue('cliente_numero_de_documento', cliente.ruc);
+    form.setValue('cliente_denominacion', cliente.razon_social);
+    form.setValue('cliente_tipo_de_documento', cliente.ruc.length === 11 ? TIPOS_DOCUMENTO.RUC : TIPOS_DOCUMENTO.DNI);
+    setBusquedaCliente(cliente.razon_social);
+    setMostrarDropdownClientes(false);
+  };
+
+  // Buscar productos (simulado - integrar con API real)
+  const buscarProductos = (termino: string) => {
+    setBusquedaProducto(termino);
+    if (termino.length < 2) {
+      setProductosEncontrados([]);
+      setMostrarDropdownProductos(false);
+      return;
+    }
+    
+    // Simulación - reemplazar con API real
+    const productosSimulados = [
+      { codigo: '0001', descripcion: 'CABLE USB NIU', precio: 10.0 },
+      { codigo: '0002', descripcion: 'CABLES HDMI NIU', precio: 15.0 },
+      { codigo: '0003', descripcion: 'BLISTER DE 5 PILAS NIU', precio: 75.0 },
+      { codigo: '0004', descripcion: 'CIGARRERAS AEREAS NIU', precio: 10.0 },
+      { codigo: '0006', descripcion: 'ACEITE DE TRANSMISION WG', precio: 80.0 },
+      { codigo: '0007', descripcion: 'ACEITE HIDROLINA NIU', precio: 270.0 },
+      { codigo: '0008', descripcion: 'ALICATE UNIVERSAL NIU', precio: 20.0 },
+      { codigo: '0009', descripcion: 'GRASA EP2 NIU', precio: 450.0 },
+    ];
+    
+    const resultados = productosSimulados.filter(p => 
+      p.codigo.includes(termino) || p.descripcion.toLowerCase().includes(termino.toLowerCase())
+    );
+    
+    setProductosEncontrados(resultados);
+    setMostrarDropdownProductos(true);
+  };
+
+  const abrirModalItem = (index?: number) => {
+    if (index !== undefined) {
+      setItemEditandoIndex(index);
+    } else {
+      setItemEditandoIndex(null);
+      // Agregar nuevo item vacío temporalmente
+      append({
+        unidad_de_medida: UNIDADES_MEDIDA.NIU,
+        codigo: '',
+        descripcion: '',
+        cantidad: 1,
+        valor_unitario: 0,
+        precio_unitario: 0,
+        descuento: 0,
+        tipo_de_igv: TIPOS_IGV.GRAVADO_OPERACION_ONEROSA,
+      });
+      setItemEditandoIndex(fields.length);
+    }
+    setModalItemAbierto(true);
+  };
+
+  const cerrarModalItem = (guardar: boolean) => {
+    if (!guardar && itemEditandoIndex === fields.length - 1) {
+      // Si es un item nuevo y no se guardó, eliminarlo
+      remove(itemEditandoIndex);
+    }
+    setModalItemAbierto(false);
+    setItemEditandoIndex(null);
+  };
 
   const calcularItem = (index: number) => {
     const item = form.getValues(`items.${index}`);
@@ -589,7 +708,7 @@ export default function EmitirComprobante() {
         {/* Datos del Cliente */}
         <Card>
           <CardHeader>
-            <CardTitle>Datos del Cliente</CardTitle>
+            <CardTitle>Cliente</CardTitle>
             <CardDescription>
               {tipoConfig.requiereDocumento
                 ? 'Información del receptor (obligatorio)'
@@ -597,6 +716,51 @@ export default function EmitirComprobante() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Búsqueda de Cliente */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Buscar cliente"
+                    value={busquedaCliente}
+                    onChange={(e) => buscarClientes(e.target.value)}
+                    onFocus={() => busquedaCliente.length >= 3 && setMostrarDropdownClientes(true)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      buscarClientes(busquedaCliente);
+                      setMostrarDropdownClientes(true);
+                    }}
+                  >
+                    🔍
+                  </button>
+                  
+                  {/* Dropdown de resultados */}
+                  {mostrarDropdownClientes && clientesEncontrados.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {clientesEncontrados.map((cliente, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left hover:bg-primary hover:text-primary-foreground text-sm"
+                          onClick={() => seleccionarCliente(cliente)}
+                        >
+                          <div className="font-medium">{cliente.ruc} {cliente.razon_social}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button type="button" size="sm" className="shrink-0">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Nuevo
+                </Button>
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo de Documento</label>
@@ -663,30 +827,92 @@ export default function EmitirComprobante() {
         {/* Items y Resumen */}
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle>Items del Comprobante</CardTitle>
-                <CardDescription>Productos o servicios vendidos</CardDescription>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle>Items del Comprobante</CardTitle>
+                  <CardDescription>Productos o servicios vendidos</CardDescription>
+                </div>
               </div>
+              
+              {/* Buscador de Productos */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Buscar Producto o Servicio</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="Buscar producto"
+                      value={busquedaProducto}
+                      onChange={(e) => buscarProductos(e.target.value)}
+                      onFocus={() => busquedaProducto.length >= 2 && setMostrarDropdownProductos(true)}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        buscarProductos(busquedaProducto);
+                        setMostrarDropdownProductos(true);
+                      }}
+                    >
+                      🔍
+                    </button>
+                    
+                    {/* Dropdown de resultados */}
+                    {mostrarDropdownProductos && productosEncontrados.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {productosEncontrados.map((producto, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-primary hover:text-primary-foreground text-sm flex justify-between items-center"
+                            onClick={() => {
+                              // Agregar producto al formulario
+                              const igvRate = (form.getValues('porcentaje_de_igv') || 18) / 100;
+                              const valor_unitario = producto.precio / (1 + igvRate);
+                              
+                              append({
+                                unidad_de_medida: UNIDADES_MEDIDA.NIU,
+                                codigo: producto.codigo,
+                                descripcion: producto.descripcion,
+                                cantidad: 1,
+                                valor_unitario: parseFloat(valor_unitario.toFixed(2)),
+                                precio_unitario: producto.precio,
+                                descuento: 0,
+                                tipo_de_igv: TIPOS_IGV.GRAVADO_OPERACION_ONEROSA,
+                              });
+                              
+                              setBusquedaProducto('');
+                              setMostrarDropdownProductos(false);
+                            }}
+                          >
+                            <div>
+                              <div className="font-medium">{producto.codigo} {producto.descripcion}</div>
+                              <div className="text-xs text-muted-foreground">{UNIDADES_MEDIDA.NIU}</div>
+                            </div>
+                            <div className="font-semibold">S/{producto.precio.toFixed(2)}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Button type="button" size="sm" className="shrink-0" onClick={() => abrirModalItem()}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Nuevo
+                  </Button>
+                </div>
+              </div>
+
+              {/* Botón Agregar Línea */}
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 size="sm"
-                onClick={() =>
-                  append({
-                    unidad_de_medida: UNIDADES_MEDIDA.NIU,
-                    codigo: `PROD${fields.length + 1}`,
-                    descripcion: '',
-                    cantidad: 1,
-                    valor_unitario: 0,
-                    precio_unitario: 0,
-                    descuento: 0,
-                    tipo_de_igv: TIPOS_IGV.GRAVADO_OPERACION_ONEROSA,
-                  })
-                }
+                className="w-full sm:w-auto bg-primary"
+                onClick={() => abrirModalItem()}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Agregar Item
+                AGREGAR LÍNEA O ITEM
               </Button>
             </div>
           </CardHeader>
@@ -694,93 +920,61 @@ export default function EmitirComprobante() {
             <div className="space-y-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
               {/* Columna Izquierda: Items */}
               <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="p-3 sm:p-4 border rounded-lg space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-sm sm:text-base">Item {index + 1}</h4>
-                      {fields.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Código</label>
-                        <Input {...form.register(`items.${index}.codigo`)} placeholder="PROD001" />
-                      </div>
-                      <div className="sm:col-span-3 space-y-2">
-                        <label className="text-sm font-medium">Descripción</label>
-                        <Input
-                          {...form.register(`items.${index}.descripcion`)}
-                          placeholder="Descripción del producto/servicio"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Unidad</label>
-                        <Select
-                          value={form.watch(`items.${index}.unidad_de_medida`)}
-                          onValueChange={(value) => form.setValue(`items.${index}.unidad_de_medida`, value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={UNIDADES_MEDIDA.NIU}>NIU</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.ZZ}>ZZ</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.KGM}>KGM</SelectItem>
-                            <SelectItem value={UNIDADES_MEDIDA.LTR}>LTR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Cant.</label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...form.register(`items.${index}.cantidad`, {
-                            valueAsNumber: true,
-                            onChange: () => calcularItem(index),
-                          })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">V. Unit.</label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...form.register(`items.${index}.valor_unitario`, {
-                            valueAsNumber: true,
-                            onChange: () => calcularItem(index),
-                          })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Desc.</label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...form.register(`items.${index}.descuento`, {
-                            valueAsNumber: true,
-                            onChange: () => calcularItem(index),
-                          })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">P. Unit. c/IGV</label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...form.register(`items.${index}.precio_unitario`, { valueAsNumber: true })}
-                          readOnly
-                          className="bg-muted"
-                        />
-                      </div>
-                    </div>
+                {fields.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No hay items agregados.</p>
+                    <p className="text-sm">Usa el buscador o botón "Agregar línea" para añadir productos.</p>
                   </div>
-                ))}
+                ) : (
+                  fields.map((field, index) => {
+                    const item = form.watch(`items.${index}`);
+                    const calc = calcularItem(index);
+                    
+                    return (
+                      <div
+                        key={field.id}
+                        className="p-3 sm:p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
+                        onClick={() => abrirModalItem(index)}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">Item {index + 1}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {item.codigo || 'Sin código'}
+                              </span>
+                            </div>
+                            <p className="text-sm font-medium truncate">{item.descripcion || 'Sin descripción'}</p>
+                            <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                              <span>Cant: {item.cantidad}</span>
+                              <span>×</span>
+                              <span>P. Unit: S/ {item.precio_unitario?.toFixed(2) || '0.00'}</span>
+                              {item.descuento && item.descuento > 0 && (
+                                <span className="text-orange-600">Desc: S/ {item.descuento.toFixed(2)}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="font-semibold">S/ {calc.total.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground">IGV: S/ {calc.igv.toFixed(2)}</div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              remove(index);
+                            }}
+                            className="shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Columna Derecha: Resumen */}
@@ -899,6 +1093,221 @@ export default function EmitirComprobante() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Selección de Tipo de Comprobante */}
+      <Dialog open={modalTipoAbierto} onOpenChange={setModalTipoAbierto}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Elegir el tipo de comprobante</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {(Object.keys(TIPOS_CONFIG) as TipoComprobante[]).map((tipo) => {
+              const config = TIPOS_CONFIG[tipo];
+              return (
+                <Button
+                  key={tipo}
+                  type="button"
+                  variant="default"
+                  className="w-full h-12 text-base"
+                  onClick={() => {
+                    cambiarTipo(tipo);
+                    setModalTipoAbierto(false);
+                  }}
+                >
+                  Nueva {config.titulo.toUpperCase()}
+                </Button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Detalle de Item */}
+      <Dialog open={modalItemAbierto} onOpenChange={(open) => !open && cerrarModalItem(false)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalle de la LÍNEA o ITEM</DialogTitle>
+          </DialogHeader>
+          {itemEditandoIndex !== null && (
+            <div className="space-y-4 py-4">
+              {/* Producto - Servicio */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Producto - Servicio (CATÁLOGO)</label>
+                <Select
+                  value={form.watch(`items.${itemEditandoIndex}.codigo`)}
+                  onValueChange={(value) => {
+                    form.setValue(`items.${itemEditandoIndex}.codigo`, value);
+                    // Aquí se puede cargar info del producto
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Buscar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0001">0001 - CABLE USB</SelectItem>
+                    <SelectItem value="0002">0002 - CABLES HDMI</SelectItem>
+                    <SelectItem value="0003">0003 - BLISTER DE 5 PILAS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Descripción */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Detalle adicional</label>
+                <Input
+                  {...form.register(`items.${itemEditandoIndex}.descripcion`)}
+                  placeholder="Descripción del producto/servicio"
+                />
+              </div>
+
+              {/* Stock */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Stock actual disponible</label>
+                <Input type="number" disabled placeholder="-" className="bg-muted" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Cantidad */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Cantidad</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...form.register(`items.${itemEditandoIndex}.cantidad`, {
+                      valueAsNumber: true,
+                      onChange: () => calcularItem(itemEditandoIndex),
+                    })}
+                  />
+                </div>
+
+                {/* Precio Unit con IGV */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">PRECIO Unit. (Con IGV)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...form.register(`items.${itemEditandoIndex}.precio_unitario`, {
+                      valueAsNumber: true,
+                      onChange: () => {
+                        // Calcular valor_unitario desde precio_unitario
+                        const precioConIgv = form.watch(`items.${itemEditandoIndex}.precio_unitario`) || 0;
+                        const igvRate = (form.getValues('porcentaje_de_igv') || 18) / 100;
+                        const valorSinIgv = precioConIgv / (1 + igvRate);
+                        form.setValue(`items.${itemEditandoIndex}.valor_unitario`, parseFloat(valorSinIgv.toFixed(2)));
+                        calcularItem(itemEditandoIndex);
+                      },
+                    })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Tipo IGV */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tipo IGV</label>
+                  <Select
+                    value={form.watch(`items.${itemEditandoIndex}.tipo_de_igv`)}
+                    onValueChange={(value) => {
+                      form.setValue(`items.${itemEditandoIndex}.tipo_de_igv`, value);
+                      calcularItem(itemEditandoIndex);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TIPOS_IGV.GRAVADO_OPERACION_ONEROSA}>
+                        Gravado - Operación Onerosa
+                      </SelectItem>
+                      <SelectItem value={TIPOS_IGV.EXONERADO}>Exonerado</SelectItem>
+                      <SelectItem value={TIPOS_IGV.INAFECTO}>Inafecto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* IGV de la línea */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">IGV de la línea</label>
+                  <Input
+                    type="number"
+                    disabled
+                    value={calcularItem(itemEditandoIndex).igv.toFixed(2)}
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Subtotal */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Subtotal</label>
+                  <Input
+                    type="number"
+                    disabled
+                    value={calcularItem(itemEditandoIndex).subtotal.toFixed(2)}
+                    className="bg-muted"
+                  />
+                </div>
+
+                {/* Total */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Total</label>
+                  <Input
+                    type="number"
+                    disabled
+                    value={calcularItem(itemEditandoIndex).total.toFixed(2)}
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+
+              {/* Descuento */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Descuento por Item o Línea (aplica al Subtotal)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...form.register(`items.${itemEditandoIndex}.descuento`, {
+                    valueAsNumber: true,
+                    onChange: () => calcularItem(itemEditandoIndex),
+                  })}
+                />
+              </div>
+
+              {/* Impuesto Bolsa Plástica */}
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="bolsa-plastica" className="rounded" />
+                <label htmlFor="bolsa-plastica" className="text-sm font-medium">
+                  Impuesto a la Bolsa Plástica
+                </label>
+              </div>
+
+              {/* Botones */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => cerrarModalItem(true)}
+                >
+                  ACEPTAR
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    if (itemEditandoIndex !== null) {
+                      remove(itemEditandoIndex);
+                      cerrarModalItem(false);
+                    }
+                  }}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
