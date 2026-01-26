@@ -316,6 +316,46 @@ export interface ProductoFormData {
   destacado: boolean;
 }
 
+export interface Entidad {
+  id: number;
+  empresa_id: number;
+  tipo_doc: string;
+  num_doc?: string;
+  numero_documento?: string;
+  denominacion?: string;
+  razon_social?: string;
+  razon_comercial?: string;
+  nombre_comercial?: string;
+  direccion?: string;
+  email?: string;
+  email_2?: string;
+  email_3?: string;
+  telefono?: string;
+  codigo_cliente?: string;
+  licencia_conducir?: string;
+  placa_vehiculo?: string;
+  es_cliente: boolean;
+  es_proveedor: boolean;
+  activo?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EntidadFormData {
+  tipo_doc: string;
+  num_doc?: string;
+  denominacion: string;
+  razon_comercial?: string;
+  direccion?: string;
+  email?: string;
+  email_2?: string;
+  email_3?: string;
+  telefono?: string;
+  codigo_cliente?: string;
+  es_cliente?: boolean;
+  es_proveedor?: boolean;
+}
+
 // Servicios de API
 export const api = {
   // Empresas
@@ -399,17 +439,32 @@ export const api = {
       ),
   },
 
-  // Clientes (entidades)
+  // Entidades (clientes y proveedores)
+  entidades: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<Entidad[]>('/v1/entidades', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<Entidad>>(`/v1/entidades/${id}`),
+    crear: (data: EntidadFormData) =>
+      apiClient.post<ApiResponse<Entidad>>('/v1/entidades', data),
+    actualizar: (id: number, data: Partial<EntidadFormData>) =>
+      apiClient.put<ApiResponse<Entidad>>(`/v1/entidades/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/entidades/${id}`),
+  },
+
+  // Alias para clientes
   clientes: {
     listar: (params?: Record<string, unknown>) =>
-      apiClient.get<PaginatedResponse<unknown>>('/v1/clientes', { params }),
-    obtener: (id: number) => apiClient.get<ApiResponse<unknown>>(`/v1/clientes/${id}`),
-    crear: (data: unknown) =>
-      apiClient.post<ApiResponse<unknown>>('/v1/clientes', data),
-    actualizar: (id: number, data: unknown) =>
-      apiClient.put<ApiResponse<unknown>>(`/v1/clientes/${id}`, data),
+      apiClient.get<Entidad[]>('/v1/entidades', { params: { ...params, es_cliente: true } }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<Entidad>>(`/v1/entidades/${id}`),
+    crear: (data: EntidadFormData) =>
+      apiClient.post<ApiResponse<Entidad>>('/v1/entidades', { ...data, es_cliente: true }),
+    actualizar: (id: number, data: Partial<EntidadFormData>) =>
+      apiClient.put<ApiResponse<Entidad>>(`/v1/entidades/${id}`, data),
     eliminar: (id: number) =>
-      apiClient.delete<ApiResponse<unknown>>(`/v1/clientes/${id}`),
+      apiClient.delete<ApiResponse<unknown>>(`/v1/entidades/${id}`),
   },
 
   // Series de facturación

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,7 +24,7 @@ import {
   UNIDADES_MEDIDA,
   type EmitirComprobanteRequest,
 } from '@/services/nubefact';
-import { api, type Serie } from '@/lib/api';
+import { api, type Serie, type Entidad, type Producto } from '@/lib/api';
 import { Plus, Trash2, Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
 
 // --- Tipos y Configuración ---
@@ -38,19 +40,7 @@ interface TipoConfig {
   requiereDocumento: boolean;
 }
 
-interface ClienteSimulado {
-  ruc: string;
-  razon_social: string;
-}
-
-interface ProductoSimulado {
-  codigo: string;
-  descripcion: string;
-  precio: number;
-  unidad_medida?: string;
-  tipo_afectacion_igv?: string;
-  valor_venta?: number;
-}
+// Tipos importados de API: Entidad y Producto
 
 const TIPOS_CONFIG: Record<TipoComprobante, TipoConfig> = {
   factura: {
@@ -149,13 +139,15 @@ export default function EmitirComprobante() {
   const [loadingSeries, setLoadingSeries] = useState(false);
   
   // Estados para búsquedas
+  const [clientes, setClientes] = useState<Entidad[]>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [openClienteCombobox, setOpenClienteCombobox] = useState(false);
   const [busquedaCliente, setBusquedaCliente] = useState('');
-  const [clientesEncontrados, setClientesEncontrados] = useState<ClienteSimulado[]>([]);
-  const [mostrarDropdownClientes, setMostrarDropdownClientes] = useState(false);
   
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loadingProductos, setLoadingProductos] = useState(false);
+  const [openProductoCombobox, setOpenProductoCombobox] = useState(false);
   const [busquedaProducto, setBusquedaProducto] = useState('');
-  const [productosEncontrados, setProductosEncontrados] = useState<ProductoSimulado[]>([]);
-  const [mostrarDropdownProductos, setMostrarDropdownProductos] = useState(false);
   
   // Estados para modal de item
   const [modalItemAbierto, setModalItemAbierto] = useState(false);
@@ -243,75 +235,54 @@ export default function EmitirComprobante() {
 
   useEffect(() => {
     void cargarSeries();
+    void cargarClientes();
+    void cargarProductos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Buscar clientes (simulado - integrar con API real)
-  const buscarClientes = (termino: string) => {
-    setBusquedaCliente(termino);
-    if (termino.length < 3) {
-      setClientesEncontrados([]);
-      setMostrarDropdownClientes(false);
-      return;
-    }
-    
-    // Simulación - reemplazar con API real
-    const clientesSimulados = [
-      { ruc: '20131295955', razon_social: 'SUNAT - SUPERINTENDENCIA NACIONAL DE ADUANAS Y DE ADMINISTRACIÓN TRIBUTARIA' },
-      { ruc: '2019803341', razon_social: 'MUNICIPALIDAD PROVINCIAL DE CAYLLOMA' },
-      { ruc: '20434906301', razon_social: 'GRUPO MOSS S.R.L.' },
-      { ruc: '20442847071', razon_social: 'TRANSPORTES LIBERTAD S.A.C.' },
-      { ruc: '2051978720', razon_social: '"ANSUS" EMP.IND.RESP.LTDA' },
-      { ruc: '20602667244', razon_social: 'FIBERTEL NETWORKS S.A.C.' },
-    ];
-    
-    const resultados = clientesSimulados.filter(c => 
-      c.ruc.includes(termino) || c.razon_social.toLowerCase().includes(termino.toLowerCase())
-    );
-    
-    setClientesEncontrados(resultados);
-    setMostrarDropdownClientes(true);
-  };
-
-  const seleccionarCliente = (cliente: ClienteSimulado) => {
-    form.setValue('cliente_numero_de_documento', cliente.ruc);
-    form.setValue('cliente_denominacion', cliente.razon_social);
-    form.setValue('cliente_tipo_de_documento', cliente.ruc.length === 11 ? TIPOS_DOCUMENTO.RUC : TIPOS_DOCUMENTO.DNI);
-    setBusquedaCliente(cliente.razon_social);
-    setMostrarDropdownClientes(false);
-  };
-
-  // Buscar productos (integrado con API)
-  const buscarProductos = async (termino: string) => {
-    setBusquedaProducto(termino);
-    if (termino.length < 2) {
-      setProductosEncontrados([]);
-      setMostrarDropdownProductos(false);
-      return;
-    }
-    
+  const cargarClientes = async () => {
     try {
-      const response = await api.productos.listar({
+      setLoadingClientes(true);
+      const response = await api.entidades.listar({
         empresa_id: form.getValues('empresa_id'),
-        buscar: termino,
         activo: true,
       });
-      
-      const productos = response.data.map((p) => ({
-        codigo: p.codigo || p.id.toString(),
-        descripcion: p.descripcion,
-        precio: Number(p.precio_venta_unitario || 0),
-        unidad_medida: p.unidad_medida,
-        tipo_afectacion_igv: p.tipo_afectacion_igv,
-        valor_venta: Number(p.valor_venta_unitario || 0),
-      }));
-      
-      setProductosEncontrados(productos);
-      setMostrarDropdownProductos(true);
+      setClientes(response.data);
     } catch (error) {
-      console.error('Error al buscar productos:', error);
-      setProductosEncontrados([]);
-      setMostrarDropdownProductos(false);
+      console.error('Error al cargar clientes:', error);
+      toast.error('Error al cargar clientes');
+    } finally {
+      setLoadingClientes(false);
+    }
+  };
+
+  const seleccionarCliente = (cliente: Entidad) => {
+    const numeroDoc = cliente.num_doc || cliente.numero_documento || '';
+    const tipoDoc = numeroDoc.length === 11 ? TIPOS_DOCUMENTO.RUC : TIPOS_DOCUMENTO.DNI;
+    const nombre = cliente.denominacion || cliente.razon_social || cliente.nombre_comercial || cliente.razon_comercial || '';
+    
+    form.setValue('cliente_numero_de_documento', numeroDoc);
+    form.setValue('cliente_denominacion', nombre);
+    form.setValue('cliente_tipo_de_documento', tipoDoc);
+    form.setValue('cliente_direccion', cliente.direccion || '');
+    form.setValue('cliente_email', cliente.email || '');
+    setOpenClienteCombobox(false);
+  };
+
+  const cargarProductos = async () => {
+    try {
+      setLoadingProductos(true);
+      const response = await api.productos.listar({
+        empresa_id: form.getValues('empresa_id'),
+        activo: true,
+      });
+      setProductos(response.data);
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      toast.error('Error al cargar productos');
+    } finally {
+      setLoadingProductos(false);
     }
   };
 
@@ -743,50 +714,6 @@ export default function EmitirComprobante() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Búsqueda de Cliente */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Buscar cliente"
-                    value={busquedaCliente}
-                    onChange={(e) => buscarClientes(e.target.value)}
-                    onFocus={() => busquedaCliente.length >= 3 && setMostrarDropdownClientes(true)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      buscarClientes(busquedaCliente);
-                      setMostrarDropdownClientes(true);
-                    }}
-                  >
-                    🔍
-                  </button>
-                  
-                  {/* Dropdown de resultados */}
-                  {mostrarDropdownClientes && clientesEncontrados.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-                      {clientesEncontrados.map((cliente, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          className="w-full px-3 py-2 text-left hover:bg-primary hover:text-primary-foreground text-sm"
-                          onClick={() => seleccionarCliente(cliente)}
-                        >
-                          <div className="font-medium">{cliente.ruc} {cliente.razon_social}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <Button type="button" size="sm" className="shrink-0">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nuevo
-                </Button>
-              </div>
-            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -834,6 +761,62 @@ export default function EmitirComprobante() {
               </div>
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium">Buscar Cliente</label>
+              <Popover open={openClienteCombobox} onOpenChange={setOpenClienteCombobox}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openClienteCombobox}
+                    className="w-full justify-between font-normal"
+                  >
+                    {form.watch('cliente_denominacion') || 'Seleccionar cliente...'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Buscar por RUC, DNI o nombre..." 
+                      value={busquedaCliente}
+                      onValueChange={setBusquedaCliente}
+                    />
+                    <CommandEmpty>
+                      {loadingClientes ? 'Cargando...' : 'No se encontraron clientes'}
+                    </CommandEmpty>
+                    <CommandGroup className="max-h-64 overflow-auto">
+                      {clientes
+                        .filter(cliente => {
+                          const termino = busquedaCliente.toLowerCase();
+                          const numeroDoc = cliente.num_doc || cliente.numero_documento || '';
+                          const nombre = cliente.denominacion || cliente.razon_social || cliente.nombre_comercial || cliente.razon_comercial || '';
+                          return (
+                            numeroDoc.toLowerCase().includes(termino) ||
+                            nombre.toLowerCase().includes(termino)
+                          );
+                        })
+                        .map((cliente) => (
+                          <CommandItem
+                            key={cliente.id}
+                            value={cliente.id.toString()}
+                            onSelect={() => seleccionarCliente(cliente)}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {cliente.denominacion || cliente.razon_social || cliente.nombre_comercial || cliente.razon_comercial}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {cliente.num_doc || cliente.numero_documento}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Razón Social / Nombre</label>
               <Input {...form.register('cliente_denominacion')} placeholder="Cliente Varios" />
               {form.formState.errors.cliente_denominacion && (
@@ -865,71 +848,84 @@ export default function EmitirComprobante() {
               {/* Buscador de Productos */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Buscar Producto o Servicio</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder="Buscar producto"
-                      value={busquedaProducto}
-                      onChange={(e) => buscarProductos(e.target.value)}
-                      onFocus={() => busquedaProducto.length >= 2 && setMostrarDropdownProductos(true)}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        buscarProductos(busquedaProducto);
-                        setMostrarDropdownProductos(true);
-                      }}
+                <Popover open={openProductoCombobox} onOpenChange={setOpenProductoCombobox}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openProductoCombobox}
+                      className="w-full justify-between font-normal"
                     >
-                      🔍
-                    </button>
-                    
-                    {/* Dropdown de resultados */}
-                    {mostrarDropdownProductos && productosEncontrados.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-                        {productosEncontrados.map((producto, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            className="w-full px-3 py-2 text-left hover:bg-primary hover:text-primary-foreground text-sm flex justify-between items-center"
-                            onClick={() => {
-                              // Agregar producto al formulario con datos reales de la API
-                              const valor_unitario = producto.valor_venta || 0;
-                              const precio_unitario = producto.precio || 0;
-                              const unidad_medida = producto.unidad_medida || UNIDADES_MEDIDA.NIU;
-                              const tipo_igv = producto.tipo_afectacion_igv || TIPOS_IGV.GRAVADO_OPERACION_ONEROSA;
-                              
-                              append({
-                                unidad_de_medida: unidad_medida,
-                                codigo: producto.codigo,
-                                descripcion: producto.descripcion,
-                                cantidad: 1,
-                                valor_unitario: parseFloat(valor_unitario.toFixed(6)),
-                                precio_unitario: parseFloat(precio_unitario.toFixed(6)),
-                                descuento: 0,
-                                tipo_de_igv: tipo_igv,
-                              });
-                              
-                              setBusquedaProducto('');
-                              setMostrarDropdownProductos(false);
-                            }}
-                          >
-                            <div>
-                              <div className="font-medium">{producto.codigo} - {producto.descripcion}</div>
-                              <div className="text-xs text-muted-foreground">{producto.unidad_medida || 'NIU'}</div>
-                            </div>
-                            <div className="font-semibold">S/{producto.precio.toFixed(2)}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Button type="button" size="sm" className="shrink-0" onClick={() => abrirModalItem()}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Nuevo
-                  </Button>
-                </div>
+                      <span className="text-muted-foreground">
+                        {loadingProductos ? 'Cargando productos...' : 'Seleccionar producto o servicio...'}
+                      </span>
+                      <Plus className="w-4 h-4 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Buscar por código o descripción..." 
+                        value={busquedaProducto}
+                        onValueChange={setBusquedaProducto}
+                      />
+                      <CommandEmpty>
+                        {loadingProductos ? 'Cargando...' : 'No se encontraron productos'}
+                      </CommandEmpty>
+                      <CommandGroup className="max-h-80 overflow-auto">
+                        {productos
+                          .filter(producto => {
+                            const termino = busquedaProducto.toLowerCase();
+                            return (
+                              (producto.codigo?.toLowerCase().includes(termino)) ||
+                              (producto.descripcion?.toLowerCase().includes(termino))
+                            );
+                          })
+                          .map((producto) => (
+                            <CommandItem
+                              key={producto.id}
+                              value={producto.id.toString()}
+                              onSelect={() => {
+                                const valor_unitario = Number(producto.valor_venta_unitario || 0);
+                                const precio_unitario = Number(producto.precio_venta_unitario || 0);
+                                const unidad_medida = producto.unidad_medida || UNIDADES_MEDIDA.NIU;
+                                const tipo_igv = producto.tipo_afectacion_igv || TIPOS_IGV.GRAVADO_OPERACION_ONEROSA;
+                                
+                                append({
+                                  unidad_de_medida: unidad_medida,
+                                  codigo: producto.codigo || producto.id.toString(),
+                                  descripcion: producto.descripcion,
+                                  cantidad: 1,
+                                  valor_unitario: parseFloat(valor_unitario.toFixed(6)),
+                                  precio_unitario: parseFloat(precio_unitario.toFixed(6)),
+                                  descuento: 0,
+                                  tipo_de_igv: tipo_igv,
+                                });
+                                
+                                setBusquedaProducto('');
+                                setOpenProductoCombobox(false);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex flex-col flex-1">
+                                  <span className="font-medium">
+                                    {producto.codigo} - {producto.descripcion}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {producto.unidad_medida || 'NIU'} · Stock: {Number(producto.stock_actual || 0).toFixed(2)}
+                                  </span>
+                                </div>
+                                <span className="font-semibold text-green-600 ml-2">
+                                  S/ {Number(producto.precio_venta_unitario || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Botón Agregar Línea */}
