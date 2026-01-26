@@ -11,26 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus, Star, StarOff, Trash2, Loader2 } from 'lucide-react';
-import api from '@/lib/api';
-
-interface Producto {
-  id: number;
-  empresa_id: number;
-  codigo: string;
-  descripcion: string;
-  categoria: string | null;
-  unidad_medida: string;
-  codigo_producto_sunat: string | null;
-  moneda: string;
-  valor_venta_unitario: number | null;
-  precio_venta_unitario: number | null;
-  costo_compra_unitario: number | null;
-  precio_compra_unitario: number | null;
-  tipo_afectacion_igv: string;
-  destacado: boolean;
-  activo: boolean;
-  stock_actual: number;
-}
+import api, { type Producto } from '@/lib/api';
 
 const UNIDADES_MEDIDA = [
   { value: 'NIU', label: 'NIU - UNIDADES' },
@@ -93,11 +74,9 @@ export default function GestionProductos() {
   const cargarProductos = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/v1/productos', {
-        params: {
-          empresa_id: empresaId,
-          buscar: busqueda || undefined,
-        },
+      const response = await api.productos.listar({
+        empresa_id: empresaId,
+        buscar: busqueda || undefined,
       });
       setProductos(response.data);
     } catch (error) {
@@ -109,7 +88,8 @@ export default function GestionProductos() {
   };
 
   useEffect(() => {
-    cargarProductos();
+    void cargarProductos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busqueda]);
 
   const abrirModal = (producto?: Producto) => {
@@ -162,27 +142,28 @@ export default function GestionProductos() {
       };
 
       if (productoEditando) {
-        await api.put(`/v1/productos/${productoEditando.id}`, data);
+        await api.productos.actualizar(productoEditando.id, data);
         toast.success('Producto actualizado exitosamente');
       } else {
-        await api.post('/v1/productos', data);
+        await api.productos.crear(data);
         toast.success('Producto creado exitosamente');
       }
 
       cerrarModal();
-      cargarProductos();
-    } catch (error: any) {
+      void cargarProductos();
+    } catch (error) {
       console.error('Error al guardar producto:', error);
-      toast.error(error.response?.data?.message || 'Error al guardar producto');
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Error al guardar producto');
     }
   };
 
   const toggleDestacado = async (id: number) => {
     try {
-      await api.patch(`/v1/productos/${id}/toggle-destacado`);
-      cargarProductos();
+      await api.productos.toggleDestacado(id);
+      void cargarProductos();
       toast.success('Estado de destacado actualizado');
-    } catch (error) {
+    } catch {
       toast.error('Error al actualizar destacado');
     }
   };
@@ -191,10 +172,10 @@ export default function GestionProductos() {
     if (!confirm('¿Estás seguro de desactivar este producto?')) return;
 
     try {
-      await api.delete(`/v1/productos/${id}`);
+      await api.productos.eliminar(id);
       toast.success('Producto desactivado');
-      cargarProductos();
-    } catch (error) {
+      void cargarProductos();
+    } catch {
       toast.error('Error al desactivar producto');
     }
   };

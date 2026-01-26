@@ -281,6 +281,41 @@ export interface SerieFormData {
   por_defecto: boolean;
 }
 
+export interface Producto {
+  id: number;
+  empresa_id: number;
+  codigo: string;
+  descripcion: string;
+  categoria: string | null;
+  unidad_medida: string;
+  codigo_producto_sunat: string | null;
+  moneda: string;
+  valor_venta_unitario: number | null;
+  precio_venta_unitario: number | null;
+  costo_compra_unitario: number | null;
+  precio_compra_unitario: number | null;
+  tipo_afectacion_igv: string;
+  destacado: boolean;
+  activo: boolean;
+  stock_actual: number;
+}
+
+export interface ProductoFormData {
+  empresa_id: number;
+  codigo: string;
+  descripcion: string;
+  categoria?: string;
+  unidad_medida: string;
+  codigo_producto_sunat?: string;
+  moneda: string;
+  valor_venta_unitario?: string | number;
+  precio_venta_unitario?: string | number;
+  costo_compra_unitario?: string | number;
+  precio_compra_unitario?: string | number;
+  tipo_afectacion_igv: string;
+  destacado: boolean;
+}
+
 // Servicios de API
 export const api = {
   // Empresas
@@ -386,6 +421,30 @@ export const api = {
     actualizar: (id: number, data: Partial<SerieFormData>) =>
       apiClient.put<ApiResponse<Serie>>(`/v1/series/${id}`, data),
     eliminar: (id: number) => apiClient.delete<ApiResponse<unknown>>(`/v1/series/${id}`),
+  },
+
+  // Productos
+  productos: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<Producto[]>('/v1/productos', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<Producto>>(`/v1/productos/${id}`),
+    crear: (data: ProductoFormData) =>
+      apiClient.post<ApiResponse<Producto>>('/v1/productos', data),
+    actualizar: (id: number, data: Partial<ProductoFormData>) =>
+      apiClient.put<ApiResponse<Producto>>(`/v1/productos/${id}`, data),
+    eliminar: (id: number) => 
+      apiClient.delete<ApiResponse<unknown>>(`/v1/productos/${id}`),
+    restaurar: (id: number) =>
+      apiClient.patch<ApiResponse<Producto>>(`/v1/productos/${id}/restaurar`),
+    toggleDestacado: (id: number) =>
+      apiClient.patch<ApiResponse<Producto>>(`/v1/productos/${id}/toggle-destacado`),
+    destacados: (params?: Record<string, unknown>) =>
+      apiClient.get<Producto[]>('/v1/productos/destacados', { params }),
+    importar: (formData: FormData) =>
+      apiClient.post<ApiResponse<unknown>>('/v1/productos/importar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
   },
 };
 

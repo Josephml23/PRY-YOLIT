@@ -291,15 +291,13 @@ export default function EmitirComprobante() {
     }
     
     try {
-      const response = await api.get('/v1/productos', {
-        params: {
-          empresa_id: form.getValues('empresa_id'),
-          buscar: termino,
-          activo: true,
-        },
+      const response = await api.productos.listar({
+        empresa_id: form.getValues('empresa_id'),
+        buscar: termino,
+        activo: true,
       });
       
-      const productos = response.data.map((p: any) => ({
+      const productos = response.data.map((p) => ({
         codigo: p.codigo || p.id.toString(),
         descripcion: p.descripcion,
         precio: Number(p.precio_venta_unitario || 0),
