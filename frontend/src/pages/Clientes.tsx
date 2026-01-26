@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { Search, Users, Edit, Trash2, Plus } from 'lucide-react';
 interface Cliente {
   id: number;
   tipo_doc: string;
-  num_doc: string;
+  num_doc?: string;
   denominacion: string;
   razon_comercial?: string | null;
   direccion?: string | null;
@@ -48,10 +48,21 @@ export default function Clientes() {
 
   const { toast } = useToast();
 
-  const fetchClientes = async () => {
+  const fetchClientes = useCallback(async () => {
     try {
       const response = await api.clientes.listar(searchTerm ? { search: searchTerm } : undefined);
-      setClientes(response.data);
+      
+      const clientesMapped: Cliente[] = response.data.map((entidad) => ({
+        id: entidad.id,
+        tipo_doc: entidad.tipo_doc || '',
+        num_doc: entidad.num_doc || '',
+        denominacion: entidad.denominacion || '',
+        razon_comercial: entidad.razon_comercial ?? '',
+        direccion: entidad.direccion ?? '',
+        email: entidad.email ?? '',
+        telefono: entidad.telefono ?? '',
+      }));
+      setClientes(clientesMapped);
     } catch (error) {
       console.error(error);
       toast({
@@ -62,12 +73,11 @@ export default function Clientes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, toast]);
 
   useEffect(() => {
     fetchClientes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchClientes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +116,7 @@ export default function Clientes() {
     setEditingCliente(cliente);
     setFormData({
       tipo_doc: cliente.tipo_doc,
-      num_doc: cliente.num_doc,
+      num_doc: cliente.num_doc || '',
       denominacion: cliente.denominacion,
       razon_comercial: cliente.razon_comercial || '',
       direccion: cliente.direccion || '',
@@ -138,7 +148,7 @@ export default function Clientes() {
     const term = searchTerm.toLowerCase();
     return (
       cliente.denominacion.toLowerCase().includes(term) ||
-      cliente.num_doc.toLowerCase().includes(term) ||
+      (cliente.num_doc || '').toLowerCase().includes(term) ||
       (cliente.razon_comercial || '').toLowerCase().includes(term)
     );
   });
