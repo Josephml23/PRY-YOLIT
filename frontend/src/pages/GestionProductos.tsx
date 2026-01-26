@@ -59,6 +59,7 @@ export default function GestionProductos() {
   const [empresaId] = useState(1); // TODO: Obtener de contexto
   const [selectedProductos, setSelectedProductos] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mostrarColumnasOpcionales, setMostrarColumnasOpcionales] = useState(false);
   const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
@@ -235,7 +236,15 @@ export default function GestionProductos() {
               <Package className="w-6 h-6 text-primary" />
               <CardTitle className="text-2xl">Gestión de Productos</CardTitle>
             </div>
-            <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setMostrarColumnasOpcionales(!mostrarColumnasOpcionales)}
+              >
+                {mostrarColumnasOpcionales ? 'Ocultar' : 'Mostrar'} columnas opcionales
+              </Button>
+              <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
               <DialogTrigger asChild>
                 <Button onClick={() => abrirModal()}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -388,6 +397,7 @@ export default function GestionProductos() {
               </DialogContent>
             </Dialog>
           </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Barra de búsqueda y filtros */}
@@ -459,61 +469,69 @@ export default function GestionProductos() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
-                      <TableHead className="w-10 py-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="w-10 py-2 px-2 bg-slate-100 dark:bg-slate-800">
                         <Checkbox
                           checked={selectedProductos.length === productosFiltrados.length && productosFiltrados.length > 0}
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
-                      <TableHead className="min-w-20 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Código</div>
+                      <TableHead className="min-w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Código</div>
                       </TableHead>
-                      <TableHead className="min-w-40 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Descripción</div>
+                      <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Descripción</div>
                       </TableHead>
-                      <TableHead className="min-w-16 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Unidad</div>
+                      <TableHead className="min-w-16 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase text-center">Unidad</div>
                       </TableHead>
-                      <TableHead className="min-w-24 text-right py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Costo Compra</div>
-                        <div className="text-[9px] font-normal text-muted-foreground">(sin IGV)</div>
+                      {mostrarColumnasOpcionales && (
+                        <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                          <div className="font-bold text-xs uppercase">Costo Compra</div>
+                          <div className="text-[10px] font-normal text-muted-foreground">(sin IGV)</div>
+                        </TableHead>
+                      )}
+                      <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Valor Venta</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">(sin IGV)</div>
                       </TableHead>
-                      <TableHead className="min-w-24 text-right py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Valor Venta</div>
-                        <div className="text-[9px] font-normal text-muted-foreground">(sin IGV)</div>
+                      {mostrarColumnasOpcionales && (
+                        <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                          <div className="font-bold text-xs uppercase">Precio Compra</div>
+                          <div className="text-[10px] font-normal text-muted-foreground">(con IGV)</div>
+                        </TableHead>
+                      )}
+                      <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Precio Venta</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">(con IGV)</div>
                       </TableHead>
-                      <TableHead className="min-w-24 text-right py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Precio Compra</div>
-                        <div className="text-[9px] font-normal text-muted-foreground">(con IGV)</div>
+                      <TableHead className="w-16 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="text-lg">⭐</div>
                       </TableHead>
-                      <TableHead className="min-w-24 text-right py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Precio Venta</div>
-                        <div className="text-[9px] font-normal text-muted-foreground">(con IGV)</div>
+                      <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Tipo IGV</div>
                       </TableHead>
-                      <TableHead className="w-16 text-center py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">★</div>
+                      {mostrarColumnasOpcionales && (
+                        <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                          <div className="font-bold text-xs uppercase">Categoría</div>
+                        </TableHead>
+                      )}
+                      {mostrarColumnasOpcionales && (
+                        <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                          <div className="font-bold text-xs uppercase">Cód. SUNAT</div>
+                        </TableHead>
+                      )}
+                      <TableHead className="min-w-20 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Stock</div>
                       </TableHead>
-                      <TableHead className="min-w-24 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Tipo IGV</div>
-                      </TableHead>
-                      <TableHead className="min-w-20 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Categoría</div>
-                      </TableHead>
-                      <TableHead className="min-w-20 py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Cód. SUNAT</div>
-                      </TableHead>
-                      <TableHead className="min-w-20 text-right py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">Stock</div>
-                      </TableHead>
-                      <TableHead className="w-14 text-center py-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-[10px] uppercase leading-tight">...</div>
+                      <TableHead className="w-16 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Acciones</div>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {productosPaginados.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={14} className="text-center py-12">
+                        <TableCell colSpan={mostrarColumnasOpcionales ? 14 : 10} className="text-center py-12">
                           <div className="flex flex-col items-center gap-3">
                             <Package className="w-16 h-16 text-muted-foreground/30" />
                             {busqueda ? (
@@ -553,84 +571,92 @@ export default function GestionProductos() {
                             selectedProductos.includes(producto.id) ? 'bg-amber-50 dark:bg-amber-950/20' : ''
                           }`}
                         >
-                          <TableCell className="py-1.5 px-2">
+                          <TableCell className="py-2 px-2">
                             <Checkbox
                               checked={selectedProductos.includes(producto.id)}
                               onCheckedChange={() => toggleSelectProducto(producto.id)}
                             />
                           </TableCell>
-                          <TableCell className="font-mono font-medium text-[10px] py-1.5 px-2">
+                          <TableCell className="font-mono font-medium text-xs py-2 px-2">
                             {producto.codigo || '-'}
                           </TableCell>
-                          <TableCell className="max-w-xs py-1.5 px-2">
-                            <div className="truncate text-[10px] leading-tight" title={producto.descripcion}>
+                          <TableCell className="py-2 px-2">
+                            <div className="truncate text-xs max-w-md" title={producto.descripcion}>
                               {producto.descripcion}
                             </div>
                           </TableCell>
-                          <TableCell className="text-center py-1.5 px-1">
-                            <Badge variant="secondary" className="font-mono text-[9px] px-1 py-0 leading-tight">
+                          <TableCell className="text-center py-2 px-2">
+                            <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
                               {producto.unidad_medida}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
-                            {producto.costo_compra_unitario ? 
-                              <span className="text-muted-foreground">{Number(producto.costo_compra_unitario).toFixed(2)}</span> : 
-                              <span className="text-muted-foreground">-</span>
-                            }
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
+                          {mostrarColumnasOpcionales && (
+                            <TableCell className="text-right font-mono text-xs py-2 px-2">
+                              {producto.costo_compra_unitario ? 
+                                <span className="text-muted-foreground">{Number(producto.costo_compra_unitario).toFixed(2)}</span> : 
+                                <span className="text-muted-foreground">-</span>
+                              }
+                            </TableCell>
+                          )}
+                          <TableCell className="text-right font-mono text-xs py-2 px-2">
                             {producto.valor_venta_unitario ? 
                               <span className="text-muted-foreground">{Number(producto.valor_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
-                            {producto.precio_compra_unitario ? 
-                              <span className="text-muted-foreground">{Number(producto.precio_compra_unitario).toFixed(2)}</span> : 
-                              <span className="text-muted-foreground">-</span>
-                            }
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-[10px] font-semibold py-1.5 px-2">
+                          {mostrarColumnasOpcionales && (
+                            <TableCell className="text-right font-mono text-xs py-2 px-2">
+                              {producto.precio_compra_unitario ? 
+                                <span className="text-muted-foreground">{Number(producto.precio_compra_unitario).toFixed(2)}</span> : 
+                                <span className="text-muted-foreground">-</span>
+                              }
+                            </TableCell>
+                          )}
+                          <TableCell className="text-right font-mono text-xs font-semibold py-2 px-2">
                             {producto.precio_venta_unitario ? 
                               <span className="text-green-700 dark:text-green-400">{Number(producto.precio_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-center py-1.5 px-1">
+                          <TableCell className="text-center py-2 px-2">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => toggleDestacado(producto.id)}
-                              className="h-5 w-5 p-0"
+                              className="h-7 w-7 p-0"
                             >
                               {producto.destacado ? (
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                               ) : (
-                                <StarOff className="w-3 h-3 text-muted-foreground" />
+                                <StarOff className="w-4 h-4 text-muted-foreground" />
                               )}
                             </Button>
                           </TableCell>
-                          <TableCell className="py-1.5 px-2">
+                          <TableCell className="py-2 px-2">
                             <Badge 
                               variant={producto.tipo_afectacion_igv === '10' ? 'default' : 'secondary'}
-                              className="text-[9px] whitespace-nowrap px-1 py-0 leading-tight"
+                              className="text-xs whitespace-nowrap px-2 py-0.5"
                             >
                               {TIPOS_IGV.find((t) => t.value === producto.tipo_afectacion_igv)?.label.split('[')[0].trim() || producto.tipo_afectacion_igv}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center py-1.5 px-1">
-                            {producto.categoria ? (
-                              <span className="font-mono text-[9px]">
-                                {producto.categoria}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground text-[9px]">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-mono text-[9px] text-center py-1.5 px-1">
-                            {producto.codigo_producto_sunat || <span className="text-muted-foreground">-</span>}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
+                          {mostrarColumnasOpcionales && (
+                            <TableCell className="text-center py-2 px-2">
+                              {producto.categoria ? (
+                                <span className="font-mono text-xs">
+                                  {producto.categoria}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
+                          )}
+                          {mostrarColumnasOpcionales && (
+                            <TableCell className="font-mono text-xs text-center py-2 px-2">
+                              {producto.codigo_producto_sunat || <span className="text-muted-foreground">-</span>}
+                            </TableCell>
+                          )}
+                          <TableCell className="text-right font-mono text-xs py-2 px-2">
                             <span className={`font-semibold ${
                               Number(producto.stock_actual || 0) < 0 
                                 ? 'text-red-600 dark:text-red-400' 
@@ -641,27 +667,27 @@ export default function GestionProductos() {
                               {Number(producto.stock_actual || 0).toFixed(2)}
                             </span>
                           </TableCell>
-                          <TableCell className="py-1.5 px-1">
+                          <TableCell className="py-2 px-2">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                                  <MoreVertical className="w-3 h-3" />
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-36">
-                                <DropdownMenuItem onClick={() => console.log('Ver movimientos', producto.id)} className="text-[10px] py-1">
-                                  <Eye className="w-3 h-3 mr-1.5" />
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => console.log('Ver movimientos', producto.id)} className="text-xs py-1.5">
+                                  <Eye className="w-4 h-4 mr-2" />
                                   Ver movimientos
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => abrirModal(producto)} className="text-[10px] py-1">
-                                  <Edit className="w-3 h-3 mr-1.5" />
+                                <DropdownMenuItem onClick={() => abrirModal(producto)} className="text-xs py-1.5">
+                                  <Edit className="w-4 h-4 mr-2" />
                                   Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => eliminarProducto(producto.id)}
-                                  className="text-red-600 text-[10px] py-1"
+                                  className="text-red-600 text-xs py-1.5"
                                 >
-                                  <Trash2 className="w-3 h-3 mr-1.5" />
+                                  <Trash2 className="w-4 h-4 mr-2" />
                                   Borrar
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
