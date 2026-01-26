@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Edit, Plus, Star, StarOff, Trash2, Loader2, MoreVertical, Eye, Package } from 'lucide-react';
+import { Edit, Plus, Star, StarOff, Trash2, Loader2, MoreVertical, Eye, Package, ArrowUp, ArrowDown } from 'lucide-react';
 import api, { type Producto } from '@/lib/api';
 
 const UNIDADES_MEDIDA = [
@@ -60,6 +60,7 @@ export default function GestionProductos() {
   const [selectedProductos, setSelectedProductos] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [mostrarColumnasOpcionales, setMostrarColumnasOpcionales] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
@@ -84,7 +85,7 @@ export default function GestionProductos() {
         empresa_id: empresaId,
         buscar: busqueda || undefined,
         sort_by: 'codigo',
-        sort_order: 'asc',
+        sort_order: sortOrder,
       });
       setProductos(response.data);
     } catch (error) {
@@ -115,7 +116,7 @@ export default function GestionProductos() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busqueda]);
+  }, [busqueda, sortOrder]);
 
   const abrirModal = (producto?: Producto) => {
     if (producto) {
@@ -476,10 +477,34 @@ export default function GestionProductos() {
                         />
                       </TableHead>
                       <TableHead className="min-w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-xs uppercase">Código</div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700"
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        >
+                          Código
+                          {sortOrder === 'asc' ? (
+                            <ArrowUp className="ml-1 w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="ml-1 w-3 h-3" />
+                          )}
+                        </Button>
                       </TableHead>
                       <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                        <div className="font-bold text-xs uppercase">Descripción</div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700"
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        >
+                          Código
+                          {sortOrder === 'asc' ? (
+                            <ArrowUp className="ml-1 w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="ml-1 w-3 h-3" />
+                          )}
+                        </Button>
                       </TableHead>
                       <TableHead className="min-w-16 py-2 px-2 bg-slate-100 dark:bg-slate-800">
                         <div className="font-bold text-xs uppercase text-center">Unidad</div>
