@@ -47,6 +47,9 @@ interface ProductoSimulado {
   codigo: string;
   descripcion: string;
   precio: number;
+  unidad_medida?: string;
+  tipo_afectacion_igv?: string;
+  valor_venta?: number;
 }
 
 const TIPOS_CONFIG: Record<TipoComprobante, TipoConfig> = {
@@ -278,8 +281,8 @@ export default function EmitirComprobante() {
     setMostrarDropdownClientes(false);
   };
 
-  // Buscar productos (simulado - integrar con API real)
-  const buscarProductos = (termino: string) => {
+  // Buscar productos (integrado con API)
+  const buscarProductos = async (termino: string) => {
     setBusquedaProducto(termino);
     if (termino.length < 2) {
       setProductosEncontrados([]);
@@ -287,24 +290,31 @@ export default function EmitirComprobante() {
       return;
     }
     
-    // Simulación - reemplazar con API real
-    const productosSimulados = [
-      { codigo: '0001', descripcion: 'CABLE USB NIU', precio: 10.0 },
-      { codigo: '0002', descripcion: 'CABLES HDMI NIU', precio: 15.0 },
-      { codigo: '0003', descripcion: 'BLISTER DE 5 PILAS NIU', precio: 75.0 },
-      { codigo: '0004', descripcion: 'CIGARRERAS AEREAS NIU', precio: 10.0 },
-      { codigo: '0006', descripcion: 'ACEITE DE TRANSMISION WG', precio: 80.0 },
-      { codigo: '0007', descripcion: 'ACEITE HIDROLINA NIU', precio: 270.0 },
-      { codigo: '0008', descripcion: 'ALICATE UNIVERSAL NIU', precio: 20.0 },
-      { codigo: '0009', descripcion: 'GRASA EP2 NIU', precio: 450.0 },
-    ];
-    
-    const resultados = productosSimulados.filter(p => 
-      p.codigo.includes(termino) || p.descripcion.toLowerCase().includes(termino.toLowerCase())
-    );
-    
-    setProductosEncontrados(resultados);
-    setMostrarDropdownProductos(true);
+    try {
+      const response = await api.get('/v1/productos', {
+        params: {
+          empresa_id: form.getValues('empresa_id'),
+          buscar: termino,
+          activo: true,
+        },
+      });
+      
+      const productos = response.data.map((p: any) => ({
+        codigo: p.codigo || p.id.toString(),
+        descripcion: p.descripcion,
+        precio: Number(p.precio_venta_unitario || 0),
+        unidad_medida: p.unidad_medida,
+        tipo_afectacion_igv: p.tipo_afectacion_igv,
+        valor_venta: Number(p.valor_venta_unitario || 0),
+      }));
+      
+      setProductosEncontrados(productos);
+      setMostrarDropdownProductos(true);
+    } catch (error) {
+      console.error('Error al buscar productos:', error);
+      setProductosEncontrados([]);
+      setMostrarDropdownProductos(false);
+    }
   };
 
   const abrirModalItem = (index?: number) => {
@@ -886,19 +896,21 @@ export default function EmitirComprobante() {
                             type="button"
                             className="w-full px-3 py-2 text-left hover:bg-primary hover:text-primary-foreground text-sm flex justify-between items-center"
                             onClick={() => {
-                              // Agregar producto al formulario
-                              const igvRate = (form.getValues('porcentaje_de_igv') || 18) / 100;
-                              const valor_unitario = producto.precio / (1 + igvRate);
+                              // Agregar producto al formulario con datos reales de la API
+                              const valor_unitario = producto.valor_venta || 0;
+                              const precio_unitario = producto.precio || 0;
+                              const unidad_medida = producto.unidad_medida || UNIDADES_MEDIDA.NIU;
+                              const tipo_igv = producto.tipo_afectacion_igv || TIPOS_IGV.GRAVADO_OPERACION_ONEROSA;
                               
                               append({
-                                unidad_de_medida: UNIDADES_MEDIDA.NIU,
+                                unidad_de_medida: unidad_medida,
                                 codigo: producto.codigo,
                                 descripcion: producto.descripcion,
                                 cantidad: 1,
-                                valor_unitario: parseFloat(valor_unitario.toFixed(2)),
-                                precio_unitario: producto.precio,
+                                valor_unitario: parseFloat(valor_unitario.toFixed(6)),
+                                precio_unitario: parseFloat(precio_unitario.toFixed(6)),
                                 descuento: 0,
-                                tipo_de_igv: TIPOS_IGV.GRAVADO_OPERACION_ONEROSA,
+                                tipo_de_igv: tipo_igv,
                               });
                               
                               setBusquedaProducto('');
@@ -906,8 +918,8 @@ export default function EmitirComprobante() {
                             }}
                           >
                             <div>
-                              <div className="font-medium">{producto.codigo} {producto.descripcion}</div>
-                              <div className="text-xs text-muted-foreground">{UNIDADES_MEDIDA.NIU}</div>
+                              <div className="font-medium">{producto.codigo} - {producto.descripcion}</div>
+                              <div className="text-xs text-muted-foreground">{producto.unidad_medida || 'NIU'}</div>
                             </div>
                             <div className="font-semibold">S/{producto.precio.toFixed(2)}</div>
                           </button>

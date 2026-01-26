@@ -13,6 +13,7 @@ import DetalleOportunidad from '@/pages/DetalleOportunidad';
 import Configuracion from '@/pages/Configuracion';
 import DocumentosPage from '@/pages/Documentos';
 import PagosPage from '@/pages/Pagos';
+import GestionProductos from '@/pages/GestionProductos';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
             <Route path="facturacion" element={<Facturacion />} />
             <Route path="facturacion-nubefact" element={<FacturacionNubefact />} />
+            <Route path="productos" element={<GestionProductos />} />
             <Route path="documentos" element={<DocumentosPage />} />
             <Route path="pagos" element={<PagosPage />} />
             <Route path="configuracion" element={<Configuracion />} />

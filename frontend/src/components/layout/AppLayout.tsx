@@ -8,7 +8,8 @@ import {
   CreditCard,
   Users,
   Settings,
-  LogOut
+  LogOut,
+  Package
 } from 'lucide-react';
 import {
   Sidebar,
@@ -30,6 +31,7 @@ const menuItems = [
   { title: 'Clientes', icon: Users, url: '/clientes' },
   { title: 'Oportunidades', icon: FileText, url: '/oportunidades' },
   { title: 'Facturación', icon: Receipt, url: '/facturacion' },
+  { title: 'Productos', icon: Package, url: '/productos' },
   { title: 'Documentos', icon: FolderOpen, url: '/documentos' },
   { title: 'Pagos', icon: CreditCard, url: '/pagos' },
 ];
