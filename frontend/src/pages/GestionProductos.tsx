@@ -82,6 +82,8 @@ export default function GestionProductos() {
       const response = await api.productos.listar({
         empresa_id: empresaId,
         buscar: busqueda || undefined,
+        sort_by: 'codigo',
+        sort_order: 'asc',
       });
       setProductos(response.data);
     } catch (error) {
@@ -92,7 +94,20 @@ export default function GestionProductos() {
     }
   };
 
+  // Cargar productos al montar el componente
   useEffect(() => {
+    void cargarProductos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Búsqueda dinámica con debounce
+  useEffect(() => {
+    if (busqueda === '') {
+      // Si está vacío, cargar inmediatamente
+      void cargarProductos();
+      return;
+    }
+
     const timer = setTimeout(() => {
       void cargarProductos();
     }, 300); // Debounce de 300ms
