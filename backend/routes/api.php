@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AlertaController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EntidadController;
 use App\Http\Controllers\Api\NubefactController;
+use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\SerieController;
 
 /*
@@ -133,4 +134,15 @@ Route::prefix('v1')->group(function () {
     Route::post('/series', [SerieController::class, 'store']);
     Route::put('/series/{id}', [SerieController::class, 'update']);
     Route::delete('/series/{id}', [SerieController::class, 'destroy']);
+    
+    // Productos
+    Route::get('productos', [ProductoController::class, 'index']);
+    Route::post('productos', [ProductoController::class, 'store']);
+    Route::get('productos/destacados', [ProductoController::class, 'destacados']);
+    Route::get('productos/{id}', [ProductoController::class, 'show']);
+    Route::put('productos/{id}', [ProductoController::class, 'update']);
+    Route::delete('productos/{id}', [ProductoController::class, 'destroy']);
+    Route::patch('productos/{id}/restaurar', [ProductoController::class, 'restore']);
+    Route::patch('productos/{id}/toggle-destacado', [ProductoController::class, 'toggleDestacado']);
+    Route::post('productos/importar', [ProductoController::class, 'importar']);
 });
