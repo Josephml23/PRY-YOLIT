@@ -296,16 +296,16 @@ export default function Clientes() {
                     <TableHead className="min-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
                       <div className="font-bold text-xs uppercase">Nombre Comercial</div>
                     </TableHead>
-                    <TableHead className="min-w-36 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                    <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
                       <div className="font-bold text-xs uppercase">Dirección</div>
                     </TableHead>
-                    <TableHead className="min-w-36 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
                       <div className="font-bold text-xs uppercase">Email</div>
                     </TableHead>
-                    <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden xl:table-cell">
+                    <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden xl:table-cell">
                       <div className="font-bold text-xs uppercase">Teléfono</div>
                     </TableHead>
-                    <TableHead className="w-24 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="w-28 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
                       <div className="font-bold text-xs uppercase">Acciones</div>
                     </TableHead>
                   </TableRow>
