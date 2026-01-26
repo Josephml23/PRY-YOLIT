@@ -10,7 +10,9 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Plus, Star, StarOff, Trash2, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Edit, Plus, Star, StarOff, Trash2, Loader2, MoreVertical, Eye, Package } from 'lucide-react';
 import api, { type Producto } from '@/lib/api';
 
 const UNIDADES_MEDIDA = [
@@ -55,6 +57,9 @@ export default function GestionProductos() {
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [empresaId] = useState(1); // TODO: Obtener de contexto
+  const [selectedProductos, setSelectedProductos] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
     codigo: '',
@@ -88,7 +93,11 @@ export default function GestionProductos() {
   };
 
   useEffect(() => {
-    void cargarProductos();
+    const timer = setTimeout(() => {
+      void cargarProductos();
+    }, 300); // Debounce de 300ms
+
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busqueda]);
 
@@ -180,14 +189,37 @@ export default function GestionProductos() {
     }
   };
 
+  const toggleSelectProducto = (id: number) => {
+    setSelectedProductos(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProductos.length === productosFiltrados.length) {
+      setSelectedProductos([]);
+    } else {
+      setSelectedProductos(productosFiltrados.map(p => p.id));
+    }
+  };
+
   const productosFiltrados = productos;
+
+  // Paginación
+  const totalPages = Math.ceil(productosFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const productosPaginados = productosFiltrados.slice(startIndex, endIndex);
 
   return (
     <div className="container mx-auto p-4 space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Gestión de Productos</CardTitle>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Package className="w-6 h-6 text-primary" />
+              <CardTitle className="text-2xl">Gestión de Productos</CardTitle>
+            </div>
             <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
               <DialogTrigger asChild>
                 <Button onClick={() => abrirModal()}>
@@ -321,105 +353,388 @@ export default function GestionProductos() {
                     </Select>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="md:col-span-2 flex items-center gap-3">
                     <Switch
                       checked={formData.destacado}
                       onCheckedChange={(checked) => setFormData({ ...formData, destacado: checked })}
                     />
-                    <Label>¿Destacado?</Label>
+                    <Label className="cursor-pointer">Producto destacado</Label>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={cerrarModal}>
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setModalAbierto(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={guardarProducto} disabled={!formData.descripcion}>
-                    {productoEditando ? 'Actualizar' : 'Crear Producto'}
+                  <Button onClick={guardarProducto}>
+                    {productoEditando ? 'Actualizar' : 'Crear'} Producto
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Input
-              placeholder="Buscar por código o descripción..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
+        <CardContent className="space-y-4">
+          {/* Barra de búsqueda y filtros */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar por código, descripción o categoría..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            {selectedProductos.length > 0 && (
+              <Badge variant="secondary" className="px-3 py-2">
+                {selectedProductos.length} seleccionado{selectedProductos.length !== 1 ? 's' : ''}
+              </Badge>
+            )}
           </div>
 
+          {/* Paginación superior */}
+          {!loading && productosFiltrados.length > 0 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1} - {Math.min(endIndex, productosFiltrados.length)} de {productosFiltrados.length} productos
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                {[...Array(totalPages)].map((_, i) => (
+                  <Button
+                    key={i + 1}
+                    variant={currentPage === i + 1 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(i + 1)}
+                    className="hidden sm:inline-flex"
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <span className="sm:hidden text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+              <p className="text-sm text-muted-foreground">Cargando productos...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead>Unidad</TableHead>
-                    <TableHead>Precio Venta</TableHead>
-                    <TableHead>Tipo IGV</TableHead>
-                    <TableHead>Destacado</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productosFiltrados.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        No se encontraron productos
-                      </TableCell>
+            <div className="rounded-md border overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
+                      <TableHead className="w-12 bg-slate-100 dark:bg-slate-800">
+                        <Checkbox
+                          checked={selectedProductos.length === productosFiltrados.length && productosFiltrados.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead className="min-w-25 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Código</div>
+                      </TableHead>
+                      <TableHead className="min-w-50 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Descripción</div>
+                      </TableHead>
+                      <TableHead className="min-w-20 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Unidad de</div>
+                        <div className="font-bold text-xs uppercase">Medida</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">M</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 text-right bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Costo Unitario</div>
+                        <div className="font-bold text-xs uppercase">de Compra</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">(sin IGV)</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 text-right bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Valor Unitario</div>
+                        <div className="font-bold text-xs uppercase">de Venta</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">(sin IGV)</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 text-right bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Precio Unitario</div>
+                        <div className="font-bold text-xs uppercase">de Compra</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">(con IGV)</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 text-right bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Precio Unitario</div>
+                        <div className="font-bold text-xs uppercase">de Venta</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">(con IGV)</div>
+                      </TableHead>
+                      <TableHead className="min-w-25 text-center bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Destacado</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Tipo de</div>
+                        <div className="font-bold text-xs uppercase">Afectación</div>
+                        <div className="text-xs font-normal mt-0.5 text-muted-foreground">(IGV)</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Código de</div>
+                        <div className="font-bold text-xs uppercase">Categoría</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Descripción</div>
+                        <div className="font-bold text-xs uppercase">de Categoría</div>
+                      </TableHead>
+                      <TableHead className="min-w-30 bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Código</div>
+                        <div className="font-bold text-xs uppercase">Producto SUNAT</div>
+                      </TableHead>
+                      <TableHead className="min-w-25 text-right bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Stock Actual</div>
+                        <div className="font-bold text-xs uppercase">Disponible</div>
+                      </TableHead>
+                      <TableHead className="w-16 text-center bg-slate-100 dark:bg-slate-800">
+                        <div className="font-bold text-xs uppercase">Opciones</div>
+                      </TableHead>
                     </TableRow>
-                  ) : (
-                    productosFiltrados.map((producto) => (
-                      <TableRow key={producto.id}>
-                        <TableCell className="font-medium">{producto.codigo || '-'}</TableCell>
-                        <TableCell className="max-w-xs truncate">{producto.descripcion}</TableCell>
-                        <TableCell>{producto.unidad_medida}</TableCell>
-                        <TableCell>
-                          {producto.precio_venta_unitario ? `S/ ${Number(producto.precio_venta_unitario).toFixed(2)}` : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {TIPOS_IGV.find((t) => t.value === producto.tipo_afectacion_igv)?.label.split('[')[0] || producto.tipo_afectacion_igv}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleDestacado(producto.id)}
-                          >
-                            {producto.destacado ? (
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  </TableHeader>
+                  <TableBody>
+                    {productosPaginados.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={15} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-3">
+                            <Package className="w-16 h-16 text-muted-foreground/30" />
+                            {busqueda ? (
+                              <>
+                                <p className="text-lg font-medium text-muted-foreground">
+                                  No se encontraron productos con "{busqueda}"
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Intenta con otro término de búsqueda o verifica la ortografía
+                                </p>
+                                <Button variant="outline" size="sm" onClick={() => setBusqueda('')}>
+                                  Ver todos los productos
+                                </Button>
+                              </>
                             ) : (
-                              <StarOff className="w-4 h-4" />
+                              <>
+                                <p className="text-lg font-medium text-muted-foreground">
+                                  No hay productos registrados
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Comienza agregando productos a tu catálogo
+                                </p>
+                                <Button variant="default" size="sm" onClick={() => abrirModal()}>
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Crear primer producto
+                                </Button>
+                              </>
                             )}
-                          </Button>
-                        </TableCell>
-                        <TableCell>{Number(producto.stock_actual || 0).toFixed(0)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => abrirModal(producto)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => eliminarProducto(producto.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      productosPaginados.map((producto) => (
+                        <TableRow 
+                          key={producto.id}
+                          className={`hover:bg-muted/50 transition-colors ${
+                            selectedProductos.includes(producto.id) ? 'bg-amber-50 dark:bg-amber-950/20' : ''
+                          }`}
+                        >
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedProductos.includes(producto.id)}
+                              onCheckedChange={() => toggleSelectProducto(producto.id)}
+                            />
+                          </TableCell>
+                          <TableCell className="font-mono font-medium text-sm">
+                            {producto.codigo || '-'}
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="truncate text-sm" title={producto.descripcion}>
+                              {producto.descripcion}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="secondary" className="font-mono text-xs">
+                              {producto.unidad_medida}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {producto.costo_compra_unitario ? 
+                              <span className="text-muted-foreground">S/ {Number(producto.costo_compra_unitario).toFixed(2)}</span> : 
+                              <span className="text-muted-foreground">-</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {producto.valor_venta_unitario ? 
+                              <span className="text-muted-foreground">S/ {Number(producto.valor_venta_unitario).toFixed(2)}</span> : 
+                              <span className="text-muted-foreground">-</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {producto.precio_compra_unitario ? 
+                              <span className="text-muted-foreground">S/ {Number(producto.precio_compra_unitario).toFixed(2)}</span> : 
+                              <span className="text-muted-foreground">-</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm font-semibold">
+                            {producto.precio_venta_unitario ? 
+                              <span className="text-green-700 dark:text-green-400">S/ {Number(producto.precio_venta_unitario).toFixed(2)}</span> : 
+                              <span className="text-muted-foreground">-</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleDestacado(producto.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              {producto.destacado ? (
+                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              ) : (
+                                <StarOff className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={producto.tipo_afectacion_igv === '10' ? 'default' : 'secondary'}
+                              className="text-xs whitespace-nowrap"
+                            >
+                              {TIPOS_IGV.find((t) => t.value === producto.tipo_afectacion_igv)?.label.split('[')[0].trim() || producto.tipo_afectacion_igv}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {producto.categoria ? (
+                              <span className="font-mono text-sm">
+                                {producto.categoria.split('-')[0]?.trim() || producto.categoria}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {producto.categoria ? (
+                              <Badge variant="outline" className="whitespace-nowrap">
+                                {producto.categoria.split('-')[1]?.trim() || producto.categoria}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">SIN CATEGORÍA</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-center">
+                            {producto.codigo_producto_sunat || <span className="text-muted-foreground">-</span>}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            <span className={`font-semibold ${
+                              Number(producto.stock_actual || 0) < 0 
+                                ? 'text-red-600 dark:text-red-400' 
+                                : Number(producto.stock_actual || 0) === 0
+                                ? 'text-yellow-600 dark:text-yellow-400'
+                                : 'text-green-700 dark:text-green-400'
+                            }`}>
+                              {Number(producto.stock_actual || 0).toFixed(2)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => console.log('Ver movimientos', producto.id)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Ver movimientos
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => abrirModal(producto)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => eliminarProducto(producto.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Borrar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* Paginación inferior */}
+          {!loading && productosFiltrados.length > itemsPerPage && (
+            <div className="flex items-center justify-between pt-4">
+              <div className="text-sm text-muted-foreground">
+                Total: {productosFiltrados.length} producto{productosFiltrados.length !== 1 ? 's' : ''}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                {[...Array(totalPages)].map((_, i) => {
+                  // Mostrar solo páginas cercanas a la actual
+                  if (
+                    i === 0 || 
+                    i === totalPages - 1 || 
+                    (i >= currentPage - 2 && i <= currentPage)
+                  ) {
+                    return (
+                      <Button
+                        key={i + 1}
+                        variant={currentPage === i + 1 ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setCurrentPage(i + 1)}
+                        className="hidden sm:inline-flex"
+                      >
+                        {i + 1}
+                      </Button>
+                    );
+                  } else if (i === currentPage - 3 || i === currentPage + 1) {
+                    return <span key={i} className="px-2 hidden sm:inline">...</span>;
+                  }
+                  return null;
+                })}
+                <span className="sm:hidden text-sm px-2">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
