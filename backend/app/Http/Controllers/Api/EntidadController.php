@@ -13,19 +13,49 @@ class EntidadController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Entidad::query()->where('es_cliente', true);
+        $query = Entidad::query();
 
-        if ($search = $request->get('search')) {
+        // Filtro por empresa_id
+        if ($request->has('empresa_id')) {
+            $query->where('empresa_id', $request->empresa_id);
+        }
+
+        // Filtro por es_cliente (por defecto true cuando se usa la ruta /clientes)
+        if ($request->has('es_cliente') || $request->path() === 'api/v1/clientes') {
+            $esCliente = $request->get('es_cliente', true);
+            if (is_string($esCliente)) {
+                $esCliente = $esCliente === 'true' || $esCliente === '1';
+            }
+            $query->where('es_cliente', $esCliente);
+        }
+
+        // Filtro por es_proveedor
+        if ($request->has('es_proveedor')) {
+            $esProveedor = $request->get('es_proveedor');
+            if (is_string($esProveedor)) {
+                $esProveedor = $esProveedor === 'true' || $esProveedor === '1';
+            }
+            $query->where('es_proveedor', $esProveedor);
+        }
+
+        // Búsqueda por texto
+        if ($search = $request->get('search') ?? $request->get('buscar')) {
             $query->where(function ($q) use ($search) {
-                $q->where('denominacion', 'like', "%{$search}%")
-                    ->orWhere('num_doc', 'like', "%{$search}%")
-                    ->orWhere('razon_comercial', 'like', "%{$search}%");
+                $q->where('denominacion', 'ilike', "%{$search}%")
+                    ->orWhere('num_doc', 'ilike', "%{$search}%")
+                    ->orWhere('razon_comercial', 'ilike', "%{$search}%");
             });
         }
 
-        $clientes = $query->orderBy('denominacion')->paginate(15);
+        // Ordenamiento
+        $sortBy = $request->get('sort_by', 'denominacion');
+        $sortOrder = $request->get('sort_order', 'asc');
+        $query->orderBy($sortBy, $sortOrder);
 
-        return response()->json($clientes);
+        // Retornar lista completa (sin paginación) para combobox
+        $entidades = $query->get();
+
+        return response()->json($entidades);
     }
 
     public function store(Request $request): JsonResponse

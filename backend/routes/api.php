@@ -122,7 +122,14 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard/tv', [DashboardController::class, 'tv']);
     Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
 
-    // Clientes (entidades marcadas como clientes)
+    // Entidades (clientes y proveedores)
+    Route::get('entidades', [EntidadController::class, 'index']);
+    Route::post('entidades', [EntidadController::class, 'store']);
+    Route::get('entidades/{id}', [EntidadController::class, 'show']);
+    Route::put('entidades/{id}', [EntidadController::class, 'update']);
+    Route::delete('entidades/{id}', [EntidadController::class, 'destroy']);
+
+    // Clientes (alias de entidades marcadas como clientes)
     Route::get('clientes', [EntidadController::class, 'index']);
     Route::post('clientes', [EntidadController::class, 'store']);
     Route::get('clientes/{id}', [EntidadController::class, 'show']);
