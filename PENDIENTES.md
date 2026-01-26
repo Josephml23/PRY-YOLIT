@@ -147,12 +147,12 @@
 
 ## 📌 PENDIENTES INMEDIATOS (SOBRE EL MVP ACTUAL)
 
-### 1️⃣ Módulo de Productos
-- [ ] **Backend**: Modelo Product/Producto con campos: código, descripción, unidad_medida, precio_unitario, tipo_igv, stock (opcional).
-- [ ] **Backend**: ProductController con CRUD completo (API `/api/v1/productos`).
-- [ ] **Frontend**: Vista de gestión de productos (listado, crear, editar, eliminar).
-- [ ] **Frontend**: Sincronización con formulario de comprobantes (búsqueda y selección de productos desde catálogo).
-- [ ] **Frontend**: Productos destacados/favoritos para acceso rápido en emisión.
+### ✅ 1️⃣ Módulo de Productos (COMPLETADO 26/01/2026)
+- [x] **Backend**: Modelo Product/Producto con campos: código, descripción, unidad_medida, precio_unitario, tipo_igv, stock.
+- [x] **Backend**: ProductoController con CRUD completo (API `/api/v1/productos`).
+- [x] **Frontend**: Vista de gestión de productos (listado, crear, editar, eliminar).
+- [x] **Frontend**: Sincronización con formulario de comprobantes (búsqueda y selección de productos desde catálogo).
+- [x] **Frontend**: Productos destacados/favoritos para acceso rápido en emisión.
 - [ ] Importación/exportación de catálogo de productos (Excel/CSV).
 
 ### 2️⃣ Guías de Remisión (GRE)
