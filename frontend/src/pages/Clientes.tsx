@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
@@ -50,7 +51,7 @@ export default function Clientes() {
   const fetchClientes = async () => {
     try {
       const response = await api.clientes.listar(searchTerm ? { search: searchTerm } : undefined);
-      setClientes(response.data.data);
+      setClientes(response.data);
     } catch (error) {
       console.error(error);
       toast({
@@ -280,38 +281,54 @@ export default function Clientes() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Tipo Doc</th>
-                    <th className="text-left py-3 px-4 font-medium">N° Doc</th>
-                    <th className="text-left py-3 px-4 font-medium">Razón Social / Nombre</th>
-                    <th className="text-left py-3 px-4 font-medium hidden md:table-cell">Nombre Comercial</th>
-                    <th className="text-left py-3 px-4 font-medium hidden lg:table-cell">Dirección</th>
-                    <th className="text-left py-3 px-4 font-medium hidden lg:table-cell">Email</th>
-                    <th className="text-left py-3 px-4 font-medium hidden xl:table-cell">Teléfono</th>
-                    <th className="text-right py-3 px-4 font-medium">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
+                    <TableHead className="min-w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">Tipo Doc</div>
+                    </TableHead>
+                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">N° Doc</div>
+                    </TableHead>
+                    <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">Razón Social / Nombre</div>
+                    </TableHead>
+                    <TableHead className="min-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
+                      <div className="font-bold text-xs uppercase">Nombre Comercial</div>
+                    </TableHead>
+                    <TableHead className="min-w-36 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                      <div className="font-bold text-xs uppercase">Dirección</div>
+                    </TableHead>
+                    <TableHead className="min-w-36 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                      <div className="font-bold text-xs uppercase">Email</div>
+                    </TableHead>
+                    <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden xl:table-cell">
+                      <div className="font-bold text-xs uppercase">Teléfono</div>
+                    </TableHead>
+                    <TableHead className="w-24 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">Acciones</div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredClientes.map((cliente) => (
-                    <tr key={cliente.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-xs">{cliente.tipo_doc}</td>
-                      <td className="py-3 px-4 font-mono text-xs">{cliente.num_doc}</td>
-                      <td className="py-3 px-4">{cliente.denominacion}</td>
-                      <td className="py-3 px-4 hidden md:table-cell text-muted-foreground">
+                    <TableRow key={cliente.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="py-2 px-2 font-mono text-[14px]">{cliente.tipo_doc}</TableCell>
+                      <TableCell className="py-2 px-2 font-mono text-[14px]">{cliente.num_doc}</TableCell>
+                      <TableCell className="py-2 px-2 text-[14px]">{cliente.denominacion}</TableCell>
+                      <TableCell className="py-2 px-2 hidden md:table-cell text-[14px] text-muted-foreground">
                         {cliente.razon_comercial || '-'}
-                      </td>
-                      <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground">
                         {cliente.direccion || '-'}
-                      </td>
-                      <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground">
                         {cliente.email || '-'}
-                      </td>
-                      <td className="py-3 px-4 hidden xl:table-cell text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="py-2 px-2 hidden xl:table-cell text-[14px] text-muted-foreground">
                         {cliente.telefono || '-'}
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell className="py-2 px-2">
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(cliente)}>
                             <Edit className="h-4 w-4" />
@@ -320,11 +337,11 @@ export default function Clientes() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

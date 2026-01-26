@@ -602,42 +602,42 @@ export default function GestionProductos() {
                               onCheckedChange={() => toggleSelectProducto(producto.id)}
                             />
                           </TableCell>
-                          <TableCell className="font-mono font-medium text-xs py-2 px-2">
+                          <TableCell className="font-mono font-medium text-[14px] py-2 px-2">
                             {producto.codigo || '-'}
                           </TableCell>
                           <TableCell className="py-2 px-2">
-                            <div className="truncate text-xs max-w-md" title={producto.descripcion}>
+                            <div className="truncate text-[14px] max-w-md" title={producto.descripcion}>
                               {producto.descripcion}
                             </div>
                           </TableCell>
                           <TableCell className="text-center py-2 px-2">
-                            <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
+                            <Badge variant="secondary" className="font-mono text-[14px] px-2 py-0.5">
                               {producto.unidad_medida}
                             </Badge>
                           </TableCell>
                           {mostrarColumnasOpcionales && (
-                            <TableCell className="text-right font-mono text-xs py-2 px-2">
+                            <TableCell className="text-right font-mono text-[14px] py-2 px-2">
                               {producto.costo_compra_unitario ? 
                                 <span className="text-muted-foreground">{Number(producto.costo_compra_unitario).toFixed(2)}</span> : 
                                 <span className="text-muted-foreground">-</span>
                               }
                             </TableCell>
                           )}
-                          <TableCell className="text-right font-mono text-xs py-2 px-2">
+                          <TableCell className="text-right font-mono text-[14px] py-2 px-2">
                             {producto.valor_venta_unitario ? 
                               <span className="text-muted-foreground">{Number(producto.valor_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
                           {mostrarColumnasOpcionales && (
-                            <TableCell className="text-right font-mono text-xs py-2 px-2">
+                            <TableCell className="text-right font-mono text-[14px] py-2 px-2">
                               {producto.precio_compra_unitario ? 
                                 <span className="text-muted-foreground">{Number(producto.precio_compra_unitario).toFixed(2)}</span> : 
                                 <span className="text-muted-foreground">-</span>
                               }
                             </TableCell>
                           )}
-                          <TableCell className="text-right font-mono text-xs font-semibold py-2 px-2">
+                          <TableCell className="text-right font-mono text-[14px] font-semibold py-2 px-2">
                             {producto.precio_venta_unitario ? 
                               <span className="text-green-700 dark:text-green-400">{Number(producto.precio_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
@@ -660,7 +660,7 @@ export default function GestionProductos() {
                           <TableCell className="py-2 px-2">
                             <Badge 
                               variant={producto.tipo_afectacion_igv === '10' ? 'default' : 'secondary'}
-                              className="text-xs whitespace-nowrap px-2 py-0.5"
+                              className="text-[14px] whitespace-nowrap px-2 py-0.5"
                             >
                               {TIPOS_IGV.find((t) => t.value === producto.tipo_afectacion_igv)?.label.split('[')[0].trim() || producto.tipo_afectacion_igv}
                             </Badge>
@@ -668,20 +668,20 @@ export default function GestionProductos() {
                           {mostrarColumnasOpcionales && (
                             <TableCell className="text-center py-2 px-2">
                               {producto.categoria ? (
-                                <span className="font-mono text-xs">
+                                <span className="font-mono text-[14px]">
                                   {producto.categoria}
                                 </span>
                               ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
+                                <span className="text-muted-foreground text-[14px]">-</span>
                               )}
                             </TableCell>
                           )}
                           {mostrarColumnasOpcionales && (
-                            <TableCell className="font-mono text-xs text-center py-2 px-2">
+                            <TableCell className="font-mono text-[14px] text-center py-2 px-2">
                               {producto.codigo_producto_sunat || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                           )}
-                          <TableCell className="text-right font-mono text-xs py-2 px-2">
+                          <TableCell className="text-right font-mono text-[14px] py-2 px-2">
                             <span className={`font-semibold ${
                               Number(producto.stock_actual || 0) < 0 
                                 ? 'text-red-600 dark:text-red-400' 

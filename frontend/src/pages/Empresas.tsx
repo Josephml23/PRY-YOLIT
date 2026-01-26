@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Building2, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -464,28 +465,38 @@ export default function Empresas() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">RUC</th>
-                    <th className="text-left py-3 px-4 font-medium">Razón Social</th>
-                    <th className="text-left py-3 px-4 font-medium hidden md:table-cell">Nombre Comercial</th>
-                    <th className="text-left py-3 px-4 font-medium hidden lg:table-cell">Usuario SOL</th>
-                    <th className="text-right py-3 px-4 font-medium">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
+                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">RUC</div>
+                    </TableHead>
+                    <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">Razón Social</div>
+                    </TableHead>
+                    <TableHead className="min-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
+                      <div className="font-bold text-xs uppercase">Nombre Comercial</div>
+                    </TableHead>
+                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                      <div className="font-bold text-xs uppercase">Usuario SOL</div>
+                    </TableHead>
+                    <TableHead className="w-24 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase">Acciones</div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredEmpresas.map((empresa) => (
-                    <tr key={empresa.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-sm">{empresa.ruc}</td>
-                      <td className="py-3 px-4">{empresa.razon_social}</td>
-                      <td className="py-3 px-4 hidden md:table-cell text-muted-foreground">
+                    <TableRow key={empresa.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="py-2 px-2 font-mono text-[14px]">{empresa.ruc}</TableCell>
+                      <TableCell className="py-2 px-2 text-[14px]">{empresa.razon_social}</TableCell>
+                      <TableCell className="py-2 px-2 hidden md:table-cell text-[14px] text-muted-foreground">
                         {empresa.nombre_comercial || '-'}
-                      </td>
-                      <td className="py-3 px-4 hidden lg:table-cell font-mono text-sm">
+                      </TableCell>
+                      <TableCell className="py-2 px-2 hidden lg:table-cell font-mono text-[14px]">
                         {empresa.sol_user}
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell className="py-2 px-2">
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
@@ -502,11 +513,11 @@ export default function Empresas() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
