@@ -284,29 +284,29 @@ export default function Clientes() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
-                    <TableHead className="min-w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
                       <div className="font-bold text-xs uppercase">Tipo Doc</div>
                     </TableHead>
-                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800">
                       <div className="font-bold text-xs uppercase">N° Doc</div>
                     </TableHead>
-                    <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="min-w-40 max-w-60 py-2 px-2 bg-slate-100 dark:bg-slate-800">
                       <div className="font-bold text-xs uppercase">Razón Social / Nombre</div>
                     </TableHead>
-                    <TableHead className="min-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
+                    <TableHead className="min-w-32 max-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
                       <div className="font-bold text-xs uppercase">Nombre Comercial</div>
                     </TableHead>
-                    <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                    <TableHead className="min-w-32 max-w-56 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
                       <div className="font-bold text-xs uppercase">Dirección</div>
                     </TableHead>
-                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
+                    <TableHead className="min-w-28 max-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
                       <div className="font-bold text-xs uppercase">Email</div>
                     </TableHead>
-                    <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden xl:table-cell">
+                    <TableHead className="w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden xl:table-cell">
                       <div className="font-bold text-xs uppercase">Teléfono</div>
                     </TableHead>
-                    <TableHead className="w-28 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                      <div className="font-bold text-xs uppercase">Acciones</div>
+                    <TableHead className="w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <div className="font-bold text-xs uppercase text-center">Acciones</div>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -315,15 +315,17 @@ export default function Clientes() {
                     <TableRow key={cliente.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="py-2 px-2 font-mono text-[14px]">{cliente.tipo_doc}</TableCell>
                       <TableCell className="py-2 px-2 font-mono text-[14px]">{cliente.num_doc}</TableCell>
-                      <TableCell className="py-2 px-2 text-[14px]">{cliente.denominacion}</TableCell>
-                      <TableCell className="py-2 px-2 hidden md:table-cell text-[14px] text-muted-foreground">
-                        {cliente.razon_comercial || '-'}
+                      <TableCell className="py-2 px-2 text-[14px] max-w-60">
+                        <div className="truncate" title={cliente.denominacion}>{cliente.denominacion}</div>
                       </TableCell>
-                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground">
-                        {cliente.direccion || '-'}
+                      <TableCell className="py-2 px-2 hidden md:table-cell text-[14px] text-muted-foreground max-w-48">
+                        <div className="truncate" title={cliente.razon_comercial || '-'}>{cliente.razon_comercial || '-'}</div>
                       </TableCell>
-                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground">
-                        {cliente.email || '-'}
+                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground max-w-56">
+                        <div className="truncate" title={cliente.direccion || '-'}>{cliente.direccion || '-'}</div>
+                      </TableCell>
+                      <TableCell className="py-2 px-2 hidden lg:table-cell text-[14px] text-muted-foreground max-w-40">
+                        <div className="truncate" title={cliente.email || '-'}>{cliente.email || '-'}</div>
                       </TableCell>
                       <TableCell className="py-2 px-2 hidden xl:table-cell text-[14px] text-muted-foreground">
                         {cliente.telefono || '-'}
