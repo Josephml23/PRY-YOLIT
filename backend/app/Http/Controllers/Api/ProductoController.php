@@ -49,8 +49,10 @@ class ProductoController extends Controller
         $sortBy = $request->get('sort_by', 'codigo');
         $sortOrder = $request->get('sort_order', 'asc');
         
-        // Ordenamiento case-insensitive para código y descripción
-        if ($sortBy === 'codigo' || $sortBy === 'descripcion') {
+        // Ordenamiento especial para código: primero alfabéticos, luego numéricos
+        if ($sortBy === 'codigo') {
+            $query->orderByRaw("CASE WHEN codigo ~ '^[A-Za-z]' THEN 0 ELSE 1 END, LOWER(codigo) {$sortOrder}");
+        } elseif ($sortBy === 'descripcion') {
             $query->orderByRaw("LOWER({$sortBy}) {$sortOrder}");
         } else {
             $query->orderBy($sortBy, $sortOrder);
