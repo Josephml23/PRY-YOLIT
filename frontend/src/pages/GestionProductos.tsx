@@ -553,84 +553,84 @@ export default function GestionProductos() {
                             selectedProductos.includes(producto.id) ? 'bg-amber-50 dark:bg-amber-950/20' : ''
                           }`}
                         >
-                          <TableCell className="py-2">
+                          <TableCell className="py-1.5 px-2">
                             <Checkbox
                               checked={selectedProductos.includes(producto.id)}
                               onCheckedChange={() => toggleSelectProducto(producto.id)}
                             />
                           </TableCell>
-                          <TableCell className="font-mono font-medium text-xs py-2">
+                          <TableCell className="font-mono font-medium text-[10px] py-1.5 px-2">
                             {producto.codigo || '-'}
                           </TableCell>
-                          <TableCell className="max-w-xs py-2">
-                            <div className="truncate text-xs" title={producto.descripcion}>
+                          <TableCell className="max-w-xs py-1.5 px-2">
+                            <div className="truncate text-[10px] leading-tight" title={producto.descripcion}>
                               {producto.descripcion}
                             </div>
                           </TableCell>
-                          <TableCell className="text-center py-2">
-                            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0">
+                          <TableCell className="text-center py-1.5 px-1">
+                            <Badge variant="secondary" className="font-mono text-[9px] px-1 py-0 leading-tight">
                               {producto.unidad_medida}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right font-mono text-xs py-2">
+                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
                             {producto.costo_compra_unitario ? 
                               <span className="text-muted-foreground">{Number(producto.costo_compra_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-right font-mono text-xs py-2">
+                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
                             {producto.valor_venta_unitario ? 
                               <span className="text-muted-foreground">{Number(producto.valor_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-right font-mono text-xs py-2">
+                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
                             {producto.precio_compra_unitario ? 
                               <span className="text-muted-foreground">{Number(producto.precio_compra_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-right font-mono text-xs font-semibold py-2">
+                          <TableCell className="text-right font-mono text-[10px] font-semibold py-1.5 px-2">
                             {producto.precio_venta_unitario ? 
                               <span className="text-green-700 dark:text-green-400">{Number(producto.precio_venta_unitario).toFixed(2)}</span> : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-center py-2">
+                          <TableCell className="text-center py-1.5 px-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => toggleDestacado(producto.id)}
-                              className="h-6 w-6 p-0"
+                              className="h-5 w-5 p-0"
                             >
                               {producto.destacado ? (
-                                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                               ) : (
-                                <StarOff className="w-3.5 h-3.5 text-muted-foreground" />
+                                <StarOff className="w-3 h-3 text-muted-foreground" />
                               )}
                             </Button>
                           </TableCell>
-                          <TableCell className="py-2">
+                          <TableCell className="py-1.5 px-2">
                             <Badge 
                               variant={producto.tipo_afectacion_igv === '10' ? 'default' : 'secondary'}
-                              className="text-[10px] whitespace-nowrap px-1.5 py-0"
+                              className="text-[9px] whitespace-nowrap px-1 py-0 leading-tight"
                             >
                               {TIPOS_IGV.find((t) => t.value === producto.tipo_afectacion_igv)?.label.split('[')[0].trim() || producto.tipo_afectacion_igv}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center py-2">
+                          <TableCell className="text-center py-1.5 px-1">
                             {producto.categoria ? (
-                              <span className="font-mono text-[10px]">
+                              <span className="font-mono text-[9px]">
                                 {producto.categoria}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground text-[10px]">-</span>
+                              <span className="text-muted-foreground text-[9px]">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono text-[10px] text-center py-2">
+                          <TableCell className="font-mono text-[9px] text-center py-1.5 px-1">
                             {producto.codigo_producto_sunat || <span className="text-muted-foreground">-</span>}
                           </TableCell>
-                          <TableCell className="text-right font-mono text-xs py-2">
+                          <TableCell className="text-right font-mono text-[10px] py-1.5 px-2">
                             <span className={`font-semibold ${
                               Number(producto.stock_actual || 0) < 0 
                                 ? 'text-red-600 dark:text-red-400' 
@@ -641,27 +641,27 @@ export default function GestionProductos() {
                               {Number(producto.stock_actual || 0).toFixed(2)}
                             </span>
                           </TableCell>
-                          <TableCell className="py-2">
+                          <TableCell className="py-1.5 px-1">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <MoreVertical className="w-3.5 h-3.5" />
+                                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                  <MoreVertical className="w-3 h-3" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuItem onClick={() => console.log('Ver movimientos', producto.id)} className="text-xs">
-                                  <Eye className="w-3.5 h-3.5 mr-2" />
+                              <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem onClick={() => console.log('Ver movimientos', producto.id)} className="text-[10px] py-1">
+                                  <Eye className="w-3 h-3 mr-1.5" />
                                   Ver movimientos
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => abrirModal(producto)} className="text-xs">
-                                  <Edit className="w-3.5 h-3.5 mr-2" />
+                                <DropdownMenuItem onClick={() => abrirModal(producto)} className="text-[10px] py-1">
+                                  <Edit className="w-3 h-3 mr-1.5" />
                                   Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => eliminarProducto(producto.id)}
-                                  className="text-red-600 text-xs"
+                                  className="text-red-600 text-[10px] py-1"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                  <Trash2 className="w-3 h-3 mr-1.5" />
                                   Borrar
                                 </DropdownMenuItem>
                               </DropdownMenuContent>

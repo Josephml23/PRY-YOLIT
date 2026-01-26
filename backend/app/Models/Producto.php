@@ -72,9 +72,9 @@ class Producto extends Model
     public function scopeBuscar($query, $termino)
     {
         return $query->where(function ($q) use ($termino) {
-            $q->where('codigo', 'like', "%{$termino}%")
-              ->orWhere('descripcion', 'like', "%{$termino}%")
-              ->orWhere('codigo_producto_sunat', 'like', "%{$termino}%");
+            $q->where('codigo', 'ilike', "%{$termino}%")
+              ->orWhere('descripcion', 'ilike', "%{$termino}%")
+              ->orWhere('codigo_producto_sunat', 'ilike', "%{$termino}%");
         });
     }
 }
