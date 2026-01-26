@@ -48,7 +48,13 @@ class ProductoController extends Controller
         // Ordenamiento
         $sortBy = $request->get('sort_by', 'codigo');
         $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortBy, $sortOrder);
+        
+        // Ordenamiento case-insensitive para código y descripción
+        if ($sortBy === 'codigo' || $sortBy === 'descripcion') {
+            $query->orderByRaw("LOWER({$sortBy}) {$sortOrder}");
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
 
         // Paginación o listado completo
         if ($request->has('per_page')) {
