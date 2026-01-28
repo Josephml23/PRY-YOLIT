@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AnularComprobanteRequest;
+use App\Http\Requests\EmitirComprobanteRequest;
+use App\Http\Requests\EmitirGuiaRequest;
 use App\Models\Comprobante;
 use App\Models\GuiaRemision;
 use App\Services\NubefactClient;
 use App\Services\NubefactMapper;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class NubefactController extends Controller
 {
@@ -29,7 +30,7 @@ class NubefactController extends Controller
      * 1. Con comprobante_id: Emite un comprobante ya existente en BD
      * 2. Con datos completos: Crea el comprobante en BD y luego lo emite
      */
-    public function emitirComprobante(Request $request)
+    public function emitirComprobante(EmitirComprobanteRequest $request)
     {
         DB::beginTransaction();
         
@@ -51,30 +52,7 @@ class NubefactController extends Controller
             } 
             // Modo 2: Crear comprobante desde datos
             else {
-                // Validar datos completos del comprobante
-                $validator = Validator::make($request->all(), [
-                    'empresa_id' => 'required|exists:empresas,id',
-                    'tipo_de_comprobante' => 'required|integer|in:1,2,3,4',
-                    'serie' => 'required|string',
-                    'numero' => 'required|integer',
-                    'cliente_numero_de_documento' => 'required|string',
-                    'cliente_denominacion' => 'required|string',
-                    'fecha_de_emision' => 'required|date',
-                    'moneda' => 'required|integer|in:1,2',
-                    'total' => 'required|numeric',
-                    'items' => 'required|array|min:1',
-                    'items.*.descripcion' => 'required|string',
-                    'items.*.cantidad' => 'required|numeric',
-                    'items.*.precio_unitario' => 'required|numeric',
-                ]);
-
-                if ($validator->fails()) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'errors' => $validator->errors()
-                    ], 422);
-                }
+                $validatedData = $request->validated();
 
                 // Mapear tipo de comprobante NubeFact a SUNAT
                 $tipoDocMap = [
@@ -241,26 +219,19 @@ class NubefactController extends Controller
      * Anular un comprobante mediante NubeFact
      * DELETE /api/nubefact/comprobantes/{tipo}/{serie}/{numero}
      */
-    public function anularComprobante(Request $request, $tipo, $serie, $numero)
+    public function anularComprobante(AnularComprobanteRequest $request, $tipo, $serie, $numero)
     {
-        $validator = Validator::make($request->all(), [
-            'motivo' => 'required|string|max:200',
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         try {
+
             $tipoInt = NubefactClient::mapearTipoComprobante($tipo);
+            $validated = $request->validated();
             $response = $this->nubefactClient->generarAnulacion(
                 $tipoInt,
                 $serie,
                 (int)$numero,
-                $request->motivo
+                $validated['motivo']
             );
 
             // Actualizar comprobante local
@@ -273,7 +244,7 @@ class NubefactController extends Controller
                 $comprobante->update([
                     'anulado' => true,
                     'anulado_at' => now(),
-                    'motivo_anulacion' => $request->motivo,
+                    'motivo_anulacion' => $validated['motivo'],
                     'nubefact_sunat_ticket' => $response['sunat_ticket_numero'] ?? null,
                 ]);
             }
@@ -303,21 +274,14 @@ class NubefactController extends Controller
      * Emitir una guía de remisión mediante NubeFact
      * POST /api/nubefact/guias
      */
-    public function emitirGuia(Request $request)
+    public function emitirGuia(EmitirGuiaRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'guia_id' => 'required|exists:guia_remisions,id',
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         try {
-            $guia = GuiaRemision::with(['items', 'empresa'])->findOrFail($request->guia_id);
+
+            $validated = $request->validated();
+            $guia = GuiaRemision::with(['items', 'empresa'])->findOrFail($validated['guia_id']);
 
             // Verificar si ya fue emitida
             if ($guia->nubefact_enlace) {
@@ -373,7 +337,8 @@ class NubefactController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::channel('nubefact')->error('Error al emitir guía', [
+
+            Log::channel('nubefact')->error('Error al emitir guía de remisión', [
                 'guia_id' => $request->guia_id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductoRequest;
+use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Validator;
 
 class ProductoController extends Controller
 {
@@ -17,33 +18,13 @@ class ProductoController extends Controller
     {
         $query = Producto::with('empresa');
 
-        // Filtro por empresa
-        if ($request->has('empresa_id')) {
-            $query->where('empresa_id', $request->empresa_id);
-        }
+        $query->when($request->filled('empresa_id'), fn($q) => $q->where('empresa_id', $request->empresa_id))
+            ->when($request->filled('categoria'), fn($q) => $q->where('categoria', $request->categoria))
+            ->when($request->has('destacado'), fn($q) => $q->where('destacado', $request->boolean('destacado')))
+            ->when($request->filled('buscar'), fn($q) => $q->buscar($request->buscar));
 
-        // Filtro por categoría
-        if ($request->has('categoria')) {
-            $query->where('categoria', $request->categoria);
-        }
-
-        // Filtro por destacados
-        if ($request->has('destacado')) {
-            $query->where('destacado', $request->destacado);
-        }
-
-        // Filtro por activos
-        if ($request->has('activo')) {
-            $query->where('activo', $request->activo);
-        } else {
-            // Por defecto, solo activos
-            $query->where('activo', true);
-        }
-
-        // Búsqueda por código o descripción
-        if ($request->has('buscar')) {
-            $query->buscar($request->buscar);
-        }
+        // Por defecto, solo activos, a menos que se especifique lo contrario
+        $query->where('activo', $request->boolean('activo', true));
 
         // Ordenamiento
         $sortBy = $request->get('sort_by', 'codigo');
@@ -80,36 +61,9 @@ class ProductoController extends Controller
     /**
      * Crear un nuevo producto
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreProductoRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'empresa_id' => 'required|exists:empresas,id',
-            'codigo' => 'nullable|string|max:50',
-            'descripcion' => 'required|string',
-            'categoria' => 'nullable|string|max:100',
-            'unidad_medida' => 'required|string|max:10',
-            'codigo_producto_sunat' => 'nullable|string|max:20',
-            'moneda' => 'nullable|string|max:3',
-            'valor_venta_unitario' => 'nullable|numeric|min:0',
-            'precio_venta_unitario' => 'nullable|numeric|min:0',
-            'costo_compra_unitario' => 'nullable|numeric|min:0',
-            'precio_compra_unitario' => 'nullable|numeric|min:0',
-            'tipo_afectacion_igv' => 'nullable|string|max:2',
-            'destacado' => 'nullable|boolean',
-            'activo' => 'nullable|boolean',
-            'stock_actual' => 'nullable|numeric|min:0',
-            'stock_minimo' => 'nullable|numeric|min:0',
-            'stock_maximo' => 'nullable|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $producto = Producto::create($request->all());
+        $producto = Producto::create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -121,38 +75,11 @@ class ProductoController extends Controller
     /**
      * Actualizar un producto
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateProductoRequest $request, string $id): JsonResponse
     {
         $producto = Producto::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'empresa_id' => 'sometimes|exists:empresas,id',
-            'codigo' => 'sometimes|nullable|string|max:50',
-            'descripcion' => 'sometimes|string',
-            'categoria' => 'sometimes|nullable|string|max:100',
-            'unidad_medida' => 'sometimes|string|max:10',
-            'codigo_producto_sunat' => 'sometimes|nullable|string|max:20',
-            'moneda' => 'sometimes|nullable|string|max:3',
-            'valor_venta_unitario' => 'sometimes|nullable|numeric|min:0',
-            'precio_venta_unitario' => 'sometimes|nullable|numeric|min:0',
-            'costo_compra_unitario' => 'sometimes|nullable|numeric|min:0',
-            'precio_compra_unitario' => 'sometimes|nullable|numeric|min:0',
-            'tipo_afectacion_igv' => 'sometimes|nullable|string|max:2',
-            'destacado' => 'sometimes|boolean',
-            'activo' => 'sometimes|boolean',
-            'stock_actual' => 'sometimes|nullable|numeric|min:0',
-            'stock_minimo' => 'sometimes|nullable|numeric|min:0',
-            'stock_maximo' => 'sometimes|nullable|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $producto->update($request->all());
+        $producto->update($request->validated());
 
         return response()->json([
             'success' => true,
@@ -228,17 +155,10 @@ class ProductoController extends Controller
      */
     public function importar(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'empresa_id' => 'required|exists:empresas,id',
             'archivo' => 'required|file|mimes:csv,txt',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         // TODO: Implementar lógica de importación CSV
         

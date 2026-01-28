@@ -26,6 +26,8 @@ import {
 } from '@/services/nubefact';
 import { api, type Serie, type Entidad, type Producto } from '@/lib/api';
 import { Plus, Trash2, Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
+import { ClienteCard } from '@/components/ClienteCard';
+import { ResumenTotalesCard } from '@/components/ResumenTotalesCard';
 
 // --- Tipos y Configuración ---
 
@@ -704,135 +706,18 @@ export default function EmitirComprobante() {
         </Card>
 
         {/* Datos del Cliente */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Cliente</CardTitle>
-            <CardDescription>
-              {tipoConfig.requiereDocumento
-                ? 'Información del receptor (obligatorio)'
-                : 'Información del receptor (opcional para montos menores a S/ 700)'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Documento</label>
-                <Select
-                  value={form.watch('cliente_tipo_de_documento')}
-                  onValueChange={(value) => form.setValue('cliente_tipo_de_documento', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TIPOS_DOCUMENTO.DNI}>DNI</SelectItem>
-                    <SelectItem value={TIPOS_DOCUMENTO.RUC}>RUC</SelectItem>
-                    <SelectItem value={TIPOS_DOCUMENTO.CARNET_EXTRANJERIA}>Carnet Extranjería</SelectItem>
-                    {!tipoConfig.requiereDocumento && (
-                      <SelectItem value={TIPOS_DOCUMENTO.SIN_DOCUMENTO}>Sin Documento</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Número de Documento{' '}
-                  {(tipoConfig.requiereDocumento || totales.total >= 700) && (
-                    <span className="text-destructive">*</span>
-                  )}
-                </label>
-                <Input
-                  {...form.register('cliente_numero_de_documento')}
-                  placeholder={
-                    form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO
-                      ? 'No requerido'
-                      : form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.RUC
-                      ? '20123456789'
-                      : '12345678'
-                  }
-                  disabled={form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO}
-                />
-                {form.formState.errors.cliente_numero_de_documento && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.cliente_numero_de_documento.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Buscar Cliente</label>
-              <Popover open={openClienteCombobox} onOpenChange={setOpenClienteCombobox}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openClienteCombobox}
-                    className="w-full justify-between font-normal"
-                  >
-                    {form.watch('cliente_denominacion') || 'Seleccionar cliente...'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput 
-                      placeholder="Buscar por RUC, DNI o nombre..." 
-                      value={busquedaCliente}
-                      onValueChange={setBusquedaCliente}
-                    />
-                    <CommandEmpty>
-                      {loadingClientes ? 'Cargando...' : 'No se encontraron clientes'}
-                    </CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-auto">
-                      {clientes
-                        .filter(cliente => {
-                          const termino = busquedaCliente.toLowerCase();
-                          const numeroDoc = cliente.num_doc || cliente.numero_documento || '';
-                          const nombre = cliente.denominacion || cliente.razon_social || cliente.nombre_comercial || cliente.razon_comercial || '';
-                          return (
-                            numeroDoc.toLowerCase().includes(termino) ||
-                            nombre.toLowerCase().includes(termino)
-                          );
-                        })
-                        .map((cliente) => (
-                          <CommandItem
-                            key={cliente.id}
-                            value={cliente.id.toString()}
-                            onSelect={() => seleccionarCliente(cliente)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {cliente.denominacion || cliente.razon_social || cliente.nombre_comercial || cliente.razon_comercial}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                {cliente.num_doc || cliente.numero_documento}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Razón Social / Nombre</label>
-              <Input {...form.register('cliente_denominacion')} placeholder="Cliente Varios" />
-              {form.formState.errors.cliente_denominacion && (
-                <p className="text-sm text-destructive">{form.formState.errors.cliente_denominacion.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Dirección</label>
-              <Input {...form.register('cliente_direccion')} placeholder="Av. Principal 123" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input type="email" {...form.register('cliente_email')} placeholder="cliente@example.com" />
-            </div>
-          </CardContent>
-        </Card>
+        <ClienteCard
+          form={form as any}
+          clientes={clientes}
+          loadingClientes={loadingClientes}
+          openClienteCombobox={openClienteCombobox}
+          setOpenClienteCombobox={setOpenClienteCombobox}
+          busquedaCliente={busquedaCliente}
+          setBusquedaCliente={setBusquedaCliente}
+          seleccionarCliente={seleccionarCliente}
+          total={totales.total}
+          requiereDocumento={tipoConfig.requiereDocumento}
+        />
 
         {/* Items y Resumen */}
         <Card>
@@ -1026,45 +911,11 @@ export default function EmitirComprobante() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Resumen de totales</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-1 text-xs sm:text-sm">
-                    <div className="flex justify-between">
-                      <span>Gravada S/</span>
-                      <span>{totales.total_gravada.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>IGV S/</span>
-                      <span>{totales.total_igv.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Exonerada S/</span>
-                      <span>0.00</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Inafecta S/</span>
-                      <span>0.00</span>
-                    </div>
-                    <div className="flex justify-between font-semibold border-t pt-2 mt-1 text-sm">
-                      <span>Total S/</span>
-                      <span>{totales.total.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 mt-1 border-t">
-                      <span className="text-sm">¿Detracción?</span>
-                      <Switch
-                        checked={!!form.watch('detraccion')}
-                        onCheckedChange={(checked) => form.setValue('detraccion', checked)}
-                      />
-                    </div>
-                    {!tipoConfig.requiereDocumento && totales.total >= 700 && (
-                      <p className="text-xs text-amber-600 pt-2">
-                        ⚠ Para montos ≥ S/ 700 se requiere documento del cliente
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                <ResumenTotalesCard
+                  form={form as any}
+                  totales={totales}
+                  requiereDocumento={tipoConfig.requiereDocumento}
+                />
               </div>
             </div>
           </CardContent>

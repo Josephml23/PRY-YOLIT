@@ -28,40 +28,28 @@ class FacturacionController extends Controller
     {
         $query = Comprobante::with(['empresa', 'usuario', 'items']);
 
-        // Filtros
-        if ($request->has('empresa_id')) {
-            $query->where('empresa_id', $request->empresa_id);
-        }
-
-        if ($request->has('tipo_doc')) {
-            $query->where('tipo_doc', $request->tipo_doc);
-        }
-
-        if ($request->has('estado_sunat')) {
-            $query->where('estado_sunat', $request->estado_sunat);
-        }
-
-        if ($request->has('cliente_num_doc')) {
-            $query->where('cliente_num_doc', 'like', "%{$request->cliente_num_doc}%");
-        }
-
-        if ($request->has('fecha_desde')) {
-            $query->whereDate('fecha_emision', '>=', $request->fecha_desde);
-        }
-
-        if ($request->has('fecha_hasta')) {
-            $query->whereDate('fecha_emision', '<=', $request->fecha_hasta);
-        }
-
-        // Búsqueda por serie-correlativo
-        if ($request->has('numero')) {
-            $query->where(function($q) use ($request) {
-                $q->whereRaw("CONCAT(serie, '-', correlativo) LIKE ?", ["%{$request->numero}%"]);
-            });
-        }
+        // Filtros dinámicos usando when()
+        $query->when($request->filled('empresa_id'), function ($q) use ($request) {
+            return $q->where('empresa_id', $request->empresa_id);
+        })->when($request->filled('tipo_doc'), function ($q) use ($request) {
+            return $q->where('tipo_doc', $request->tipo_doc);
+        })->when($request->filled('estado_sunat'), function ($q) use ($request) {
+            return $q->where('estado_sunat', $request->estado_sunat);
+        })->when($request->filled('cliente_num_doc'), function ($q) use ($request) {
+            return $q->where('cliente_num_doc', 'like', "%{$request->cliente_num_doc}%");
+        })->when($request->filled('fecha_desde'), function ($q) use ($request) {
+            return $q->whereDate('fecha_emision', '>=', $request->fecha_desde);
+        })->when($request->filled('fecha_hasta'), function ($q) use ($request) {
+            return $q->whereDate('fecha_emision', '<=', $request->fecha_hasta);
+        })->when($request->filled('numero'), function ($q) use ($request) {
+            // Búsqueda por serie-correlativo
+            return $q->whereRaw("CONCAT(serie, '-', correlativo) LIKE ?", ["%{$request->numero}%"]);
+        });
 
         // Ordenamiento
-        $query->orderBy('fecha_emision', 'desc');
+        $sortBy = $request->input('sort_by', 'fecha_emision');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
 
         // Paginación
         $comprobantes = $query->paginate($request->per_page ?? 15);
