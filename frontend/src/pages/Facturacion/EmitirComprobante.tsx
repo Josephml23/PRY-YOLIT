@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,9 +23,11 @@ import {
   type EmitirComprobanteRequest,
 } from '@/services/nubefact';
 import { api, type Serie, type Entidad, type Producto } from '@/lib/api';
-import { Plus, Trash2, Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
+import { Receipt, FileText, CreditCard, FileX, Loader2 } from 'lucide-react';
 import { ClienteCard } from '@/components/ClienteCard';
 import { ResumenTotalesCard } from '@/components/ResumenTotalesCard';
+import { ItemsSection } from '@/components/ItemsSection';
+import { ItemModal } from '@/components/ItemModal';
 
 // --- Tipos y Configuración ---
 
@@ -192,6 +192,9 @@ export default function EmitirComprobante() {
       ],
     },
   });
+  // Cast interno para poder reutilizar el mismo formulario en componentes desacoplados
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const formAny = form as any;
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -316,6 +319,24 @@ export default function EmitirComprobante() {
     }
     setModalItemAbierto(false);
     setItemEditandoIndex(null);
+  };
+
+  const appendItemFromProducto = (producto: Producto) => {
+    const valor_unitario = Number(producto.valor_venta_unitario || 0);
+    const precio_unitario = Number(producto.precio_venta_unitario || 0);
+    const unidad_medida = producto.unidad_medida || UNIDADES_MEDIDA.NIU;
+    const tipo_igv = producto.tipo_afectacion_igv || TIPOS_IGV.GRAVADO_OPERACION_ONEROSA;
+
+    append({
+      unidad_de_medida: unidad_medida,
+      codigo: producto.codigo || producto.id.toString(),
+      descripcion: producto.descripcion,
+      cantidad: 1,
+      valor_unitario: parseFloat(valor_unitario.toFixed(6)),
+      precio_unitario: parseFloat(precio_unitario.toFixed(6)),
+      descuento: 0,
+      tipo_de_igv: tipo_igv,
+    });
   };
 
   // Calcular item sin side effects (para lecturas en render y calculos)
@@ -707,7 +728,7 @@ export default function EmitirComprobante() {
 
         {/* Datos del Cliente */}
         <ClienteCard
-          form={form as any}
+          form={formAny}
           clientes={clientes}
           loadingClientes={loadingClientes}
           openClienteCombobox={openClienteCombobox}
@@ -720,206 +741,31 @@ export default function EmitirComprobante() {
         />
 
         {/* Items y Resumen */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Items del Comprobante</CardTitle>
-                  <CardDescription>Productos o servicios vendidos</CardDescription>
-                </div>
-              </div>
-              
-              {/* Buscador de Productos */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Buscar Producto o Servicio</label>
-                <Popover open={openProductoCombobox} onOpenChange={setOpenProductoCombobox}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openProductoCombobox}
-                      className="w-full justify-between font-normal"
-                    >
-                      <span className="text-muted-foreground">
-                        {loadingProductos ? 'Cargando productos...' : 'Seleccionar producto o servicio...'}
-                      </span>
-                      <Plus className="w-4 h-4 ml-2" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Buscar por código o descripción..." 
-                        value={busquedaProducto}
-                        onValueChange={setBusquedaProducto}
-                      />
-                      <CommandEmpty>
-                        {loadingProductos ? 'Cargando...' : 'No se encontraron productos'}
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-80 overflow-auto">
-                        {productos
-                          .filter(producto => {
-                            const termino = busquedaProducto.toLowerCase();
-                            return (
-                              (producto.codigo?.toLowerCase().includes(termino)) ||
-                              (producto.descripcion?.toLowerCase().includes(termino))
-                            );
-                          })
-                          .map((producto) => (
-                            <CommandItem
-                              key={producto.id}
-                              value={producto.id.toString()}
-                              onSelect={() => {
-                                const valor_unitario = Number(producto.valor_venta_unitario || 0);
-                                const precio_unitario = Number(producto.precio_venta_unitario || 0);
-                                const unidad_medida = producto.unidad_medida || UNIDADES_MEDIDA.NIU;
-                                const tipo_igv = producto.tipo_afectacion_igv || TIPOS_IGV.GRAVADO_OPERACION_ONEROSA;
-                                
-                                append({
-                                  unidad_de_medida: unidad_medida,
-                                  codigo: producto.codigo || producto.id.toString(),
-                                  descripcion: producto.descripcion,
-                                  cantidad: 1,
-                                  valor_unitario: parseFloat(valor_unitario.toFixed(6)),
-                                  precio_unitario: parseFloat(precio_unitario.toFixed(6)),
-                                  descuento: 0,
-                                  tipo_de_igv: tipo_igv,
-                                });
-                                
-                                setBusquedaProducto('');
-                                setOpenProductoCombobox(false);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <div className="flex flex-col flex-1">
-                                  <span className="font-medium">
-                                    {producto.codigo} - {producto.descripcion}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {producto.unidad_medida || 'NIU'} · Stock: {Number(producto.stock_actual || 0).toFixed(2)}
-                                  </span>
-                                </div>
-                                <span className="font-semibold text-green-600 ml-2">
-                                  S/ {Number(producto.precio_venta_unitario || 0).toFixed(2)}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
+        <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
+          <ItemsSection
+            form={formAny}
+            fields={fields}
+            productos={productos}
+            loadingProductos={loadingProductos}
+            openProductoCombobox={openProductoCombobox}
+            setOpenProductoCombobox={setOpenProductoCombobox}
+            busquedaProducto={busquedaProducto}
+            setBusquedaProducto={setBusquedaProducto}
+            onAppendProducto={appendItemFromProducto}
+            onAgregarLinea={() => abrirModalItem()}
+            onClickItem={(index) => abrirModalItem(index)}
+            onRemoveItem={(index) => remove(index)}
+            calcularItemSolo={calcularItemSolo}
+          />
 
-              {/* Botón Agregar Línea */}
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                className="w-full sm:w-auto bg-primary"
-                onClick={() => abrirModalItem()}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                AGREGAR LÍNEA O ITEM
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-6">
-              {/* Columna Izquierda: Items */}
-              <div className="space-y-4">
-                {fields.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No hay items agregados.</p>
-                    <p className="text-sm">Usa el buscador o botón "Agregar línea" para añadir productos.</p>
-                  </div>
-                ) : (
-                  fields.map((field, index) => {
-                    // AQUÍ ESTABA EL ERROR: Usar watch para reactividad sin disparar re-render masivo
-                    const item = form.watch(`items.${index}`);
-                    
-                    // CORRECCIÓN CLAVE: Usamos calcularItemSolo, que NO ejecuta form.setValue
-                    const calc = calcularItemSolo(index);
-                    
-                    return (
-                      <div
-                        key={field.id}
-                        className="p-3 sm:p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors"
-                        onClick={() => abrirModalItem(index)}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">Item {index + 1}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {item.codigo || 'Sin código'}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium truncate">{item.descripcion || 'Sin descripción'}</p>
-                            <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                              <span>Cant: {item.cantidad}</span>
-                              <span>×</span>
-                              <span>P. Unit: S/ {item.precio_unitario?.toFixed(2) || '0.00'}</span>
-                              {item.descuento && item.descuento > 0 && (
-                                <span className="text-orange-600">Desc: S/ {item.descuento.toFixed(2)}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="font-semibold">S/ {calc.total.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">IGV: S/ {calc.igv.toFixed(2)}</div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              remove(index);
-                            }}
-                            className="shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Columna Derecha: Resumen */}
-              <div className="space-y-4">
-                <Card className="border-dashed">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Productos destacados</CardTitle>
-                    <CardDescription className="text-xs">
-                      Placeholder para productos frecuentes
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="outline" className="text-xs">
-                        PROD001 · S/ 0.00
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" className="text-xs">
-                        SERV001 · S/ 0.00
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <ResumenTotalesCard
-                  form={form as any}
-                  totales={totales}
-                  requiereDocumento={tipoConfig.requiereDocumento}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-4">
+            <ResumenTotalesCard
+              form={formAny}
+              totales={totales}
+              requiereDocumento={tipoConfig.requiereDocumento}
+            />
+          </div>
+        </div>
 
         {/* Observaciones */}
         <Card>
@@ -974,191 +820,18 @@ export default function EmitirComprobante() {
       )}
 
       {/* Modal de Detalle de Item */}
-      <Dialog open={modalItemAbierto} onOpenChange={(open) => !open && cerrarModalItem(false)}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalle de la LÍNEA o ITEM</DialogTitle>
-          </DialogHeader>
-          {itemEditandoIndex !== null && (
-            <div className="space-y-4 py-4">
-              {/* Producto - Servicio */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Producto - Servicio (CATÁLOGO)</label>
-                <Select
-                  value={form.watch(`items.${itemEditandoIndex}.codigo`)}
-                  onValueChange={(value) => {
-                    form.setValue(`items.${itemEditandoIndex}.codigo`, value);
-                    // Aquí se puede cargar info del producto
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Buscar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0001">0001 - CABLE USB</SelectItem>
-                    <SelectItem value="0002">0002 - CABLES HDMI</SelectItem>
-                    <SelectItem value="0003">0003 - BLISTER DE 5 PILAS</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Descripción */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Detalle adicional</label>
-                <Input
-                  {...form.register(`items.${itemEditandoIndex}.descripcion`)}
-                  placeholder="Descripción del producto/servicio"
-                />
-              </div>
-
-              {/* Stock */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Stock actual disponible</label>
-                <Input type="number" disabled placeholder="-" className="bg-muted" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Cantidad */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Cantidad</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    {...form.register(`items.${itemEditandoIndex}.cantidad`, {
-                      valueAsNumber: true,
-                      onChange: () => calcularItem(itemEditandoIndex),
-                    })}
-                  />
-                </div>
-
-                {/* Precio Unit con IGV */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">PRECIO Unit. (Con IGV)</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    {...form.register(`items.${itemEditandoIndex}.precio_unitario`, {
-                      valueAsNumber: true,
-                      onChange: () => {
-                        // Calcular valor_unitario desde precio_unitario
-                        const precioConIgv = form.watch(`items.${itemEditandoIndex}.precio_unitario`) || 0;
-                        const igvRate = (form.getValues('porcentaje_de_igv') || 18) / 100;
-                        const valorSinIgv = precioConIgv / (1 + igvRate);
-                        form.setValue(`items.${itemEditandoIndex}.valor_unitario`, parseFloat(valorSinIgv.toFixed(2)));
-                        calcularItem(itemEditandoIndex);
-                      },
-                    })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Tipo IGV */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tipo IGV</label>
-                  <Select
-                    value={form.watch(`items.${itemEditandoIndex}.tipo_de_igv`)}
-                    onValueChange={(value) => {
-                      form.setValue(`items.${itemEditandoIndex}.tipo_de_igv`, value);
-                      calcularItem(itemEditandoIndex);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={TIPOS_IGV.GRAVADO_OPERACION_ONEROSA}>
-                        Gravado - Operación Onerosa
-                      </SelectItem>
-                      <SelectItem value={TIPOS_IGV.EXONERADO}>Exonerado</SelectItem>
-                      <SelectItem value={TIPOS_IGV.INAFECTO}>Inafecto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* IGV de la línea */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">IGV de la línea</label>
-                  <Input
-                    type="number"
-                    disabled
-                    value={calcularItemSolo(itemEditandoIndex).igv.toFixed(2)}
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Subtotal */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Subtotal</label>
-                  <Input
-                    type="number"
-                    disabled
-                    value={calcularItemSolo(itemEditandoIndex).subtotal.toFixed(2)}
-                    className="bg-muted"
-                  />
-                </div>
-
-                {/* Total */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Total</label>
-                  <Input
-                    type="number"
-                    disabled
-                    value={calcularItemSolo(itemEditandoIndex).total.toFixed(2)}
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-
-              {/* Descuento */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Descuento por Item o Línea (aplica al Subtotal)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...form.register(`items.${itemEditandoIndex}.descuento`, {
-                    valueAsNumber: true,
-                    onChange: () => calcularItem(itemEditandoIndex),
-                  })}
-                />
-              </div>
-
-              {/* Impuesto Bolsa Plástica */}
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="bolsa-plastica" className="rounded" />
-                <label htmlFor="bolsa-plastica" className="text-sm font-medium">
-                  Impuesto a la Bolsa Plástica
-                </label>
-              </div>
-
-              {/* Botones */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button
-                  type="button"
-                  className="flex-1"
-                  onClick={() => cerrarModalItem(true)}
-                >
-                  ACEPTAR
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => {
-                    if (itemEditandoIndex !== null) {
-                      remove(itemEditandoIndex);
-                      cerrarModalItem(false);
-                    }
-                  }}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ItemModal
+        form={formAny}
+        open={modalItemAbierto}
+        index={itemEditandoIndex}
+        onClose={cerrarModalItem}
+        calcularItem={calcularItem}
+        calcularItemSolo={calcularItemSolo}
+        onRemove={(index) => {
+          remove(index);
+          cerrarModalItem(false);
+        }}
+      />
     </div>
   );
 }
