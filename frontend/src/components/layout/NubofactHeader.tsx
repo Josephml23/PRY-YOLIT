@@ -39,23 +39,10 @@ export function NubofactHeader() {
 
   return (
     <header className="bg-[hsl(var(--nubofact-header))] text-white">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 h-16">
-        {/* Logo + Navigation */}
+      {/* Top Bar - Altura reducida */}
+      <div className="flex items-center justify-between px-4 h-12">
+        {/* Navigation Menu */}
         <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="bg-white rounded px-2 py-1 h-12 flex items-center">
-              <span className="text-[hsl(var(--nubofact-primary))] font-bold text-lg">
-                NUBOFACT
-              </span>
-            </div>
-            <div className="w-8 h-8 bg-[hsl(var(--nubofact-secondary))] rounded flex items-center justify-center">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-          </div>
-
-          {/* Navigation Menu */}
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -92,8 +79,8 @@ export function NubofactHeader() {
         </div>
       </div>
 
-      {/* Tabs Bar */}
-      <div className="bg-[hsl(var(--nubofact-header-dark))] h-9 flex items-center">
+      {/* Tabs Bar - Altura reducida */}
+      <div className="bg-[hsl(var(--nubofact-header-dark))] h-8 flex items-center">
         {dashboardTabs.map((tab) => (
           <Link
             key={tab.path}

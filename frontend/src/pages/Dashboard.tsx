@@ -98,12 +98,13 @@ export default function Dashboard() {
 
       {/* Main Content con fondo beige Nubofact */}
       <div className="min-h-screen bg-[hsl(var(--nubofact-background))]">
-        <div className="space-y-3 pt-3 px-4 md:px-16 pb-8">
+        <div className="space-y-3 pt-3 px-4 pb-8">
           {/* Filtros Dashboard */}
           <DashboardFilters
-            establecimiento="OFICINA PRINCIPAL"
-            periodo="POR FECHA"
-            fechaDel="01/01/2025"
+            establecimiento={filtros.establecimiento}
+            periodo={filtros.periodo}
+            fechaDel={filtros.fechaDel}
+            onFiltrosChange={handleFiltrosChange}
           />
 
           {/* 2. KPIs (5 tarjetas estilo Nubofact) */}

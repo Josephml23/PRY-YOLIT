@@ -1,24 +1,41 @@
 import { cn } from '@/lib/utils';
 
+const PERIODOS = [
+  { value: 'POR_FECHA', label: 'Por Fecha' },
+  { value: 'HOY', label: 'Hoy' },
+  { value: 'ESTA_SEMANA', label: 'Esta Semana' },
+  { value: 'ESTE_MES', label: 'Este Mes' },
+  { value: 'ESTE_AÑO', label: 'Este Año' },
+] as const;
+
 interface DashboardFiltersProps {
   establecimiento?: string;
   periodo?: string;
   fechaDel?: string;
-  onEstablecimientoChange?: (value: string) => void;
-  onPeriodoChange?: (value: string) => void;
-  onFechaDelChange?: (value: string) => void;
+  onFiltrosChange?: (filtros: { establecimiento: string; periodo: string; fechaDel: string }) => void;
   className?: string;
 }
 
 export function DashboardFilters({
-  establecimiento = 'OFICINA PRINCIPAL',
-  periodo = 'POR FECHA',
+  establecimiento = '1',
+  periodo = 'ESTE_AÑO',
   fechaDel = '',
-  onEstablecimientoChange,
-  onPeriodoChange,
-  onFechaDelChange,
+  onFiltrosChange,
   className,
 }: DashboardFiltersProps) {
+  const establecimientoNombre = establecimiento === '1' ? 'OFICINA PRINCIPAL' : `Establecimiento ${establecimiento}`;
+  
+  const handleEstablecimientoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltrosChange?.({ establecimiento: e.target.value, periodo, fechaDel });
+  };
+
+  const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFiltrosChange?.({ establecimiento, periodo: e.target.value, fechaDel });
+  };
+
+  const handleFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltrosChange?.({ establecimiento, periodo, fechaDel: e.target.value });
+  };
   return (
     <div className={cn('bg-[hsl(var(--nubofact-primary))] rounded-[10px] p-4', className)}>
       <div className="flex items-center justify-between">
@@ -43,10 +60,11 @@ export function DashboardFilters({
               </label>
               <input
                 type="text"
-                value={establecimiento}
-                onChange={(e) => onEstablecimientoChange?.(e.target.value)}
+                value={establecimientoNombre}
+                onChange={handleEstablecimientoChange}
                 placeholder="OFICINA PRINCIPAL"
-                className="bg-white rounded px-3 py-1.5 text-xs text-black/50 w-48 h-7"
+                className="bg-white rounded px-3 py-1.5 text-xs text-black w-48 h-7"
+                readOnly
               />
             </div>
 
@@ -55,13 +73,15 @@ export function DashboardFilters({
               <label className="text-white text-xs uppercase">
                 PERIODO
               </label>
-              <input
-                type="text"
+              <select
                 value={periodo}
-                onChange={(e) => onPeriodoChange?.(e.target.value)}
-                placeholder="POR FECHA"
-                className="bg-white rounded px-3 py-1.5 text-xs text-black/50 w-32 h-7"
-              />
+                onChange={handlePeriodoChange}
+                className="bg-white rounded px-3 py-1.5 text-xs text-black w-32 h-7"
+              >
+                {PERIODOS.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Fecha Del */}
@@ -70,11 +90,10 @@ export function DashboardFilters({
                 FECHA DEL
               </label>
               <input
-                type="text"
+                type="date"
                 value={fechaDel}
-                onChange={(e) => onFechaDelChange?.(e.target.value)}
-                placeholder="dd/mm/aaaa"
-                className="bg-white rounded px-3 py-1.5 text-xs text-black/50 w-32 h-7"
+                onChange={handleFechaChange}
+                className="bg-white rounded px-3 py-1.5 text-xs text-black w-32 h-7"
               />
             </div>
           </div>
