@@ -25,7 +25,7 @@ export function ProductosTopTable({ data, className }: ProductosTopTableProps) {
       <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
         {/* Dropdown */}
         <div className="mb-3">
-          <select className="w-full bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--nubofact-primary))]">
+          <select className="w-full bg-background text-foreground border border-input rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary">
             <option>Adicionar X Anónimenes</option>
             <option>Top 5</option>
             <option>Top 10</option>
@@ -34,9 +34,9 @@ export function ProductosTopTable({ data, className }: ProductosTopTableProps) {
         </div>
 
         {/* Tabla */}
-        <div className="bg-white dark:bg-gray-900 rounded overflow-hidden">
+        <div className="bg-card rounded overflow-hidden border border-border">
           <table className="w-full text-xs">
-            <thead className="bg-[hsl(var(--nubofact-primary))] text-white">
+            <thead className="bg-primary text-primary-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
                 <th className="px-3 py-2 text-left">Producto</th>
@@ -47,7 +47,7 @@ export function ProductosTopTable({ data, className }: ProductosTopTableProps) {
             <tbody>
               {data.length > 0 ? (
                 data.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <tr key={item.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-3 py-3">{item.id}</td>
                     <td className="px-3 py-3">{item.producto}</td>
                     <td className="px-3 py-3">{item.cantidad}</td>
@@ -56,8 +56,8 @@ export function ProductosTopTable({ data, className }: ProductosTopTableProps) {
                 ))
               ) : (
                 <>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-3 py-3 text-center text-gray-500" colSpan={4}>
+                  <tr className="border-b border-border">
+                    <td className="px-3 py-3 text-center text-muted-foreground" colSpan={4}>
                       No hay datos disponibles
                     </td>
                   </tr>

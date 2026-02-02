@@ -18,8 +18,8 @@ interface MonthlyTableProps {
  */
 export function MonthlyTable({ data, className }: MonthlyTableProps) {
   return (
-    <div className={`bg-gray-300 dark:bg-gray-700 rounded-lg shadow-md p-4 ${className}`}>
-      <div className="bg-white dark:bg-gray-900 rounded overflow-hidden">
+    <div className={`bg-muted rounded-lg shadow-md p-4 min-h-70 ${className}`}>
+      <div className="bg-card border border-border rounded overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-[hsl(var(--nubofact-primary))] text-white">
             <tr>
@@ -34,8 +34,8 @@ export function MonthlyTable({ data, className }: MonthlyTableProps) {
             {data.map((row, index) => (
               <tr 
                 key={index} 
-                className={`border-b border-gray-200 ${
-                  row.isTotal ? 'bg-gray-200 font-semibold' : 'hover:bg-gray-50'
+                className={`border-b border-border ${
+                  row.isTotal ? 'bg-primary/10 font-semibold' : 'hover:bg-muted/50 transition-colors'
                 }`}
               >
                 <td className="px-3 py-2">{row.mes}</td>

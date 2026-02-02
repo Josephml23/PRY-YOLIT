@@ -44,7 +44,7 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
           {LEGEND_ITEMS.map(({ label, color }) => (
             <div key={label} className="flex items-center gap-1">
               <div className={`w-3 h-3 ${color} rounded`}></div>
-              <span className="text-gray-700 dark:text-gray-300">{label}</span>
+              <span className="text-foreground">{label}</span>
             </div>
           ))}
         </div>

@@ -32,22 +32,22 @@ export function NotasVentaPanel({
 
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">Notas de Venta</CardTitle>
       </CardHeader>
-      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
+      <CardContent className="bg-muted p-4 min-h-70">
         {/* Métricas */}
         <div className="flex justify-around mb-4">
           <div className="text-center">
-            <div className="text-xs text-gray-700 mb-1">Ingresos</div>
-            <div className="text-blue-400 text-lg font-semibold">{ingresos}</div>
+            <div className="text-xs text-muted-foreground mb-1">Ingresos</div>
+            <div className="text-chart-2 text-lg font-semibold">{ingresos}</div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-700 mb-1">Egresos</div>
-            <div className="text-red-400 text-lg font-semibold">{egresos.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground mb-1">Egresos</div>
+            <div className="text-chart-1 text-lg font-semibold">{egresos.toFixed(2)}</div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-700 mb-1">M Flujo</div>
+            <div className="text-xs text-muted-foreground mb-1">M Flujo</div>
             <div className="text-green-400 text-lg font-semibold">{flujo.toFixed(2)}</div>
           </div>
         </div>
@@ -69,12 +69,12 @@ export function NotasVentaPanel({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="w-4 h-4 accent-[hsl(var(--nubofact-primary))]"
+              className="w-4 h-4 accent-primary"
               id="filtrar"
               checked={filtrarProducto}
               onChange={(e) => setFiltrarProducto(e.target.checked)}
             />
-            <label htmlFor="filtrar" className="text-xs text-gray-700 cursor-pointer">
+            <label htmlFor="filtrar" className="text-xs text-muted-foreground cursor-pointer">
               Filtrar por producto
             </label>
           </div>

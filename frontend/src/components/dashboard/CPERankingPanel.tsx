@@ -22,10 +22,10 @@ export function CPERankingPanel({ data, className }: CPERankingPanelProps) {
 
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">CPE</CardTitle>
       </CardHeader>
-      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
+      <CardContent className="bg-muted p-4 min-h-70">
         <div className="space-y-2">
           {data.map((item, index) => {
             const barWidth = item.percentage 

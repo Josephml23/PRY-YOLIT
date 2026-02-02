@@ -71,7 +71,7 @@ export function StockMinimoTable({
 
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">Productos con Stock Mínimo</CardTitle>
       </CardHeader>
       <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
@@ -91,7 +91,7 @@ export function StockMinimoTable({
             <tbody>
               {data.length > 0 ? (
                 data.map((product) => (
-                  <tr key={product.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <tr key={product.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-2 py-2">{product.id}</td>
                     <td className="px-2 py-2 text-[10px]">{product.producto}</td>
                     <td className="px-2 py-2 text-center">{product.stock}</td>

@@ -32,7 +32,7 @@ export function TotalComprasPanel({
 }: TotalComprasPanelProps) {
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">Total Compras</CardTitle>
       </CardHeader>
       <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
@@ -60,15 +60,15 @@ export function TotalComprasPanel({
           >
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#999" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: '#333', fontSize: 10 }}
-                  axisLine={{ stroke: '#666' }}
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
                 />
                 <YAxis
-                  tick={{ fill: '#333', fontSize: 10 }}
-                  axisLine={{ stroke: '#666' }}
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
                 />
                 <ChartTooltip
                   content={
@@ -77,7 +77,7 @@ export function TotalComprasPanel({
                     />
                   }
                 />
-                <Bar dataKey="value" fill="#3b9dd6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
