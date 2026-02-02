@@ -8,6 +8,7 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { DashboardFilterPanel } from '@/components/dashboard/DashboardFilterPanel';
 import { DesgloseSummaryPanel } from '@/components/dashboard/DesgloseSummaryPanel';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DashboardFiltros, DashboardStats } from '@/types';
 
@@ -262,61 +263,73 @@ export default function Dashboard() {
         </DesgloseSummaryPanel>
 
         {/* Totales Generales con gráfico de barras */}
-        <div className="border-none bg-[hsl(var(--dashboard-dark))] text-white shadow-lg rounded-lg p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Totales Generales</h3>
-          <div className="grid grid-cols-3 gap-2 mb-3 sm:mb-4">
-            <div className="text-center">
-              <p className="text-xs text-white/70">Total Nota Venta</p>
-              <p className="text-sm sm:text-base font-bold text-red-300 truncate">{formatCurrency(stats.totalNotasVenta)}</p>
+        <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg font-semibold">Totales Generales</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center">
+                <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
+                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-words">
+                  {formatCurrency(stats.totalNotasVenta)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs opacity-70 mb-1">Total CPE</p>
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-words">
+                  {formatCurrency(stats.totalCPE)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs opacity-70 mb-1">Total General</p>
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-words">
+                  {formatCurrency(stats.montoTotalGeneral)}
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-white/70">Total CPE</p>
-              <p className="text-sm sm:text-base font-bold text-blue-300 truncate">{formatCurrency(stats.totalCPE)}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-white/70">Total General</p>
-              <p className="text-sm sm:text-base font-bold text-blue-300 truncate">{formatCurrency(stats.montoTotalGeneral)}</p>
-            </div>
-          </div>
-          {/* Gráfico de barras */}
-          <ChartContainer
-            config={{
-              total: { label: 'Total (S/)', color: CHART_COLORS.primary },
-            }}
-            className="h-[180px] w-full"
-          >
-            <BarChart data={dataTotalesBar}>
-              <XAxis
-                dataKey="name"
-                stroke="#fff"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="#fff"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-                width={50}
-                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatCurrency(Number(value))}
-                  />
-                }
-                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
-              />
-              <Bar
-                dataKey="total"
-                fill={CHART_COLORS.primary}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
+            {/* Gráfico de barras */}
+            <ChartContainer
+              config={{
+                total: { label: 'Total (S/)', color: CHART_COLORS.primary },
+              }}
+              className="h-[180px] w-full"
+            >
+              <BarChart data={dataTotalesBar}>
+                <XAxis
+                  dataKey="name"
+                  stroke="currentColor"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  className="opacity-70"
+                />
+                <YAxis
+                  stroke="currentColor"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  width={50}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                  className="opacity-70"
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  }
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                />
+                <Bar
+                  dataKey="total"
+                  fill={CHART_COLORS.primary}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -95,9 +95,10 @@
   --sidebar-border: 0 0% 89.8%;
   --sidebar-ring: 0 0% 3.9%;
   
-  /* Dashboard Dark Colors (negro oscuro) */
-  --dashboard-dark: 0 0% 12%;
-  --dashboard-dark-light: 0 0% 18%;
+  /* Dashboard Dark Colors (negro oscuro para light mode, fondo claro en light) */
+  --dashboard-dark: 0 0% 96%;
+  --dashboard-dark-foreground: 0 0% 10%;
+  --dashboard-dark-light: 0 0% 98%;
 }
 
 .dark {
@@ -140,6 +141,7 @@
   
   /* Dashboard Dark Colors (negro oscuro en dark mode) */
   --dashboard-dark: 0 0% 8%;
+  --dashboard-dark-foreground: 0 0% 98%;
   --dashboard-dark-light: 0 0% 14%;
 }
 

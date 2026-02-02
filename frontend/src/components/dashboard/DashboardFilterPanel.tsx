@@ -30,44 +30,44 @@ export function DashboardFilterPanel({
   };
 
   return (
-    <Card className="border-none bg-[hsl(var(--dashboard-dark))] text-white shadow-lg">
+    <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
       <CardContent className="p-4 sm:p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
-          <div className="shrink-0">
-            <h2 className="text-2xl font-bold text-white">Dashboard General</h2>
+          <div className="flex-shrink-0">
+            <h2 className="text-xl sm:text-2xl font-bold">Dashboard General</h2>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
             {/* Establecimiento */}
-            <div className="flex-1">
-              <Label htmlFor="establecimiento" className="text-white/80 text-xs mb-1.5">
+            <div className="flex-1 min-w-[180px]">
+              <Label htmlFor="establecimiento" className="text-xs font-medium mb-1.5 opacity-80">
                 Establecimiento
               </Label>
               <select
                 id="establecimiento"
-                className="w-full h-9 rounded-md border border-white/20 bg-white/10 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                className="w-full h-9 rounded-md border bg-background/50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:border-white/20 dark:bg-white/10"
                 value={establecimiento}
                 onChange={(e) => handleEstablecimientoChange(e.target.value)}
               >
-                <option value="1" className="bg-[hsl(var(--dashboard-dark))] text-white">
+                <option value="1" className="bg-background dark:bg-[hsl(var(--dashboard-dark))]">
                   OFICINA PRINCIPAL
                 </option>
               </select>
             </div>
 
             {/* Período */}
-            <div className="flex-1">
-              <Label htmlFor="periodo" className="text-white/80 text-xs mb-1.5">
+            <div className="flex-1 min-w-[180px]">
+              <Label htmlFor="periodo" className="text-xs font-medium mb-1.5 opacity-80">
                 Período
               </Label>
               <select
                 id="periodo"
-                className="w-full h-9 rounded-md border border-white/20 bg-white/10 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                className="w-full h-9 rounded-md border bg-background/50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:border-white/20 dark:bg-white/10"
                 value={periodo}
                 onChange={(e) => handlePeriodoChange(e.target.value as DashboardFilterPanelProps['periodo'])}
               >
                 {PERIODOS.map((p) => (
-                  <option key={p.value} value={p.value} className="bg-[hsl(var(--dashboard-dark))] text-white">
+                  <option key={p.value} value={p.value} className="bg-background dark:bg-[hsl(var(--dashboard-dark))]">
                     {p.label}
                   </option>
                 ))}
@@ -76,14 +76,14 @@ export function DashboardFilterPanel({
 
             {/* Fecha del (solo si período = POR_FECHA) */}
             {periodo === 'POR_FECHA' && (
-              <div className="flex-1">
-                <Label htmlFor="fecha-del" className="text-white/80 text-xs mb-1.5">
+              <div className="flex-1 min-w-[180px]">
+                <Label htmlFor="fecha-del" className="text-xs font-medium mb-1.5 opacity-80">
                   Fecha del
                 </Label>
                 <Input
                   id="fecha-del"
                   type="date"
-                  className="h-9 border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/30"
+                  className="h-9 bg-background/50 dark:border-white/20 dark:bg-white/10 focus:ring-2 focus:ring-ring"
                   value={fechaDel}
                   onChange={(e) => handleFechaChange(e.target.value)}
                 />
