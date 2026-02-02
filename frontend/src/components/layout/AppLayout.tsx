@@ -46,7 +46,7 @@ export function AppLayout() {
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar className="border-r">
           <SidebarContent>
-            <div className="border-b flex items-center justify-center overflow-hidden" style={{ height: '64px', padding: '0', margin: '0', lineHeight: '0' }}>
+            <div className="border-b flex items-center justify-center overflow-hidden" style={{ height: '56px', padding: '0', margin: '0', lineHeight: '0' }}>
               <Link to="/app" className="flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ padding: '0', margin: '0', lineHeight: '0' }}>
                 <img
                   src={logoUrl}
@@ -57,8 +57,8 @@ export function AppLayout() {
                     objectFit: 'contain',
                     objectPosition: 'center center',
                     padding: '0',
-                    margin: '-35% 0',
-                    transform: 'scale(2.3)',
+                    margin: '-32% 0',
+                    transform: 'scale(2.2)',
                     maxWidth: '100%',
                     display: 'block'
                   }}
@@ -112,8 +112,8 @@ export function AppLayout() {
         </Sidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-background dark:bg-primary text-foreground dark:text-primary-foreground px-4 md:px-6" style={{ height: '56px' }}>
-            <SidebarTrigger className="shrink-0 text-foreground dark:text-primary-foreground hover:bg-muted dark:hover:bg-primary-foreground/10" />
+          <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-card text-card-foreground px-4 md:px-6" style={{ height: '56px' }}>
+            <SidebarTrigger className="shrink-0 text-card-foreground hover:bg-muted" />
             <div className="flex-1 min-w-0" />
             <ThemeToggle />
           </header>
