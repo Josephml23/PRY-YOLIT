@@ -2,6 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { type MetricCardProps } from '@/types';
 import { cn } from '@/lib/utils';
 
+/**
+ * MetricCard - Displays financial metrics with intentional design for invoice/ledger context
+ * 
+ * Design Principles:
+ * - Typography: Always tabular-nums for number alignment (like accounting ledger)
+ * - Signature: Document receipt strip (subtle gradient border-left)
+ * - Craft: Subtle layering, no harsh shadows, borders-only depth
+ * - Domain: Evokes professionalism of fiscal documents
+ */
 export function MetricCard({
   title,
   value,
@@ -14,14 +23,26 @@ export function MetricCard({
   const isNavy = variant === 'navy';
 
   if (isNavy) {
-    // Variant Navy: Fondo oscuro/claro según tema, layout mejorado
+    // Variant Navy: Professional ledger-style with signature receipt strip
     return (
       <Card className={cn(
-        'hover:shadow-lg transition-shadow border',
+        'hover:shadow-lg transition-all duration-200 border',
         'bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))]',
         'dark:border-none',
+        // Signature Element: Document Receipt Strip (subtle gradient)
+        'border-l-[3px] border-l-primary/60',
+        'relative overflow-hidden',
         className
       )}>
+        {/* Subtle receipt strip gradient */}
+        <div 
+          className="absolute left-0 top-0 bottom-0 w-[3px] opacity-40"
+          style={{
+            background: 'linear-gradient(to bottom, hsl(142 76% 36%), hsl(221 83% 53%))',
+          }}
+          aria-hidden="true"
+        />
+        
         <CardContent className="p-4 sm:p-5 lg:p-6">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="shrink-0 mt-0.5">
@@ -31,7 +52,8 @@ export function MetricCard({
               <CardTitle className="text-xs sm:text-sm font-medium opacity-70 leading-tight">
                 {title}
               </CardTitle>
-              <div className="text-sm sm:text-base lg:text-lg font-bold leading-tight break-all tabular-nums">
+              {/* Financial data: tabular-nums for ledger-style alignment */}
+              <div className="text-sm sm:text-base lg:text-lg font-bold leading-tight tabular-nums tracking-tight">
                 {value}
               </div>
               {description && (
@@ -46,15 +68,20 @@ export function MetricCard({
     );
   }
 
-  // Variant Default: Layout original
+  // Variant Default: Clean layout for general metrics
   return (
-    <Card className={cn('hover:shadow-lg transition-shadow', className)}>
+    <Card className={cn(
+      'hover:shadow-lg transition-shadow duration-200',
+      'border-l-2 border-l-primary/30', // Subtle receipt strip for default too
+      className
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {/* Financial data: tabular-nums for alignment */}
+        <div className="text-2xl font-bold tabular-nums tracking-tight">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
@@ -66,7 +93,7 @@ export function MetricCard({
                 className="flex items-center justify-between"
               >
                 <span>{item.label}</span>
-                <span>{item.value}</span>
+                <span className="tabular-nums">{item.value}</span>
               </div>
             ))}
           </div>
@@ -75,3 +102,4 @@ export function MetricCard({
     </Card>
   );
 }
+

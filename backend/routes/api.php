@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AlertaController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EntidadController;
 use App\Http\Controllers\Api\NubefactController;
+use App\Http\Controllers\Api\NubefactSyncController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\SerieController;
 
@@ -62,6 +63,27 @@ Route::prefix('nubefact')->middleware('api')->group(function () {
     // Guías de remisión
     Route::post('/guias', [NubefactController::class, 'emitirGuia']);
     Route::get('/guias/{tipo}/{serie}/{numero}', [NubefactController::class, 'consultarGuia']);
+});
+
+// Rutas para sincronización directa con NubeFact API (sin archivos Excel)
+Route::prefix('nubefact-sync')->middleware('api')->group(function () {
+    // Verificar estado de conexión
+    Route::get('/estado', [NubefactSyncController::class, 'verificarEstado']);
+    
+    // Estadísticas de sincronización
+    Route::get('/estadisticas', [NubefactSyncController::class, 'estadisticas']);
+    
+    // Consultar comprobante directo (sin guardar)
+    Route::get('/consultar/{tipo_doc}/{serie}/{numero}', [NubefactSyncController::class, 'consultarEnNubefact']);
+    
+    // Sincronizar comprobante específico
+    Route::post('/comprobante', [NubefactSyncController::class, 'sincronizarComprobante']);
+    
+    // Sincronizar rango de comprobantes
+    Route::post('/rango', [NubefactSyncController::class, 'sincronizarRango']);
+    
+    // Sincronizar pendientes
+    Route::post('/pendientes', [NubefactSyncController::class, 'sincronizarPendientes']);
 });
 
 // Rutas adicionales para futuras implementaciones

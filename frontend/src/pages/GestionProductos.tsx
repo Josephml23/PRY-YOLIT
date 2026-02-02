@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+// Vercel Best Practice: Extract constants outside component
+const DEBOUNCE_DELAY = 300; // ms
 import { Edit, Plus, Star, StarOff, Trash2, MoreVertical, Eye, Package, ArrowUp, ArrowDown } from 'lucide-react';
 import api, { type Producto } from '@/lib/api';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -81,7 +84,8 @@ export default function GestionProductos() {
     destacado: false,
   });
 
-  const cargarProductos = async () => {
+  // React Best Practice: Memoize async functions to prevent recreation
+  const cargarProductos = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.productos.listar({
@@ -97,7 +101,7 @@ export default function GestionProductos() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [empresaId, busqueda, sortOrder]);
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -106,20 +110,19 @@ export default function GestionProductos() {
   }, []);
 
   // Búsqueda dinámica con debounce
+  // React Best Practice: Use cleanup function to prevent stale closures
   useEffect(() => {
     if (busqueda === '') {
-      // Si está vacío, cargar inmediatamente
       void cargarProductos();
       return;
     }
 
     const timer = setTimeout(() => {
       void cargarProductos();
-    }, 300); // Debounce de 300ms
+    }, DEBOUNCE_DELAY);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busqueda, sortOrder]);
+  }, [busqueda, sortOrder, cargarProductos]);
 
   const abrirModal = (producto?: Producto) => {
     if (producto) {

@@ -1,16 +1,95 @@
 # Contexto de diseño – Plataforma Facturación Electrónica
 
+**Versión:** 2.0 — Actualizado con Interface Design Principles (Intent First)
+
 Documento de referencia para mantener coherencia al añadir o reformular pantallas. Actualizar cuando se definan nuevos patrones o componentes compartidos (para uso con Context7/MCP y desarrollo).
 
-## Tokens y tema
+---
+
+## 1. Intent: ¿Qué es este producto?
+
+### Usuarios
+- **Contadores** - Registran y validan comprobantes oficiales
+- **Administradores** - Gestionan flujo de caja y cumplimiento
+- **Dueños de negocio** - Monitorean ingresos y oportunidades
+
+### Tareas Principales
+1. Emitir comprobantes de pago electrónicos (CPE)
+2. Rastrear estados de facturación (aceptado, pendiente, rechazado)
+3. Controlar flujo de caja (pagado vs. por pagar)
+4. Cumplir con normativa SUNAT (autoridad tributaria peruana)
+5. Monitorear SLA de entregas y oportunidades
+
+### Sensación del Producto
+- **Profesional** como un libro contable físico (ledger)
+- **Preciso** cada número tiene consecuencia legal
+- **Confiable** como un sello fiscal oficial
+- **Ordenado** registro meticuloso con jerarquía clara
+
+---
+
+## 2. Dominio: Facturación Electrónica
+
+**Conceptos clave:**
+Ledger (Libro Mayor), Stamp (Sello SUNAT), Seal (Lacre certificado), Invoice (Factura), Registry (Registro), Compliance (Cumplimiento), Vault (Bóveda de documentos)
+
+**Color World:**
+- **Ink Blue** #1e3a8a - Tinta oficial de documentos contables
+- **Paper Cream** #fefce8 - Papel bond para facturas
+- **Seal Red** #991b1b - Sellos oficiales, alertas críticas
+- **Ledger Green** #166534 - Cantidades positivas, ingresos
+- **Carbon Black** #18181b - Números, texto formal
+- **Stamp Purple** #6b21a8 - Marca oficial, distintivo fiscal
+
+---
+
+## 3. Signature Element
+
+**"Document Receipt Strip"** - Franja vertical sutil en el lado izquierdo de cards/tablas principales que simula el margen perforado de facturas impresas. Gradiente muy sutil (ledger-green → ink-blue), solo visible al prestar atención. Evoca autenticidad de comprobantes fiscales.
+
+**Aplicación:**
+- MetricCard variant="navy": border-left 3px con gradiente
+- Tablas de facturas principales: pseudo-elemento con gradiente en primera columna
+- Cards de desglose: border-left-2 en color semántico
+
+---
+
+## 4. Tokens y tema
 
 - **Origen:** `frontend/src/index.css` (variables CSS en `:root` y `.dark`).
 - **Componentes base:** Shadcn UI (estilo new-york), Tailwind, iconos Lucide.
 - **Uso:** Preferir **siempre** variables semánticas (`bg-background`, `text-muted-foreground`, `border`, `primary`, `muted`, `accent`, `destructive`, `success`, `warning`) en lugar de colores fijos (evitar `slate-*`, `blue-*`, `green-*`, `amber-*`, etc.) para no conflictuar con el tema Shadcn y el modo claro/oscuro.
 - **Tablas:** Cabeceras con `bg-muted/50` y `border-b-2`; filas hover `hover:bg-muted/50`; selección con `bg-accent/50`.
-- **Espaciado:** Convención de páginas: `p-4 md:p-6 lg:p-8` en contenedor principal; `space-y-6` entre secciones; `gap-4` en grids de cards.
+- **Espaciado:** Base unit 4px (Tailwind default). Páginas: `p-4 md:p-6 lg:p-8`; secciones: `space-y-6`; grids: `gap-4`. Consistencia > valores específicos.
+- **Tipografía para datos financieros:** 
+  - Siempre `tabular-nums` para alineación de decimales
+  - Totales: `text-2xl font-bold` o `text-3xl font-bold` (Dashboard TV)
+  - Desgloses: `text-sm` o `text-base`, regular/medium
+  - Montos negativos/alertas: color semántico (`text-destructive`)
 
-## Componentes base (Shadcn)
+---
+
+## 5. Craft Principles
+
+### Subtle Layering
+- **Surfaces:** Cambios mínimos pero distinguibles. Cards con `border` sutil, no saltos dramáticos.
+- **Borders:** `border` (1px) ligero pero visible. No harsh, no invisible. Si los bordes son lo primero que notas, muy fuertes.
+- **Shadows:** Solo en hover/active (`hover:shadow-lg`), nunca dramáticas.
+
+### Depth Strategy
+**Borders-only** - Approach técnico, limpio para herramientas densas:
+- Cards: `border rounded-xl`
+- Elevación mediante border más oscuro, no sombras
+- Coherente con estilo "ledger" (libro contable con líneas claras)
+
+### Color Lives Somewhere
+- Colores derivan del dominio fiscal: ink-blue, ledger-green, seal-red
+- No usar color decorativo sin significado
+- Un color de acento (primary) usado con intención > cinco colores sin pensamiento
+
+---
+
+## 6. Componentes base (Shadcn)
 
 Usar siempre que aplique:
 

@@ -75,16 +75,15 @@ export default function DetalleOportunidad() {
     try {
       setLoading(true);
       
-      // Cargar oportunidad
-      const oportunidadRes = await api.get(`/v1/oportunidades/${id}`);
+      // Vercel Critical: Eliminate waterfalls - load all data in parallel with Promise.all
+      const [oportunidadRes, documentosRes, pagosRes] = await Promise.all([
+        api.get(`/v1/oportunidades/${id}`),
+        api.get(`/v1/documentos/oportunidad/${id}`),
+        api.get(`/v1/pagos/oportunidad/${id}`)
+      ]);
+
       setOportunidad(oportunidadRes.data.data);
-
-      // Cargar documentos de la oportunidad
-      const documentosRes = await api.get(`/v1/documentos/oportunidad/${id}`);
       setDocumentos(Array.isArray(documentosRes.data) ? documentosRes.data : documentosRes.data.data || []);
-
-      // Cargar pagos de la oportunidad
-      const pagosRes = await api.get(`/v1/pagos/oportunidad/${id}`);
       setPagos(Array.isArray(pagosRes.data) ? pagosRes.data : pagosRes.data.data || []);
 
     } catch (error) {

@@ -552,6 +552,7 @@ class FacturacionController extends Controller
 
     /**
      * Estadísticas de facturación
+     * Optimización: Single aggregated query (PostgreSQL Best Practice)
      */
     public function estadisticas(Request $request): JsonResponse
     {
@@ -559,25 +560,33 @@ class FacturacionController extends Controller
         $fechaDesde = $request->fecha_desde ?? now()->startOfMonth();
         $fechaHasta = $request->fecha_hasta ?? now();
 
-        $query = Comprobante::whereBetween('fecha_emision', [$fechaDesde, $fechaHasta]);
+        // PostgreSQL: Use conditional aggregations instead of cloning queries
+        $stats = Comprobante::selectRaw("
+            COUNT(*) as total_emitidos,
+            COUNT(CASE WHEN estado_sunat = 'aceptado' THEN 1 END) as total_aceptados,
+            COUNT(CASE WHEN estado_sunat = 'rechazado' THEN 1 END) as total_rechazados,
+            COUNT(CASE WHEN estado_sunat = 'pendiente' THEN 1 END) as total_pendientes,
+            COALESCE(SUM(CASE WHEN estado_sunat = 'aceptado' THEN mto_imp_venta ELSE 0 END), 0) as monto_total,
+            COUNT(CASE WHEN tipo_doc = '01' THEN 1 END) as facturas,
+            COUNT(CASE WHEN tipo_doc = '03' THEN 1 END) as boletas,
+            COUNT(CASE WHEN tipo_doc = '07' THEN 1 END) as notas_credito,
+            COUNT(CASE WHEN tipo_doc = '08' THEN 1 END) as notas_debito
+        ")
+            ->whereBetween('fecha_emision', [$fechaDesde, $fechaHasta])
+            ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
+            ->first();
 
-        if ($empresaId) {
-            $query->where('empresa_id', $empresaId);
-        }
-
-        $estadisticas = [
-            'total_emitidos' => $query->count(),
-            'total_aceptados' => (clone $query)->where('estado_sunat', 'aceptado')->count(),
-            'total_rechazados' => (clone $query)->where('estado_sunat', 'rechazado')->count(),
-            'total_pendientes' => (clone $query)->where('estado_sunat', 'pendiente')->count(),
-            'monto_total' => (clone $query)->where('estado_sunat', 'aceptado')->sum('mto_imp_venta'),
-            'facturas' => (clone $query)->where('tipo_doc', '01')->count(),
-            'boletas' => (clone $query)->where('tipo_doc', '03')->count(),
-            'notas_credito' => (clone $query)->where('tipo_doc', '07')->count(),
-            'notas_debito' => (clone $query)->where('tipo_doc', '08')->count(),
-        ];
-
-        return response()->json($estadisticas);
+        return response()->json([
+            'total_emitidos' => $stats->total_emitidos,
+            'total_aceptados' => $stats->total_aceptados,
+            'total_rechazados' => $stats->total_rechazados,
+            'total_pendientes' => $stats->total_pendientes,
+            'monto_total' => $stats->monto_total,
+            'facturas' => $stats->facturas,
+            'boletas' => $stats->boletas,
+            'notas_credito' => $stats->notas_credito,
+            'notas_debito' => $stats->notas_debito,
+        ]);
     }
 
     /**

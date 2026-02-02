@@ -61,31 +61,27 @@ class DashboardController extends Controller
 
     /**
      * Estadísticas de facturación
+     * Optimización: Una sola query con agregaciones condicionales (reduce N+1)
      */
     private function estadisticasFacturacion($empresaId = null, $fechaDesde = null, $fechaHasta = null, $clienteNumDoc = null): array
     {
-        $baseQuery = Comprobante::query();
+        // PostgreSQL Best Practice: Single aggregated query instead of multiple clones
+        $stats = Comprobante::selectRaw("
+            COALESCE(SUM(mto_imp_venta), 0) as total_mes,
+            COUNT(CASE WHEN estado_sunat = 'aceptado' THEN 1 END) as total_aceptados,
+            COUNT(CASE WHEN estado_sunat = 'rechazado' THEN 1 END) as total_rechazados,
+            COUNT(CASE WHEN estado_sunat = 'pendiente' THEN 1 END) as total_pendientes
+        ")
+            ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
+            ->when($clienteNumDoc, fn($q) => $q->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%"))
+            ->when($fechaDesde, fn($q) => $q->whereDate('fecha_emision', '>=', $fechaDesde))
+            ->when($fechaHasta, fn($q) => $q->whereDate('fecha_emision', '<=', $fechaHasta))
+            ->first();
 
-        if ($empresaId) {
-            $baseQuery->where('empresa_id', $empresaId);
-        }
-
-        if ($clienteNumDoc) {
-            $baseQuery->where('cliente_num_doc', 'like', "%{$clienteNumDoc}%");
-        }
-
-        if ($fechaDesde) {
-            $baseQuery->whereDate('fecha_emision', '>=', $fechaDesde);
-        }
-
-        if ($fechaHasta) {
-            $baseQuery->whereDate('fecha_emision', '<=', $fechaHasta);
-        }
-
-        $totalMes = (clone $baseQuery)->sum('mto_imp_venta');
-        $totalAceptados = (clone $baseQuery)->where('estado_sunat', 'aceptado')->count();
-        $totalRechazados = (clone $baseQuery)->where('estado_sunat', 'rechazado')->count();
-        $totalPendientes = (clone $baseQuery)->where('estado_sunat', 'pendiente')->count();
+        $totalMes = $stats->total_mes ?? 0;
+        $totalAceptados = $stats->total_aceptados ?? 0;
+        $totalRechazados = $stats->total_rechazados ?? 0;
+        $totalPendientes = $stats->total_pendientes ?? 0;
 
         $porTipo = Comprobante::selectRaw('tipo_doc, count(*) as cantidad, sum(mto_imp_venta) as total')
             ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
@@ -210,10 +206,12 @@ class DashboardController extends Controller
         $sla = $this->slaService->resumenSlas();
 
         // Últimas facturas emitidas
-        $ultimasFacturas = Comprobante::with('empresa')
+        // Best Practice: Select only needed columns, use index on created_at
+        $ultimasFacturas = Comprobante::with('empresa:id,razon_social') // Specify empresa columns
+            ->select('id', 'empresa_id', 'tipo_doc', 'serie', 'correlativo', 'cliente_razon_social', 'mto_imp_venta', 'estado_sunat', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->get(['id', 'empresa_id', 'tipo_doc', 'serie', 'correlativo', 'cliente_razon_social', 'mto_imp_venta', 'estado_sunat', 'created_at']);
+            ->get();
 
         // Oportunidades próximas a vencer
         // No existe columna cliente_nombre en la tabla; usamos titulo como identificador visible
@@ -281,8 +279,19 @@ class DashboardController extends Controller
         // Calcular fecha_hasta según período
         $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
 
-        // TODOS los CPE (para el KPI "CPE Emitidos")
-        $todosLosCPE = Comprobante::whereIn('tipo_doc', ['01', '03', '07', '08'])
+        // PostgreSQL Best Practice: Single aggregated query with conditional sums
+        // Avoid loading all records into memory then filtering in PHP
+        $stats = Comprobante::selectRaw("
+            COUNT(*) as cpe_emitidos,
+            COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') THEN mto_imp_venta ELSE 0 END), 0) as total_cpe,
+            COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') AND pagado = true THEN mto_imp_venta ELSE 0 END), 0) as cpe_pagado,
+            COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') AND (pagado = false OR pagado IS NULL) THEN mto_imp_venta ELSE 0 END), 0) as cpe_por_pagar,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' THEN mto_imp_venta ELSE 0 END), 0) as total_notas_venta,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND pagado = true THEN mto_imp_venta ELSE 0 END), 0) as notas_venta_pagado,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND (pagado = false OR pagado IS NULL) THEN mto_imp_venta ELSE 0 END), 0) as notas_venta_por_pagar,
+            COALESCE(SUM(mto_imp_venta), 0) as ingresos
+        ")
+            ->whereIn('tipo_doc', ['01', '03', '07', '08'])
             ->whereDate('fecha_emision', '>=', $fechaDel)
             ->whereDate('fecha_emision', '<=', $fechaHasta)
             ->where('estado_sunat', 'aceptado')
@@ -290,24 +299,16 @@ class DashboardController extends Controller
                 $q->whereNull('anulado')
                   ->orWhere('anulado', false);
             })
-            ->get();
+            ->first();
 
-        $cpeEmitidos = $todosLosCPE->count();
-
-        // Panel CPE = Facturas (01) + NC (07) + ND (08) - SIN Boletas
-        $cpeSinBoletas = $todosLosCPE->whereIn('tipo_doc', ['01', '07', '08']);
-        $totalCPE = $cpeSinBoletas->sum('mto_imp_venta');
-        $cpePagado = $cpeSinBoletas->where('pagado', true)->sum('mto_imp_venta');
-        $cpePorPagar = $cpeSinBoletas->where('pagado', '!=', true)->sum('mto_imp_venta');
-
-        // Panel Notas de Venta = Boletas de Venta (03)
-        $boletas = $todosLosCPE->where('tipo_doc', '03');
-        $totalNotasVenta = $boletas->sum('mto_imp_venta');
-        $notasVentaPagado = $boletas->where('pagado', true)->sum('mto_imp_venta');
-        $notasVentaPorPagar = $boletas->where('pagado', '!=', true)->sum('mto_imp_venta');
-
-        // Utilidad Neta = Ingresos - Egresos
-        $ingresos = $todosLosCPE->sum('mto_imp_venta');
+        $cpeEmitidos = $stats->cpe_emitidos;
+        $totalCPE = $stats->total_cpe;
+        $cpePagado = $stats->cpe_pagado;
+        $cpePorPagar = $stats->cpe_por_pagar;
+        $totalNotasVenta = $stats->total_notas_venta;
+        $notasVentaPagado = $stats->notas_venta_pagado;
+        $notasVentaPorPagar = $stats->notas_venta_por_pagar;
+        $ingresos = $stats->ingresos;
         $egresos = 0; // TODO: implementar cuando exista módulo de compras
         $utilidadNeta = $ingresos - $egresos;
 

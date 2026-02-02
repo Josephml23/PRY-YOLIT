@@ -53,7 +53,8 @@ export default function PagosPage() {
     por_medio_pago: Record<string, { cantidad: number; total: number }>;
   } | null>(null);
 
-  const cargarPagos = async (page = 1) => {
+  // Vercel Critical: Load data and stats in parallel to eliminate waterfall
+  const cargarDatos = async (page = 1) => {
     try {
       setLoading(true);
       const params: Record<string, unknown> = {
@@ -71,10 +72,27 @@ export default function PagosPage() {
         params.fecha_hasta = filtros.fecha_hasta;
       }
 
-      const res = await api.pagos.listar(params);
-      setPagos(res.data.data);
-      setPagina(res.data.current_page);
-      setUltimaPagina(res.data.last_page);
+      const statsParams: Record<string, unknown> = {};
+      if (filtros.fecha_desde) {
+        statsParams.fecha_desde = filtros.fecha_desde;
+      }
+      if (filtros.fecha_hasta) {
+        statsParams.fecha_hasta = filtros.fecha_hasta;
+      }
+
+      // Parallel fetch: pagos + stats
+      const [pagosRes, statsRes] = await Promise.all([
+        api.pagos.listar(params),
+        api.pagos.estadisticas(statsParams).catch(() => null) // Don't block on stats error
+      ]);
+
+      setPagos(pagosRes.data.data);
+      setPagina(pagosRes.data.current_page);
+      setUltimaPagina(pagosRes.data.last_page);
+      
+      if (statsRes) {
+        setStats(statsRes.data.data);
+      }
     } catch {
       toast.error('No se pudieron cargar los pagos');
     } finally {
@@ -82,26 +100,8 @@ export default function PagosPage() {
     }
   };
 
-  const cargarEstadisticas = async () => {
-    try {
-      const params: Record<string, unknown> = {};
-      if (filtros.fecha_desde) {
-        params.fecha_desde = filtros.fecha_desde;
-      }
-      if (filtros.fecha_hasta) {
-        params.fecha_hasta = filtros.fecha_hasta;
-      }
-
-      const res = await api.pagos.estadisticas(params);
-      setStats(res.data.data);
-    } catch {
-      // No bloquear por error en stats
-    }
-  };
-
   useEffect(() => {
-    cargarPagos(1);
-    cargarEstadisticas();
+    cargarDatos(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros.medio_pago, filtros.fecha_desde, filtros.fecha_hasta]);
 
@@ -116,8 +116,7 @@ export default function PagosPage() {
     try {
       await api.pagos.eliminar(id);
       toast.success('Pago eliminado');
-      cargarPagos(pagina);
-      cargarEstadisticas();
+      cargarDatos(pagina);
     } catch {
       toast.error('Error al eliminar el pago');
     }
@@ -143,7 +142,7 @@ export default function PagosPage() {
     if (pagina > 1) {
       const nueva = pagina - 1;
       setPagina(nueva);
-      cargarPagos(nueva);
+      cargarDatos(nueva);
     }
   };
 
@@ -151,7 +150,7 @@ export default function PagosPage() {
     if (pagina < ultimaPagina) {
       const nueva = pagina + 1;
       setPagina(nueva);
-      cargarPagos(nueva);
+      cargarDatos(nueva);
     }
   };
 

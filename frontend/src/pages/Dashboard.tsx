@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, CreditCard, BarChart3, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -13,12 +13,13 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import type { DashboardFiltros, DashboardStats } from '@/types';
 import { formatCurrency, formatCurrencyKpi } from '@/lib/format';
 
+// Vercel Best Practice: Extract constants outside component to prevent recreation on each render
 const CHART_COLORS = {
   pagado: '#10b981', // green
   porPagar: '#ef4444', // red
   primary: '#3b82f6', // blue
   secondary: '#8b5cf6', // purple
-};
+} as const;
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -59,28 +60,27 @@ export default function Dashboard() {
     cargarStats();
   }, [filtros]);
 
-  const handleFiltrosChange = (nuevosFiltros: DashboardFiltros) => {
+  // React Best Practice: Memoize callbacks to prevent child re-renders
+  const handleFiltrosChange = useCallback((nuevosFiltros: DashboardFiltros) => {
     setFiltros(nuevosFiltros);
-  };
+  }, []);
 
-  // Datos para gráfico de pie de CPE
-  const dataCPEPie = [
+  // React Best Practice: Memoize computed values to avoid recalculation on every render
+  const dataCPEPie = useMemo(() => [
     { name: 'Pagado', value: stats.cpePagado, color: CHART_COLORS.pagado },
     { name: 'Por Pagar', value: stats.cpePorPagar, color: CHART_COLORS.porPagar },
-  ].filter(item => item.value > 0);
+  ].filter(item => item.value > 0), [stats.cpePagado, stats.cpePorPagar]);
 
-  // Datos para gráfico de pie de Notas de Venta
-  const dataNotasVentaPie = [
+  const dataNotasVentaPie = useMemo(() => [
     { name: 'Pagado', value: stats.notasVentaPagado, color: CHART_COLORS.pagado },
     { name: 'Por Pagar', value: stats.notasVentaPorPagar, color: CHART_COLORS.porPagar },
-  ].filter(item => item.value > 0);
+  ].filter(item => item.value > 0), [stats.notasVentaPagado, stats.notasVentaPorPagar]);
 
-  // Datos para gráfico de barras de Totales Generales
-  const dataTotalesBar = [
+  const dataTotalesBar = useMemo(() => [
     { name: 'CPE', total: stats.totalCPE },
     { name: 'Notas Venta', total: stats.totalNotasVenta },
     { name: 'Total General', total: stats.montoTotalGeneral },
-  ];
+  ], [stats.totalCPE, stats.totalNotasVenta, stats.montoTotalGeneral]);
 
   if (loading) {
     return (
@@ -175,7 +175,7 @@ export default function Dashboard() {
                 pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
                 porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
               }}
-              className="h-[180px] w-full"
+              className="h-45 w-full"
             >
               <PieChart>
                 <ChartTooltip
@@ -224,7 +224,7 @@ export default function Dashboard() {
                 pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
                 porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
               }}
-              className="h-[180px] w-full"
+              className="h-45 w-full"
             >
               <PieChart>
                 <ChartTooltip
@@ -289,7 +289,7 @@ export default function Dashboard() {
               config={{
                 total: { label: 'Total (S/)', color: CHART_COLORS.primary },
               }}
-              className="h-[180px] w-full"
+              className="h-45 w-full"
             >
               <BarChart data={dataTotalesBar}>
                 <XAxis
