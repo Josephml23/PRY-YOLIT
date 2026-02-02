@@ -25,9 +25,21 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-const logoUrl = '/nubofact-logo.png';
+// Constants moved outside component to prevent recreation on each render
+const LOGO_URL = '/nubofact-logo.png';
 
-const menuItems = [
+const LOGO_STYLES = {
+  imageRendering: 'crisp-edges' as const,
+  objectFit: 'contain' as const,
+  objectPosition: 'center center',
+  padding: '0',
+  margin: '-32% 0',
+  transform: 'scale(2.2)',
+  maxWidth: '100%',
+  display: 'block'
+};
+
+const MENU_ITEMS = [
   { title: 'Dashboard', icon: Home, url: '/app' },
   { title: 'Empresas', icon: Building2, url: '/app/empresas' },
   { title: 'Clientes', icon: Users, url: '/app/clientes' },
@@ -36,8 +48,14 @@ const menuItems = [
   { title: 'Productos', icon: Package, url: '/app/productos' },
   { title: 'Documentos', icon: FolderOpen, url: '/app/documentos' },
   { title: 'Pagos', icon: CreditCard, url: '/app/pagos' },
-];
+] as const;
 
+/**
+ * AppLayout Component
+ * 
+ * Main application layout with sidebar navigation and header.
+ * Provides consistent layout structure across all app pages.
+ */
 export function AppLayout() {
   const location = useLocation();
 
@@ -49,19 +67,10 @@ export function AppLayout() {
             <div className="border-b flex items-center justify-center overflow-hidden" style={{ height: '56px', padding: '0', margin: '0', lineHeight: '0' }}>
               <Link to="/app" className="flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ padding: '0', margin: '0', lineHeight: '0' }}>
                 <img
-                  src={logoUrl}
-                  alt="Nubofact"
+                  src={LOGO_URL}
+                  alt="Nubofact - Sistema de Facturacion Electronica"
                   className="w-full h-full object-contain dark:invert-0"
-                  style={{
-                    imageRendering: 'crisp-edges',
-                    objectFit: 'contain',
-                    objectPosition: 'center center',
-                    padding: '0',
-                    margin: '-32% 0',
-                    transform: 'scale(2.2)',
-                    maxWidth: '100%',
-                    display: 'block'
-                  }}
+                  style={LOGO_STYLES}
                   fetchPriority="high"
                 />
               </Link>
@@ -71,14 +80,14 @@ export function AppLayout() {
               <SidebarGroupLabel>Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
+                  {MENU_ITEMS.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild
                         isActive={location.pathname === item.url}
                       >
                         <Link to={item.url}>
-                          <item.icon className="w-4 h-4" />
+                          <item.icon className="w-4 h-4" aria-hidden="true" />
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
