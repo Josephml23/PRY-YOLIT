@@ -85,8 +85,11 @@ export function NotasVentaPanel({
           {normalizedData.map((height, index) => (
             <div
               key={index}
-              className="w-6 bg-card rounded-t transition-all duration-300 hover:bg-primary"
-              style={{ height: `${height}%` }}
+              className="w-6 rounded-t transition-all duration-300"
+              style={{ 
+                height: `${height}%`,
+                backgroundColor: '#5ec9c7'
+              }}
               title={`${chartData[index]}`}
             />
           ))}

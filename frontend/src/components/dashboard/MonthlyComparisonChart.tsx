@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/format';
 
@@ -56,34 +56,32 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
           config={CHART_CONFIG}
           className="h-full w-full"
         >
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="month"
-                angle={-45}
-                textAnchor="end"
-                height={100}
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                interval={0}
-              />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                tickFormatter={(value) => `S/ ${(value / 1000).toFixed(0)}k`}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatCurrency(Number(value))}
-                  />
-                }
-              />
-              <Bar dataKey="facturas" fill="#ef4444" />
-              <Bar dataKey="boletas" fill="#fb923c" />
-              <Bar dataKey="notasVenta" fill="#22c55e" />
-              <Bar dataKey="compras" fill="#60a5fa" />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart width={520} height={400} data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey="month"
+              angle={-45}
+              textAnchor="end"
+              height={100}
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+              interval={0}
+            />
+            <YAxis 
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+              tickFormatter={(value) => `S/ ${(value / 1000).toFixed(0)}k`}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value) => formatCurrency(Number(value))}
+                />
+              }
+            />
+            <Bar dataKey="facturas" fill="#ef4444" />
+            <Bar dataKey="boletas" fill="#fb923c" />
+            <Bar dataKey="notasVenta" fill="#22c55e" />
+            <Bar dataKey="compras" fill="#60a5fa" />
+          </BarChart>
         </ChartContainer>
       </div>
     </div>

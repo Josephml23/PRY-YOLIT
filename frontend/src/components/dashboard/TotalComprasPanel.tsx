@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/format';
 
@@ -58,28 +58,26 @@ export function TotalComprasPanel({
             config={CHART_CONFIG}
             className="h-full w-full"
           >
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                />
-                <YAxis
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
-                    />
-                  }
-                />
-                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart width={320} height={160} data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+              />
+              <YAxis
+                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                }
+              />
+              <Bar dataKey="value" fill="#5ec9c7" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ChartContainer>
         </div>
       </CardContent>

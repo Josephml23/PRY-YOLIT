@@ -42,8 +42,11 @@ export function CPERankingPanel({ data, className }: CPERankingPanelProps) {
                   <span className="text-foreground w-12 text-right">{item.value}</span>
                   <div className="w-20 h-2 bg-secondary/30 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${Math.min(barWidth, 100)}%` }}
+                      className="h-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.min(barWidth, 100)}%`,
+                        backgroundColor: '#5ec9c7'
+                      }}
                     />
                   </div>
                 </div>
