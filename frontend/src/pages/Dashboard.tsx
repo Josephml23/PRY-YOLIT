@@ -92,23 +92,26 @@ export default function Dashboard() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-200">
       {/* Header Nubofact */}
       <NubofactHeader />
 
-      {/* Main Content con fondo beige Nubofact */}
-      <div className="min-h-screen bg-[hsl(var(--nubofact-background))]">
-        <div className="space-y-3 pt-3 px-4 pb-8">
-          {/* Filtros Dashboard */}
+      {/* Dashboard General Section with Filters - fondo beige */}
+      <div className="bg-[#cbbfae] py-3">
+        <div className="max-w-[1400px] mx-auto px-16">
           <DashboardFilters
             establecimiento={filtros.establecimiento}
             periodo={filtros.periodo}
             fechaDel={filtros.fechaDel}
             onFiltrosChange={handleFiltrosChange}
           />
+        </div>
+      </div>
 
-          {/* 2. KPIs (5 tarjetas estilo Nubofact) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+      {/* Metrics Cards - fondo beige */}
+      <div className="bg-[#cbbfac] pb-4">
+        <div className="max-w-[1400px] mx-auto px-16">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             <MetricCard
               variant="nubofact"
               icon={FileText}
@@ -140,9 +143,14 @@ export default function Dashboard() {
               value={formatCurrencyKpi(stats.utilidadNeta)}
             />
           </div>
+        </div>
+      </div>
 
+      {/* Main Dashboard Content - fondo gray-200 */}
+      <div className="p-4">
+        <div className="max-w-[1400px] mx-auto space-y-4">
           {/* 3. Paneles de Desglose (3 columnas) con gráficos */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* CPE con gráfico de pie */}
             <DesgloseSummaryPanel
               title="CPE"
