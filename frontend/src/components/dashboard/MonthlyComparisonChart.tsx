@@ -20,40 +20,40 @@ interface MonthlyComparisonChartProps {
  * Gráfico de barras agrupadas comparando Facturas, Boletas, Notas de Venta y Compras por mes
  * (diseño Nubofact)
  */
+// Vercel Best Practice: Extract color config outside component
+const CHART_CONFIG = {
+  facturas: { label: 'Facturas', color: '#ef4444' },
+  boletas: { label: 'Boletas', color: '#fb923c' },
+  notasVenta: { label: 'Notas de Venta', color: '#22c55e' },
+  compras: { label: 'Compras', color: '#60a5fa' },
+} as const;
+
+const LEGEND_ITEMS = [
+  { label: 'FACTURAS', color: 'bg-red-500' },
+  { label: 'BOLETAS', color: 'bg-orange-400' },
+  { label: 'NOTAS DE VENTA', color: 'bg-green-500' },
+  { label: 'COMPRAS', color: 'bg-blue-400' },
+] as const;
+
 export function MonthlyComparisonChart({ data, className }: MonthlyComparisonChartProps) {
   return (
-    <div className={`bg-[#8b9aa3] rounded-lg shadow-md p-4 ${className}`}>
+    <div className={`bg-gray-300 dark:bg-gray-700 rounded-lg shadow-md p-4 ${className}`}>
       {/* Leyenda */}
-      <div className="bg-white rounded p-2 mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded p-2 mb-2">
         <div className="flex gap-4 text-xs flex-wrap">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span className="text-gray-700">FACTURAS</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-orange-400 rounded"></div>
-            <span className="text-gray-700">BOLETAS</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-gray-700">NOTAS DE VENTA</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-400 rounded"></div>
-            <span className="text-gray-700">COMPRAS</span>
-          </div>
+          {LEGEND_ITEMS.map(({ label, color }) => (
+            <div key={label} className="flex items-center gap-1">
+              <div className={`w-3 h-3 ${color} rounded`}></div>
+              <span className="text-gray-700 dark:text-gray-300">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Gráfico */}
-      <div className="h-[400px] w-full bg-[#8b9aa3]">
+      <div className="h-[400px] w-full">
         <ChartContainer
-          config={{
-            facturas: { label: 'Facturas', color: '#ef4444' },
-            boletas: { label: 'Boletas', color: '#fb923c' },
-            notasVenta: { label: 'Notas de Venta', color: '#22c55e' },
-            compras: { label: 'Compras', color: '#60a5fa' },
-          }}
+          config={CHART_CONFIG}
           className="h-full w-full"
         >
           <ResponsiveContainer width="100%" height={400}>

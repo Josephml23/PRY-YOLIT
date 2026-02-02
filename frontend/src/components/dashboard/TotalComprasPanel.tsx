@@ -19,6 +19,11 @@ interface TotalComprasPanelProps {
  * TotalComprasPanel Component
  * Panel de Total Compras con gráfico mensual de barras (diseño Nubofact)
  */
+// Vercel Best Practice: Extract color config outside component
+const CHART_CONFIG = {
+  value: { label: 'Compras', color: '#3b9dd6' },
+} as const;
+
 export function TotalComprasPanel({ 
   totalCompras, 
   saldo, 
@@ -27,10 +32,10 @@ export function TotalComprasPanel({
 }: TotalComprasPanelProps) {
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[#0c5078] text-white px-4 py-3">
+      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
         <CardTitle className="text-sm font-semibold">Total Compras</CardTitle>
       </CardHeader>
-      <CardContent className="bg-[#b8b8b8] p-4 min-h-70">
+      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
         {/* Resumen boxes */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white rounded-lg p-3 text-center">
@@ -50,9 +55,7 @@ export function TotalComprasPanel({
         {/* Gráfico mensual */}
         <div className="h-40 w-full">
           <ChartContainer
-            config={{
-              value: { label: 'Compras', color: '#3b9dd6' },
-            }}
+            config={CHART_CONFIG}
             className="h-full w-full"
           >
             <ResponsiveContainer width="100%" height={160}>

@@ -19,13 +19,13 @@ interface ClientesTopTableProps {
 export function ClientesTopTable({ data, className }: ClientesTopTableProps) {
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[#0c5078] text-white px-4 py-3">
+      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
         <CardTitle className="text-sm font-semibold">Clientes Top</CardTitle>
       </CardHeader>
-      <CardContent className="bg-[#b8b8b8] p-4 min-h-[280px]">
+      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
         {/* Dropdown */}
         <div className="mb-3">
-          <select className="w-full bg-white border border-gray-400 rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#0c5078]">
+          <select className="w-full bg-white dark:bg-gray-900 border border-gray-400 dark:border-gray-600 rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--nubofact-primary))]">
             <option>Adicionar anónimemes</option>
             <option>Top 5</option>
             <option>Top 10</option>
@@ -34,9 +34,9 @@ export function ClientesTopTable({ data, className }: ClientesTopTableProps) {
         </div>
 
         {/* Tabla */}
-        <div className="bg-white rounded overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded overflow-hidden">
           <table className="w-full text-xs">
-            <thead className="bg-[#0c5078] text-white">
+            <thead className="bg-[hsl(var(--nubofact-primary))] text-white">
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
                 <th className="px-3 py-2 text-left">Cliente</th>

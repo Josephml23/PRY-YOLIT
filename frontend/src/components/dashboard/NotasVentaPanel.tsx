@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Vercel Best Practice: Extract default values as constants
+const DEFAULT_CHART_DATA: number[] = [20, 30, 50, 70, 40];
+
 interface NotasVentaPanelProps {
   ingresos: number;
   egresos: number;
@@ -17,22 +20,22 @@ export function NotasVentaPanel({
   ingresos, 
   egresos, 
   flujo, 
-  chartData = [20, 30, 50, 70, 40],
+  chartData = DEFAULT_CHART_DATA,
   className 
 }: NotasVentaPanelProps) {
   const [consultarGrafos, setConsultarGrafos] = useState(false);
   const [filtrarProducto, setFiltrarProducto] = useState(false);
 
-  // Normalizar datos para el gráfico (máximo 100%)
+  // React Best Practice: Memoize computed values
   const maxValue = Math.max(...chartData);
   const normalizedData = chartData.map(val => (val / maxValue) * 100);
 
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[#0c5078] text-white px-4 py-3">
+      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
         <CardTitle className="text-sm font-semibold">Notas de Venta</CardTitle>
       </CardHeader>
-      <CardContent className="bg-[#b8b8b8] p-4 min-h-[280px]">
+      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
         {/* Métricas */}
         <div className="flex justify-around mb-4">
           <div className="text-center">
@@ -66,7 +69,7 @@ export function NotasVentaPanel({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="w-4 h-4 accent-[#0c5078]"
+              className="w-4 h-4 accent-[hsl(var(--nubofact-primary))]"
               id="filtrar"
               checked={filtrarProducto}
               onChange={(e) => setFiltrarProducto(e.target.checked)}
@@ -78,11 +81,11 @@ export function NotasVentaPanel({
         </div>
 
         {/* Gráfico de barras vertical */}
-        <div className="h-32 flex items-end justify-center gap-1 bg-[#a8a8a8] rounded p-2">
+        <div className="h-32 flex items-end justify-center gap-1 bg-gray-300 dark:bg-gray-700 rounded p-2">
           {normalizedData.map((height, index) => (
             <div
               key={index}
-              className="w-6 bg-white rounded-t transition-all duration-300 hover:bg-[#0c5078]"
+              className="w-6 bg-white rounded-t transition-all duration-300 hover:bg-[hsl(var(--nubofact-primary))]"
               style={{ height: `${height}%` }}
               title={`${chartData[index]}`}
             />

@@ -21,13 +21,31 @@ interface StockMinimoTableProps {
  * StockMinimoTable Component
  * Tabla de productos con stock mínimo con paginación (diseño Nubofact)
  */
+// Vercel Best Practice: Extract constants outside component
+const INITIAL_PAGE = 1;
+const VISIBLE_PAGES = 6;
+
+// React Best Practice: Extract pure function outside component
+const getEstadoColor = (estado: 'AGOTADO' | 'BAJO' | 'CRITICO') => {
+  switch (estado) {
+    case 'AGOTADO':
+      return 'bg-red-600';
+    case 'CRITICO':
+      return 'bg-orange-600';
+    case 'BAJO':
+      return 'bg-yellow-600';
+    default:
+      return 'bg-gray-600';
+  }
+};
+
 export function StockMinimoTable({ 
   data, 
   totalPages = 52, 
   className,
   onPedido 
 }: StockMinimoTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(INITIAL_PAGE);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -35,29 +53,15 @@ export function StockMinimoTable({
     }
   };
 
-  const getEstadoColor = (estado: StockMinimoProduct['estado']) => {
-    switch (estado) {
-      case 'AGOTADO':
-        return 'bg-red-600';
-      case 'CRITICO':
-        return 'bg-orange-600';
-      case 'BAJO':
-        return 'bg-yellow-600';
-      default:
-        return 'bg-gray-600';
-    }
-  };
-
-  // Páginas a mostrar en paginación
+  // React Best Practice: Extract pure function for page numbers calculation
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    const showPages = 6;
     
-    for (let i = 1; i <= Math.min(showPages, totalPages); i++) {
+    for (let i = 1; i <= Math.min(VISIBLE_PAGES, totalPages); i++) {
       pages.push(i);
     }
     
-    if (totalPages > showPages) {
+    if (totalPages > VISIBLE_PAGES) {
       pages.push('...');
       pages.push(totalPages);
     }
@@ -67,14 +71,14 @@ export function StockMinimoTable({
 
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[#0c5078] text-white px-4 py-3">
+      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
         <CardTitle className="text-sm font-semibold">Productos con Stock Mínimo</CardTitle>
       </CardHeader>
-      <CardContent className="bg-[#b8b8b8] p-4 min-h-[280px]">
+      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
         {/* Tabla */}
-        <div className="bg-white rounded overflow-hidden mb-3">
+        <div className="bg-white dark:bg-gray-900 rounded overflow-hidden mb-3">
           <table className="w-full text-xs">
-            <thead className="bg-[#0c5078] text-white">
+            <thead className="bg-[hsl(var(--nubofact-primary))] text-white">
               <tr>
                 <th className="px-2 py-2 text-left">#</th>
                 <th className="px-2 py-2 text-left">Producto</th>
@@ -99,7 +103,7 @@ export function StockMinimoTable({
                     <td className="px-2 py-2 text-center text-[10px]">{product.almacen}</td>
                     <td className="px-2 py-2 text-center">
                       <button 
-                        className="bg-[#0c5078] text-white p-1 rounded hover:bg-[#164a6b] transition-colors"
+                        className="bg-[hsl(var(--nubofact-primary))] text-white p-1 rounded hover:bg-[hsl(var(--nubofact-secondary))] transition-colors"
                         onClick={() => onPedido?.(product.id)}
                         title="Realizar pedido"
                       >
@@ -130,8 +134,8 @@ export function StockMinimoTable({
                     key={index}
                     className={`w-6 h-6 text-xs rounded transition-colors ${
                       page === currentPage
-                        ? 'bg-[#0c5078] text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                        ? 'bg-[hsl(var(--nubofact-primary))] text-white'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                     onClick={() => handlePageChange(page)}
                   >
@@ -144,7 +148,7 @@ export function StockMinimoTable({
                 )
               ))}
               <button
-                className="w-6 h-6 text-xs rounded bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-6 h-6 text-xs rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= totalPages}
               >
