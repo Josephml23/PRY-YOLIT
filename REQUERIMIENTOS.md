@@ -85,7 +85,14 @@
   - PageHeader, MetricCard, FilterBar, DataTable, EmptyState, TableSkeleton.
   - DashboardFilterPanel, DesgloseSummaryPanel (dashboard).
 - **Listados refactorizados:** Clientes, Empresas, GestionProductos con PageHeader + FilterBar + DataTable + EmptyState/Skeleton.
-- **Dashboard refactorizado:** Filtros (establecimiento, período, fecha), 5 KPIs (CPE emitidos, Total CPE, Total Notas Venta, Monto Total General, Utilidad Neta), paneles CPE / Notas de Venta / Totales Generales con gráficos (pie y barras).
+- **Dashboard – Sección 1: Dashboard General (realizado):**
+  - **Barra de filtros:** Panel superior “Dashboard General” con selectores: Establecimiento (ej. OFICINA PRINCIPAL), Período (HOY, ESTA_SEMANA, ESTE_MES, ESTE_AÑO, POR_FECHA), Fecha del (date picker). Valores enviados al backend para filtrar por rango de fechas.
+  - **5 KPIs (MetricCard variant navy):** CPE Emitidos (cantidad de comprobantes 01, 03, 07, 08 aceptados no anulados), Total CPE (suma Facturas + NC + ND, sin Boletas), Total Notas Venta (suma Boletas 03), Monto Total General (suma de todos los CPE del período), Utilidad Neta (ingresos − egresos; egresos = 0 por ahora). Formato de montos con `formatCurrencyKpi` (compacto para millones) y tamaños responsivos.
+  - **Panel CPE:** Desglose Total Pagado, Total por Pagar, Total (Facturas + NC + ND). Gráfico de pie (Pagado vs Por Pagar) con Recharts; solo se muestra si hay datos.
+  - **Panel Notas de Venta:** Desglose Total Pagado, Total por Pagar, Total (solo Boletas 03). Gráfico de pie (Pagado vs Por Pagar). Estado pagado/por pagar según columna PAGADO del reporte Nubefact.
+  - **Panel Totales Generales:** Tres valores destacados (Total Nota Venta, Total CPE, Total General) y gráfico de barras (CPE, Notas Venta, Total General). Opcionalmente ventas por hora en el período (backend entrega array `ventasPorHora`).
+  - **Backend:** `GET /api/v1/dashboard/stats` con query params `establecimiento`, `periodo`, `fecha_del`. Cálculo de `fecha_hasta` según período (fin de día/semana/mes/año o +30 días). Consultas a tabla `comprobantes` filtradas por `tipo_doc`, `estado_sunat`, `anulado`, `pagado`, rango de fechas. Respuesta JSON con todos los KPIs y `ventasPorHora` para gráficos.
+  - **Componentes:** DashboardFilterPanel, MetricCard (variant navy), DesgloseSummaryPanel, ChartContainer + Recharts (PieChart, BarChart). Paleta dashboard (tokens `--dashboard-dark` / `--dashboard-dark-foreground`) para modo claro/oscuro.
 - **Layout:** AppLayout con sidebar, header, tema claro/oscuro; Landing; rutas unificadas.
 - **Detalle del plan:** [docs/plan_reformulacion_interfaces_y_diseno.md](docs/plan_reformulacion_interfaces_y_diseno.md).
 
@@ -135,7 +142,26 @@
 - [ ] Verificación de cargas/descargas (MinIO + NubeFact).
 - [ ] Revisión de validaciones front/back.
 
-### 4.7 Dashboard y UX
+### 4.7 Dashboard – Sección 2: Desglose de Operaciones y Stock
+
+Panel con seis módulos debajo de la Sección 1 (Dashboard General) ya implementada:
+
+- [ ] **CPE Emitidos por tipo:** Panel que lista tipos de comprobante (Facturas, Boletas, Notas Venta, Notas Crédito, Notas Débito) con cantidad emitida por cada uno. Datos desde API/BD comprobantes.
+- [ ] **Utilidades / Ganancias:** Bloque con valores Ingreso, Egreso, Utilidad (Ingreso − Egreso). Casillas de verificación: “Considerar gastos” y “Filtrar por producto”. Fuente: ingresos por comprobantes; egresos (módulo compras o Nubefact cuando aplique).
+- [ ] **Total Compras:** Dos tarjetas con Total Compras y Total; a la derecha gráfico de barras con compras mensuales (Ene–Dic). Requiere datos de compras (API Nubefact o módulo propio).
+- [ ] **Productos Top:** Tabla con columnas #, Producto, Mov. (movimientos), Total. Opción “Ordenar X movimientos”. Backend: agregar endpoint de productos más vendidos por período.
+- [ ] **Clientes Top:** Tabla con columnas #, Cliente, Trans. (transacciones), Total. Opción “Ordenar por transacciones”. Backend: agregar endpoint de clientes por monto/cantidad en el período.
+- [ ] **Productos con Stock Mínimo:** Tabla con #, Producto, Stock, Estado (ej. badge “Agotado” en rojo), Almacén, botón “Aprovisionar” (carrito). Datos desde modelo Producto y stock; alertas por debajo de mínimo.
+
+### 4.8 Dashboard – Sección 3: Análisis Mensual
+
+Comparativo mensual de ventas y compras a lo largo del año:
+
+- [ ] **Gráfico de barras comparativo:** Eje Y con escala (ej. 0–200 000), eje X con meses (ENERO–DICIEMBRE). Cuatro barras por mes: Facturas, Boletas, Notas de Venta, Compras (colores distintos por serie). Datos desde comprobantes agrupados por mes y tipo; compras desde API/módulo de compras.
+- [ ] **Tabla de datos mensual:** Columnas Mes, Facturas, Boletas, Notas de Venta, Compras. Una fila por mes (Enero–Diciembre) con totales numéricos. Fila final de totales resaltada. Misma fuente de datos que el gráfico.
+- [ ] **Backend:** Endpoint (ej. `/api/v1/dashboard/analisis-mensual`) que devuelva por año/mes los totales por tipo de comprobante y compras, con formato listo para gráfico y tabla.
+
+### 4.9 Dashboard y UX (ajustes generales)
 
 - [ ] Ajustes finos de visualización y KPIs adicionales en fases posteriores.
 - [ ] Revisar flujos de notas de crédito/débito y GRE con catálogos SUNAT.
