@@ -25,15 +25,17 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 
+const logoUrl = '/nubofact-logo.png';
+
 const menuItems = [
-  { title: 'Dashboard', icon: Home, url: '/' },
-  { title: 'Empresas', icon: Building2, url: '/empresas' },
-  { title: 'Clientes', icon: Users, url: '/clientes' },
-  { title: 'Oportunidades', icon: FileText, url: '/oportunidades' },
-  { title: 'Facturación', icon: Receipt, url: '/facturacion' },
-  { title: 'Productos', icon: Package, url: '/productos' },
-  { title: 'Documentos', icon: FolderOpen, url: '/documentos' },
-  { title: 'Pagos', icon: CreditCard, url: '/pagos' },
+  { title: 'Dashboard', icon: Home, url: '/app' },
+  { title: 'Empresas', icon: Building2, url: '/app/empresas' },
+  { title: 'Clientes', icon: Users, url: '/app/clientes' },
+  { title: 'Oportunidades', icon: FileText, url: '/app/oportunidades' },
+  { title: 'Facturación', icon: Receipt, url: '/app/facturacion' },
+  { title: 'Productos', icon: Package, url: '/app/productos' },
+  { title: 'Documentos', icon: FolderOpen, url: '/app/documentos' },
+  { title: 'Pagos', icon: CreditCard, url: '/app/pagos' },
 ];
 
 export function AppLayout() {
@@ -44,11 +46,25 @@ export function AppLayout() {
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar className="border-r">
           <SidebarContent>
-            <div className="p-4 border-b">
-              <h2 className="text-xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Facturación SUNAT
-              </h2>
-              <p className="text-sm text-muted-foreground">Sistema de Facturación Electrónica</p>
+            <div className="border-b flex items-center justify-center overflow-hidden" style={{ height: '56px', padding: '0', margin: '0', lineHeight: '0' }}>
+              <Link to="/app" className="flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ padding: '0', margin: '0', lineHeight: '0' }}>
+                <img
+                  src={logoUrl}
+                  alt="Nubofact"
+                  className="w-full h-full object-contain dark:invert-0"
+                  style={{
+                    imageRendering: 'crisp-edges',
+                    objectFit: 'contain',
+                    objectPosition: 'center center',
+                    padding: '0',
+                    margin: '-32% 0',
+                    transform: 'scale(2)',
+                    maxWidth: '100%',
+                    display: 'block'
+                  }}
+                  fetchPriority="high"
+                />
+              </Link>
             </div>
             
             <SidebarGroup>
@@ -77,7 +93,7 @@ export function AppLayout() {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <Link to="/configuracion">
+                      <Link to="/app/configuracion">
                         <Settings className="w-4 h-4" />
                         <span>Configuración</span>
                       </Link>
@@ -95,18 +111,14 @@ export function AppLayout() {
           </SidebarContent>
         </Sidebar>
 
-        <main className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-4 md:px-6 lg:px-8">
-            <SidebarTrigger />
-            <div className="flex-1">
-              <h1 className="text-lg md:text-xl lg:text-2xl font-semibold truncate">
-                {menuItems.find(item => item.url === location.pathname)?.title || 'Plataforma de Facturación'}
-              </h1>
-            </div>
+        <main className="flex-1 flex flex-col">
+          <header className="sticky top-0 z-10 flex items-center gap-4 border-b px-4 md:px-6" style={{ height: '56px', backgroundColor: 'hsl(0, 0%, 9%)', color: 'white' }}>
+            <SidebarTrigger className="shrink-0" style={{ color: 'white' }} />
+            <div className="flex-1 min-w-0" />
             <ThemeToggle />
           </header>
           
-          <div className="p-0 max-w-500 mx-auto w-full">
+          <div className="p-0 max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
         </main>

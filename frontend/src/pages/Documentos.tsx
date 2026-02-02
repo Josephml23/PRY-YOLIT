@@ -12,9 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Download, Trash2, Loader2 } from 'lucide-react';
+import { FileText, Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, type Documento } from '@/lib/api';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const TIPOS_DOCUMENTO = [
   { value: 'all', label: 'Todos los tipos' },
@@ -139,14 +142,14 @@ export default function DocumentosPage() {
     }
   };
 
+  const columnCount = 6;
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Documentos</h1>
-        <p className="text-muted-foreground">
-          Vista global de todos los documentos adjuntos a las oportunidades.
-        </p>
-      </div>
+      <PageHeader
+        title="Documentos"
+        description="Vista global de todos los documentos adjuntos a las oportunidades."
+      />
 
       <Card>
         <CardHeader>
@@ -189,13 +192,20 @@ export default function DocumentosPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="overflow-x-auto">
+              <TableSkeleton columns={columnCount} rows={6} />
             </div>
+          ) : documentosFiltrados.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No se encontraron documentos"
+              description="No hay documentos con los filtros actuales o aún no se han subido documentos."
+              className="py-12"
+            />
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/50 border-b-2">
                   <TableHead>Archivo</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Oportunidad</TableHead>
@@ -205,14 +215,7 @@ export default function DocumentosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documentosFiltrados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No se encontraron documentos
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  documentosFiltrados.map((doc) => (
+                {documentosFiltrados.map((doc) => (
                     <TableRow key={doc.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -257,8 +260,7 @@ export default function DocumentosPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           )}

@@ -8,6 +8,9 @@ import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell, Searc
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import api from '@/services/api';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { MetricCard } from '@/components/dashboard/MetricCard';
+import { FilterBar } from '@/components/filters/FilterBar';
 
 const DIAS = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, '0'));
 
@@ -360,36 +363,31 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      {/* Header del Dashboard */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Resumen general de facturación electrónica
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-muted-foreground">
-            Actualizado: {new Date().toLocaleDateString('es-PE', { 
-              day: '2-digit', 
-              month: 'short', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+      <PageHeader
+        title="Dashboard"
+        description="Resumen general de facturación electrónica"
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground">
+              Actualizado: {new Date().toLocaleDateString('es-PE', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+            <Link to="/app/dashboard-tv" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-2">
+                <span>Modo TV</span>
+              </Button>
+            </Link>
           </div>
-          <Link to="/dashboard-tv" target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm" className="gap-2">
-              <span>Modo TV</span>
-            </Button>
-          </Link>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Filtros */}
-      <Card className="border-dashed bg-muted/40">
-        <CardContent className="pt-4 pb-3">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5 items-end">
+      <FilterBar onClear={limpiarFiltros} clearLabel="Limpiar filtros">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5 items-end w-full">
             <div>
               <Label htmlFor="fecha-desde" className="text-xs font-medium text-muted-foreground">Fecha desde</Label>
               <div className="mt-1 flex flex-wrap gap-2">
@@ -505,92 +503,40 @@ export default function Dashboard() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-2 md:justify-end md:self-end mt-2 md:mt-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 text-xs"
-                onClick={limpiarFiltros}
-              >
-                Limpiar filtros
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      </Card>
+      </FilterBar>
 
-      {/* Tarjetas de estadísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Facturado</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">S/ {stats.totalFacturado.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {comprobantes.filter(c => !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado').length} comprobantes vigentes (aceptados)
-            </p>
-            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span>Total de FACTURAS</span>
-                <span>S/ {totalesPorTipo.facturas.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Total de BOLETAS DE VENTA</span>
-                <span>S/ {totalesPorTipo.boletas.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Total de NOTAS DE CRÉDITO</span>
-                <span>S/ {totalesPorTipo.notasCredito.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Total de NOTAS DE DÉBITO</span>
-                <span>S/ {totalesPorTipo.notasDebito.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comprobantes Emitidos</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalComprobantes}</div>
-            <p className="text-xs text-muted-foreground">
-              Total en el sistema
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes y Proveedores registrados</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClientesRegistrados}</div>
-            <p className="text-xs text-muted-foreground">
-              Registros en el sistema
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasa de Aceptación</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.tasaAceptacion.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Comprobantes aceptados por SUNAT
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="Total Facturado"
+          value={`S/ ${stats.totalFacturado.toFixed(2)}`}
+          icon={Receipt}
+          description={`${comprobantes.filter(c => !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado').length} comprobantes vigentes (aceptados)`}
+          details={[
+            { label: 'Total de FACTURAS', value: `S/ ${totalesPorTipo.facturas.toFixed(2)}` },
+            { label: 'Total de BOLETAS DE VENTA', value: `S/ ${totalesPorTipo.boletas.toFixed(2)}` },
+            { label: 'Total de NOTAS DE CRÉDITO', value: `S/ ${totalesPorTipo.notasCredito.toFixed(2)}` },
+            { label: 'Total de NOTAS DE DÉBITO', value: `S/ ${totalesPorTipo.notasDebito.toFixed(2)}` },
+          ]}
+        />
+        <MetricCard
+          title="Comprobantes Emitidos"
+          value={stats.totalComprobantes}
+          icon={TrendingUp}
+          description="Total en el sistema"
+        />
+        <MetricCard
+          title="Clientes y Proveedores registrados"
+          value={totalClientesRegistrados}
+          icon={Building2}
+          description="Registros en el sistema"
+        />
+        <MetricCard
+          title="Tasa de Aceptación"
+          value={`${stats.tasaAceptacion.toFixed(1)}%`}
+          icon={CheckCircle}
+          description="Comprobantes aceptados por SUNAT"
+        />
       </div>
 
       {/* SLA y Alertas */}
@@ -599,7 +545,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <AlertTriangle className="h-4 w-4 text-warning" />
                 SLA de Oportunidades
               </CardTitle>
               <CardDescription>
@@ -616,19 +562,19 @@ export default function Dashboard() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">En plazo</span>
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="font-medium text-success">
                     {slaResumen.en_plazo}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Próximos a vencer</span>
-                  <span className="font-medium text-amber-600 dark:text-amber-400">
+                  <span className="font-medium text-warning">
                     {slaResumen.proximo_vencer}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Vencidos</span>
-                  <span className="font-medium text-red-600 dark:text-red-400">
+                  <span className="font-medium text-destructive">
                     {slaResumen.vencidos}
                   </span>
                 </div>
@@ -644,7 +590,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Bell className="h-4 w-4 text-sky-500" />
+                <Bell className="h-4 w-4 text-primary" />
                 Alertas
               </CardTitle>
               <CardDescription>
@@ -699,6 +645,8 @@ export default function Dashboard() {
                 },
               }}
               className="aspect-4/3 w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
+              role="img"
+              aria-label={`Facturación mensual: ${datosFacturacionMensual.map((d) => `${d.mes} S/ ${Number(d.monto).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`).join(', ')}`}
             >
               <BarChart
                 data={datosFacturacionMensual}
@@ -722,7 +670,18 @@ export default function Dashboard() {
                   style={{ fontSize: '14px' }}
                 />
                 <ChartTooltip
-                  content={<ChartTooltipContent />}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => (
+                        <div className="flex w-full flex-1 justify-between items-center gap-2 leading-none">
+                          <span className="text-muted-foreground">Monto (S/)</span>
+                          <span className="text-foreground font-mono font-medium tabular-nums">
+                            S/ {Number(value).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                    />
+                  }
                   cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                 />
                 <Bar
@@ -868,11 +827,11 @@ export default function Dashboard() {
                     <div className="text-left sm:text-right space-y-1 shrink-0">
                       <p className="text-sm font-medium">S/ {Number(doc.mto_imp_venta ?? 0).toFixed(2)}</p>
                       <p className={`text-xs font-medium ${
-                        doc.estado_sunat?.toLowerCase() === 'aceptado' 
-                          ? 'text-green-600 dark:text-green-400' 
+                        doc.estado_sunat?.toLowerCase() === 'aceptado'
+                          ? 'text-success'
                           : doc.estado_sunat?.toLowerCase() === 'rechazado'
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-yellow-600 dark:text-yellow-400'
+                          ? 'text-destructive'
+                          : 'text-warning'
                       }`}>
                         {doc.estado_sunat || 'Pendiente'}
                       </p>

@@ -17,7 +17,10 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api, type Empresa, type Serie } from '@/lib/api';
-import { Settings2, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileDigit } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const TIPOS_COMPROBANTE = [
   { value: '01', label: 'Factura (01)' },
@@ -226,17 +229,14 @@ export default function Configuracion() {
     return TIPOS_COMPROBANTE.find((t) => t.value === codigo)?.label ?? codigo;
   };
 
+  const columnCount = 7;
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Settings2 className="w-6 h-6" />
-          Configuración de facturación
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Administra las series y numeración de comprobantes por empresa, alineado con la configuración de SUNAT.
-        </p>
-      </div>
+      <PageHeader
+        title="Configuración de facturación"
+        description="Administra las series y numeración de comprobantes por empresa, alineado con la configuración de SUNAT."
+      />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -399,34 +399,35 @@ export default function Configuracion() {
             </div>
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Serie</TableHead>
-                  <TableHead className="text-right">Correlativo</TableHead>
-                  <TableHead>Por defecto</TableHead>
-                  <TableHead>Activa</TableHead>
-                  <TableHead className="w-30 text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loadingSeries ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                      Cargando series...
-                    </TableCell>
+          <div className="rounded-md border overflow-hidden">
+            {loadingSeries ? (
+              <TableSkeleton columns={columnCount} rows={5} />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 border-b-2">
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Serie</TableHead>
+                    <TableHead className="text-right">Correlativo</TableHead>
+                    <TableHead>Por defecto</TableHead>
+                    <TableHead>Activa</TableHead>
+                    <TableHead className="w-30 text-right">Acciones</TableHead>
                   </TableRow>
-                ) : seriesFiltradas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                      No hay series configuradas con los filtros actuales.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  seriesFiltradas.map((s) => (
+                </TableHeader>
+                <TableBody>
+                  {seriesFiltradas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={columnCount} className="p-0">
+                        <EmptyState
+                          icon={FileDigit}
+                          title="No hay series configuradas"
+                          description="Con los filtros actuales no hay series. Crea una nueva serie o cambia los filtros."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    seriesFiltradas.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell>{nombreEmpresa(s.empresa_id)}</TableCell>
                       <TableCell>{etiquetaTipo(s.tipo_comprobante)}</TableCell>
@@ -451,12 +452,13 @@ export default function Configuracion() {
                       </TableCell>
                     </TableRow>
                   ))
-                )}
-              </TableBody>
-              <TableCaption>
-                Recuerde definir al menos una serie por defecto por empresa y tipo de comprobante.
-              </TableCaption>
-            </Table>
+                  )}
+                </TableBody>
+                <TableCaption>
+                  Recuerde definir al menos una serie por defecto por empresa y tipo de comprobante.
+                </TableCaption>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>

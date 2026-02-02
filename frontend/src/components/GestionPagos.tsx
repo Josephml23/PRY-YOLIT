@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { DollarSign, Trash2, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/services/api';
@@ -162,15 +163,15 @@ export default function GestionPagos({
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <DollarSign className="h-5 w-5 text-green-500 shrink-0" />
+                    <DollarSign className="h-5 w-5 text-success shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-lg font-bold text-green-600">
+                        <p className="text-lg font-bold text-success">
                           S/ {Number(pago.monto).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
                         </p>
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                        <Badge variant="secondary" className="rounded-full">
                           {MEDIOS_PAGO.find((m) => m.value === pago.medio_pago)?.label || pago.medio_pago}
-                        </span>
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                         <span>{new Date(pago.fecha_pago).toLocaleDateString('es-PE', { 
@@ -189,7 +190,7 @@ export default function GestionPagos({
                         <p className="text-xs text-muted-foreground mt-1">{pago.descripcion}</p>
                       )}
                       {pago.comprobante && (
-                        <div className="flex items-center gap-1 text-xs text-blue-600 mt-1">
+                        <div className="flex items-center gap-1 text-xs text-primary mt-1">
                           <LinkIcon className="h-3 w-3" />
                           <span>
                             Vinculado a {pago.comprobante.tipo_doc} {pago.comprobante.serie}-{pago.comprobante.numero}

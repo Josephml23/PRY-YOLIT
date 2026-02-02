@@ -127,7 +127,7 @@ export default function DashboardTv() {
         <div className="flex flex-col items-end gap-2 text-right text-sm md:text-base text-muted-foreground">
           <div>Actualizado: {new Date().toLocaleString('es-PE')}</div>
           <div className="text-xs md:text-sm">Se actualiza automáticamente cada 60 segundos</div>
-          <Link to="/">
+          <Link to="/app">
             <Button size="sm" variant="outline" className="mt-1">
               Volver al modo normal
             </Button>
@@ -281,7 +281,7 @@ export default function DashboardTv() {
                       S/ {parseMonto(o.monto_estimado).toFixed(2)}
                     </div>
                     <div className="col-span-3 text-center">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold bg-sky-500/10 text-sky-500 border border-sky-500/40">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold bg-muted text-muted-foreground border border-border">
                         {o.estado.toUpperCase()}
                       </span>
                     </div>

@@ -134,7 +134,7 @@ export default function DetalleOportunidad() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="text-muted-foreground">Oportunidad no encontrada</div>
-        <Button onClick={() => navigate('/oportunidades')}>
+        <Button onClick={() => navigate('/app/oportunidades')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver al listado
         </Button>
@@ -151,7 +151,7 @@ export default function DetalleOportunidad() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/oportunidades')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/app/oportunidades')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -342,7 +342,7 @@ export default function DetalleOportunidad() {
             <CardContent className="pt-6">
               <div className="space-y-3">
                 <div className="flex items-start gap-3 pb-3 border-b">
-                  <div className="h-2 w-2 rounded-full bg-green-500 mt-2"></div>
+                  <div className="h-2 w-2 rounded-full bg-success mt-2 shrink-0" aria-hidden></div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">Oportunidad creada</div>
                     <div className="text-xs text-muted-foreground">
@@ -353,7 +353,7 @@ export default function DetalleOportunidad() {
                 
                 {oportunidad.updated_at !== oportunidad.created_at && (
                   <div className="flex items-start gap-3 pb-3 border-b">
-                    <div className="h-2 w-2 rounded-full bg-blue-500 mt-2"></div>
+                    <div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" aria-hidden></div>
                     <div className="flex-1">
                       <div className="text-sm font-medium">Última actualización</div>
                       <div className="text-xs text-muted-foreground">

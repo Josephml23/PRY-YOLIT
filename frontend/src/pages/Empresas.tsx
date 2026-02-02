@@ -10,25 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-
-interface Empresa {
-  id: number;
-  ruc: string;
-  razon_social: string;
-  nombre_comercial: string;
-  ubigeo?: string;
-  departamento?: string;
-  provincia?: string;
-  distrito?: string;
-  direccion: string;
-  telefono?: string;
-  email?: string;
-  sol_user: string;
-  client_id?: string;
-  modo?: 'beta' | 'prod';
-  activo?: boolean;
-  created_at: string;
-}
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import type { Empresa } from '@/types';
 
 export default function Empresas() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -180,26 +165,24 @@ export default function Empresas() {
     empresa.nombre_comercial?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const columnCount = 5;
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
-          <p className="text-muted-foreground">
-            Gestiona las empresas emisoras de comprobantes electrónicos
-          </p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Empresa
-            </Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Empresas"
+        description="Gestiona las empresas emisoras de comprobantes electrónicos"
+        actions={
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Empresa
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -421,7 +404,8 @@ export default function Empresas() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -434,66 +418,54 @@ export default function Empresas() {
             </div>
             
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
               <Input
                 placeholder="Buscar empresa..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
+                aria-label="Buscar empresa por RUC, razón social o nombre comercial"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Cargando empresas...
+            <div className="overflow-x-auto">
+              <TableSkeleton columns={columnCount} rows={6} />
             </div>
           ) : filteredEmpresas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Building2 className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>No se encontraron empresas</p>
-              {searchTerm && (
-                <Button 
-                  variant="link" 
-                  onClick={() => setSearchTerm('')}
-                  className="mt-2"
-                >
+            <EmptyState
+              icon={Building2}
+              title="No se encontraron empresas"
+              description={searchTerm ? 'Prueba con otro criterio de búsqueda.' : 'Registra tu primera empresa emisora con el botón Nueva Empresa.'}
+              action={searchTerm ? (
+                <Button variant="link" onClick={() => setSearchTerm('')}>
                   Limpiar búsqueda
                 </Button>
-              )}
-            </div>
+              ) : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
-                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                      <div className="font-bold text-xs uppercase">RUC</div>
-                    </TableHead>
-                    <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                      <div className="font-bold text-xs uppercase">Razón Social</div>
-                    </TableHead>
-                    <TableHead className="min-w-40 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden md:table-cell">
-                      <div className="font-bold text-xs uppercase">Nombre Comercial</div>
-                    </TableHead>
-                    <TableHead className="min-w-32 py-2 px-2 bg-slate-100 dark:bg-slate-800 hidden lg:table-cell">
-                      <div className="font-bold text-xs uppercase">Usuario SOL</div>
-                    </TableHead>
-                    <TableHead className="w-24 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
-                      <div className="font-bold text-xs uppercase">Acciones</div>
-                    </TableHead>
+                  <TableRow className="bg-muted/50 border-b-2">
+                    <TableHead className="min-w-32 py-2 px-2">RUC</TableHead>
+                    <TableHead className="min-w-48 py-2 px-2">Razón Social</TableHead>
+                    <TableHead className="min-w-40 py-2 px-2 hidden md:table-cell">Nombre Comercial</TableHead>
+                    <TableHead className="min-w-32 py-2 px-2 hidden lg:table-cell">Usuario SOL</TableHead>
+                    <TableHead className="w-24 text-center py-2 px-2">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredEmpresas.map((empresa) => (
                     <TableRow key={empresa.id} className="hover:bg-muted/50 transition-colors">
-                      <TableCell className="py-2 px-2 font-mono text-[14px]">{empresa.ruc}</TableCell>
-                      <TableCell className="py-2 px-2 text-[14px]">{empresa.razon_social}</TableCell>
-                      <TableCell className="py-2 px-2 hidden md:table-cell text-[14px] text-muted-foreground">
+                      <TableCell className="py-2 px-2 font-mono text-sm">{empresa.ruc}</TableCell>
+                      <TableCell className="py-2 px-2 text-sm">{empresa.razon_social}</TableCell>
+                      <TableCell className="py-2 px-2 hidden md:table-cell text-sm text-muted-foreground">
                         {empresa.nombre_comercial || '-'}
                       </TableCell>
-                      <TableCell className="py-2 px-2 hidden lg:table-cell font-mono text-[14px]">
+                      <TableCell className="py-2 px-2 hidden lg:table-cell font-mono text-sm">
                         {empresa.sol_user}
                       </TableCell>
                       <TableCell className="py-2 px-2">
@@ -502,6 +474,7 @@ export default function Empresas() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEdit(empresa)}
+                            aria-label="Editar empresa"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -509,6 +482,7 @@ export default function Empresas() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(empresa.id)}
+                            aria-label="Eliminar empresa"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

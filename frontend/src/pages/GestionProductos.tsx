@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Edit, Plus, Star, StarOff, Trash2, Loader2, MoreVertical, Eye, Package, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Plus, Star, StarOff, Trash2, MoreVertical, Eye, Package, ArrowUp, ArrowDown } from 'lucide-react';
 import api, { type Producto } from '@/lib/api';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 const UNIDADES_MEDIDA = [
   { value: 'NIU', label: 'NIU - UNIDADES' },
@@ -229,14 +232,14 @@ export default function GestionProductos() {
   const productosPaginados = productosFiltrados.slice(startIndex, endIndex);
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
+      <PageHeader
+        title="Gestión de Productos"
+        description="Administra el catálogo de productos por empresa: códigos, precios, stock y tipos de afectación IGV."
+      />
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Package className="w-6 h-6 text-primary" />
-              <CardTitle className="text-2xl">Gestión de Productos</CardTitle>
-            </div>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -460,27 +463,26 @@ export default function GestionProductos() {
           )}
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
-              <p className="text-sm text-muted-foreground">Cargando productos...</p>
+            <div className="rounded-md border overflow-hidden">
+              <TableSkeleton columns={12} rows={8} />
             </div>
           ) : (
             <div className="rounded-md border overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-100 dark:bg-slate-800 border-b-2">
-                      <TableHead className="w-10 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                    <TableRow className="bg-muted/50 border-b-2">
+                      <TableHead className="w-10 py-2 px-2 bg-muted/50">
                         <Checkbox
                           checked={selectedProductos.length === productosFiltrados.length && productosFiltrados.length > 0}
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
-                      <TableHead className="min-w-20 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-20 py-2 px-2 bg-muted/50">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700"
+                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-muted"
                           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         >
                           Código
@@ -491,11 +493,11 @@ export default function GestionProductos() {
                           )}
                         </Button>
                       </TableHead>
-                      <TableHead className="min-w-48 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-48 py-2 px-2 bg-muted/50">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700"
+                          className="h-7 px-2 -ml-2 font-bold text-xs uppercase hover:bg-muted"
                           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         >
                           Código
@@ -506,49 +508,49 @@ export default function GestionProductos() {
                           )}
                         </Button>
                       </TableHead>
-                      <TableHead className="min-w-16 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-16 py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase text-center">Unidad</div>
                       </TableHead>
                       {mostrarColumnasOpcionales && (
-                        <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <TableHead className="min-w-24 text-right py-2 px-2 bg-muted/50">
                           <div className="font-bold text-xs uppercase">Costo Compra</div>
                           <div className="text-[10px] font-normal text-muted-foreground">(sin IGV)</div>
                         </TableHead>
                       )}
-                      <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-24 text-right py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase">Valor Venta</div>
                         <div className="text-[10px] font-normal text-muted-foreground">(sin IGV)</div>
                       </TableHead>
                       {mostrarColumnasOpcionales && (
-                        <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <TableHead className="min-w-24 text-right py-2 px-2 bg-muted/50">
                           <div className="font-bold text-xs uppercase">Precio Compra</div>
                           <div className="text-[10px] font-normal text-muted-foreground">(con IGV)</div>
                         </TableHead>
                       )}
-                      <TableHead className="min-w-24 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-24 text-right py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase">Precio Venta</div>
                         <div className="text-[10px] font-normal text-muted-foreground">(con IGV)</div>
                       </TableHead>
-                      <TableHead className="w-16 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="w-16 text-center py-2 px-2 bg-muted/50">
                         <div className="text-lg">⭐</div>
                       </TableHead>
-                      <TableHead className="min-w-28 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-28 py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase">Tipo IGV</div>
                       </TableHead>
                       {mostrarColumnasOpcionales && (
-                        <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <TableHead className="min-w-24 py-2 px-2 bg-muted/50">
                           <div className="font-bold text-xs uppercase">Categoría</div>
                         </TableHead>
                       )}
                       {mostrarColumnasOpcionales && (
-                        <TableHead className="min-w-24 py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                        <TableHead className="min-w-24 py-2 px-2 bg-muted/50">
                           <div className="font-bold text-xs uppercase">Cód. SUNAT</div>
                         </TableHead>
                       )}
-                      <TableHead className="min-w-20 text-right py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="min-w-20 text-right py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase">Stock</div>
                       </TableHead>
-                      <TableHead className="w-16 text-center py-2 px-2 bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="w-16 text-center py-2 px-2 bg-muted/50">
                         <div className="font-bold text-xs uppercase">Acciones</div>
                       </TableHead>
                     </TableRow>
@@ -556,36 +558,23 @@ export default function GestionProductos() {
                   <TableBody>
                     {productosPaginados.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={mostrarColumnasOpcionales ? 14 : 10} className="text-center py-12">
-                          <div className="flex flex-col items-center gap-3">
-                            <Package className="w-16 h-16 text-muted-foreground/30" />
-                            {busqueda ? (
-                              <>
-                                <p className="text-lg font-medium text-muted-foreground">
-                                  No se encontraron productos con "{busqueda}"
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Intenta con otro término de búsqueda o verifica la ortografía
-                                </p>
-                                <Button variant="outline" size="sm" onClick={() => setBusqueda('')}>
-                                  Ver todos los productos
-                                </Button>
-                              </>
+                        <TableCell colSpan={mostrarColumnasOpcionales ? 14 : 10} className="p-0">
+                          <EmptyState
+                            icon={Package}
+                            title={busqueda ? `No se encontraron productos con "${busqueda}"` : 'No hay productos registrados'}
+                            description={busqueda ? 'Intenta con otro término de búsqueda o verifica la ortografía.' : 'Comienza agregando productos a tu catálogo.'}
+                            action={busqueda ? (
+                              <Button variant="outline" size="sm" onClick={() => setBusqueda('')}>
+                                Ver todos los productos
+                              </Button>
                             ) : (
-                              <>
-                                <p className="text-lg font-medium text-muted-foreground">
-                                  No hay productos registrados
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Comienza agregando productos a tu catálogo
-                                </p>
-                                <Button variant="default" size="sm" onClick={() => abrirModal()}>
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Crear primer producto
-                                </Button>
-                              </>
+                              <Button variant="default" size="sm" onClick={() => abrirModal()}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Crear primer producto
+                              </Button>
                             )}
-                          </div>
+                            className="py-12"
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -593,7 +582,7 @@ export default function GestionProductos() {
                         <TableRow 
                           key={producto.id}
                           className={`hover:bg-muted/50 transition-colors ${
-                            selectedProductos.includes(producto.id) ? 'bg-amber-50 dark:bg-amber-950/20' : ''
+                            selectedProductos.includes(producto.id) ? 'bg-accent/50' : ''
                           }`}
                         >
                           <TableCell className="py-2 px-2">

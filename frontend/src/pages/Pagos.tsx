@@ -12,7 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { DollarSign, Loader2, Trash2, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, Trash2, Download, CreditCard } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { toast } from 'sonner';
 import { api, type Pago } from '@/lib/api';
 
@@ -165,14 +169,14 @@ export default function PagosPage() {
     );
   };
 
+  const columnCount = 6;
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Pagos</h1>
-        <p className="text-muted-foreground">
-          Vista global de los pagos registrados en las oportunidades y comprobantes.
-        </p>
-      </div>
+      <PageHeader
+        title="Pagos"
+        description="Vista global de los pagos registrados en las oportunidades y comprobantes."
+      />
 
       {/* Resumen */}
       <Card>
@@ -187,19 +191,19 @@ export default function PagosPage() {
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Total de pagos</p>
               <p className="text-2xl font-bold flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <DollarSign className="w-5 h-5 text-success" />
                 {stats ? stats.total_pagos : '-'}
               </p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Monto total (S/)</p>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-foreground">
                 {stats ? `S/ ${formatMonto(stats.monto_total)}` : '-'}
               </p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Total en página actual</p>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-foreground">
                 S/ {formatMonto(totalPagina)}
               </p>
             </div>
@@ -272,13 +276,20 @@ export default function PagosPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="overflow-x-auto">
+              <TableSkeleton columns={columnCount} rows={6} />
             </div>
+          ) : pagos.length === 0 ? (
+            <EmptyState
+              icon={CreditCard}
+              title="No se encontraron pagos"
+              description="No hay pagos con los filtros actuales o aún no se han registrado pagos."
+              className="py-12"
+            />
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/50 border-b-2">
                   <TableHead>Fecha</TableHead>
                   <TableHead>Monto</TableHead>
                   <TableHead>Medio</TableHead>
@@ -288,14 +299,7 @@ export default function PagosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagos.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No se encontraron pagos
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pagos.map((pago) => (
+                {pagos.map((pago) => (
                     <TableRow key={pago.id}>
                       <TableCell>
                         {new Date(pago.fecha_pago).toLocaleDateString('es-PE', {
@@ -305,14 +309,14 @@ export default function PagosPage() {
                         })}
                       </TableCell>
                       <TableCell>
-                        <span className="font-semibold text-green-700">
+                        <span className="font-semibold text-foreground">
                           S/ {formatMonto(pago.monto)}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                        <Badge variant="secondary">
                           {labelMedio(pago.medio_pago)}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-xs max-w-65 truncate">
                         {pago.oportunidad?.cliente_nombre
@@ -348,8 +352,7 @@ export default function PagosPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           )}

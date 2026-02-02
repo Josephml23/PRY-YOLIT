@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
 import DashboardTv from '@/pages/DashboardTv';
 import Empresas from '@/pages/Empresas';
@@ -20,7 +21,8 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="facturacion-theme">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AppLayout />}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard-tv" element={<DashboardTv />} />
             <Route path="empresas" element={<Empresas />} />

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -23,6 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 
 interface Comprobante {
   id: number;
@@ -164,32 +168,33 @@ export default function ListaComprobantes() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Comprobantes Emitidos</h2>
-          <p className="text-muted-foreground">Consulta y gestión de comprobantes electrónicos</p>
-        </div>
-        <Button onClick={cargarComprobantes} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Actualizar
-        </Button>
-      </div>
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
+      <PageHeader
+        title="Comprobantes Emitidos"
+        description="Consulta y gestión de comprobantes electrónicos"
+        actions={
+          <Button onClick={cargarComprobantes} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualizar
+          </Button>
+        }
+      />
 
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Buscar</label>
+              <Label htmlFor="busqueda-comprobantes">Buscar</Label>
               <Input
+                id="busqueda-comprobantes"
                 placeholder="Serie, número, cliente..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Comprobante</label>
+              <Label>Tipo de Comprobante</Label>
               <Select value={filtroTipo} onValueChange={setFiltroTipo}>
                 <SelectTrigger>
                   <SelectValue />
@@ -204,7 +209,7 @@ export default function ListaComprobantes() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Estado SUNAT</label>
+              <Label>Estado SUNAT</Label>
               <Select value={filtroEstado} onValueChange={setFiltroEstado}>
                 <SelectTrigger>
                   <SelectValue />
@@ -225,51 +230,51 @@ export default function ListaComprobantes() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="overflow-x-auto p-4">
+              <TableSkeleton columns={8} rows={8} />
             </div>
+          ) : comprobantesFiltrados.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No se encontraron comprobantes"
+              description={busqueda || filtroTipo !== 'all' || filtroEstado !== 'all' ? 'Ajusta los filtros o el criterio de búsqueda.' : 'Los comprobantes emitidos aparecerán aquí.'}
+            />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Serie-Número</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>RUC/DNI</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {comprobantesFiltrados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No se encontraron comprobantes
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 border-b-2">
+                    <TableHead className="py-2 px-2">Tipo</TableHead>
+                    <TableHead className="py-2 px-2">Serie-Número</TableHead>
+                    <TableHead className="py-2 px-2">Fecha</TableHead>
+                    <TableHead className="py-2 px-2">Cliente</TableHead>
+                    <TableHead className="py-2 px-2">RUC/DNI</TableHead>
+                    <TableHead className="py-2 px-2 text-right">Monto</TableHead>
+                    <TableHead className="py-2 px-2">Estado</TableHead>
+                    <TableHead className="py-2 px-2 text-right">Acciones</TableHead>
                   </TableRow>
-                ) : (
-                  comprobantesFiltrados.map((comprobante) => (
-                    <TableRow key={comprobante.id}>
-                      <TableCell className="font-medium">
+                </TableHeader>
+                <TableBody>
+                  {comprobantesFiltrados.map((comprobante) => (
+                    <TableRow key={comprobante.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="py-2 px-2 font-medium">
                         {TIPOS_DOC[comprobante.tipo_doc as keyof typeof TIPOS_DOC] || comprobante.tipo_doc}
                       </TableCell>
-                      <TableCell>{`${comprobante.serie}-${comprobante.correlativo}`}</TableCell>
-                      <TableCell>{new Date(comprobante.fecha_emision).toLocaleDateString()}</TableCell>
-                      <TableCell className="max-w-50 truncate">
+                      <TableCell className="py-2 px-2">{`${comprobante.serie}-${comprobante.correlativo}`}</TableCell>
+                      <TableCell className="py-2 px-2">{new Date(comprobante.fecha_emision).toLocaleDateString()}</TableCell>
+                      <TableCell className="py-2 px-2 max-w-50 truncate">
                         {comprobante.cliente_razon_social}
                       </TableCell>
-                      <TableCell>{comprobante.cliente_num_doc}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="py-2 px-2">{comprobante.cliente_num_doc}</TableCell>
+                      <TableCell className="py-2 px-2 text-right">
                         {comprobante.moneda === 'PEN' ? 'S/ ' : '$ '}
                         {Number(comprobante.mto_imp_venta || 0).toFixed(2)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2 px-2">
                         {comprobante.anulado ? (
                           <Badge variant="secondary">Anulado</Badge>
                         ) : comprobante.nubefact_aceptada_por_sunat ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge className="bg-success text-success-foreground border-transparent">
                             Aceptado
                           </Badge>
                         ) : comprobante.estado_sunat === 'rechazado' ? (
@@ -278,7 +283,7 @@ export default function ListaComprobantes() {
                           <Badge variant="outline">Pendiente</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2 px-2">
                         <div className="flex items-center justify-end gap-2">
                           {comprobante.nubefact_pdf_url && (
                             <Button
@@ -286,7 +291,7 @@ export default function ListaComprobantes() {
                               size="sm"
                               asChild
                             >
-                              <a href={comprobante.nubefact_pdf_url} target="_blank" rel="noopener noreferrer">
+                              <a href={comprobante.nubefact_pdf_url} target="_blank" rel="noopener noreferrer" aria-label="Ver PDF">
                                 <FileText className="w-4 h-4" />
                               </a>
                             </Button>
@@ -297,7 +302,7 @@ export default function ListaComprobantes() {
                               size="sm"
                               asChild
                             >
-                              <a href={comprobante.nubefact_xml_url} download>
+                              <a href={comprobante.nubefact_xml_url} download aria-label="Descargar XML">
                                 <Download className="w-4 h-4" />
                               </a>
                             </Button>
@@ -308,7 +313,7 @@ export default function ListaComprobantes() {
                               size="sm"
                               asChild
                             >
-                              <a href={comprobante.nubefact_cdr_url} download>
+                              <a href={comprobante.nubefact_cdr_url} download aria-label="Descargar CDR">
                                 <Download className="w-4 h-4" />
                               </a>
                             </Button>
@@ -318,6 +323,7 @@ export default function ListaComprobantes() {
                             size="sm"
                             onClick={() => handleConsultar(comprobante)}
                             disabled={consultando === comprobante.id}
+                            aria-label="Consultar estado"
                           >
                             {consultando === comprobante.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -330,6 +336,7 @@ export default function ListaComprobantes() {
                               variant="ghost"
                               size="sm"
                               onClick={() => setComprobanteAnular(comprobante)}
+                              aria-label="Anular comprobante"
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
@@ -337,10 +344,10 @@ export default function ListaComprobantes() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

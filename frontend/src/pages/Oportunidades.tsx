@@ -8,6 +8,10 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api, type Empresa, type Oportunidad, type EstadoOportunidad } from '@/lib/api';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { FileText } from 'lucide-react';
 
 interface Filtros {
   empresa_id: string;
@@ -278,14 +282,15 @@ export default function Oportunidades() {
     }
   };
 
+  const columnCount = 7;
+
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Oportunidades</h1>
-        <p className="text-muted-foreground">
-          Gestiona oportunidades comerciales asociadas a las empresas emisoras.
-        </p>
-      </div>
+      <PageHeader
+        title="Oportunidades"
+        description="Gestiona oportunidades comerciales asociadas a las empresas emisoras."
+        actions={<Button onClick={abrirCrear}>Nueva oportunidad</Button>}
+      />
 
       <Card>
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -295,7 +300,6 @@ export default function Oportunidades() {
               Filtra, crea y actualiza oportunidades.
             </CardDescription>
           </div>
-          <Button onClick={abrirCrear}>Nueva oportunidad</Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
@@ -351,16 +355,20 @@ export default function Oportunidades() {
           </div>
 
           {loading ? (
-            <div className="py-6 text-center text-muted-foreground">Cargando oportunidades...</div>
-          ) : oportunidades.length === 0 ? (
-            <div className="py-6 text-center text-muted-foreground">
-              No se encontraron oportunidades con los filtros seleccionados.
+            <div className="overflow-x-auto">
+              <TableSkeleton columns={columnCount} rows={6} />
             </div>
+          ) : oportunidades.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No se encontraron oportunidades"
+              description="Con los filtros seleccionados no hay oportunidades. Crea una nueva o ajusta los filtros."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
+                  <tr className="border-b bg-muted/50 text-left text-xs font-medium text-foreground">
                     <th className="py-2 pr-4">Fecha inicio</th>
                     <th className="py-2 pr-4">Empresa</th>
                     <th className="py-2 pr-4">Cliente</th>
@@ -391,7 +399,7 @@ export default function Oportunidades() {
                       </td>
                       <td className="py-2 pr-4 whitespace-nowrap">{o.area}</td>
                       <td className="py-2 pr-4 whitespace-nowrap">
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-200">
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
                           {o.estado}
                         </span>
                       </td>
@@ -400,7 +408,7 @@ export default function Oportunidades() {
                       </td>
                       <td className="py-2 pr-0 text-right">
                         <div className="inline-flex gap-2">
-                          <Button size="sm" variant="default" onClick={() => navigate(`/oportunidades/${o.id}`)}>
+                          <Button size="sm" variant="default" onClick={() => navigate(`/app/oportunidades/${o.id}`)}>
                             Ver detalle
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => abrirEditar(o)}>
