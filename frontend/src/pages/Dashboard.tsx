@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { FileText, CreditCard, BarChart3, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { dashboardApi } from '@/services/api';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { NubofactHeader } from '@/components/layout/NubofactHeader';
+import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { DashboardFilterPanel } from '@/components/dashboard/DashboardFilterPanel';
 import { DesgloseSummaryPanel } from '@/components/dashboard/DesgloseSummaryPanel';
@@ -91,242 +92,225 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <PageHeader
-        title="Dashboard"
-        description="Resumen general de facturación electrónica"
-        actions={
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-              Actualizado: {new Date().toLocaleDateString('es-PE', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-            <Link to="/app/dashboard-tv" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-2">
-                <span className="hidden sm:inline">Modo TV</span>
-                <span className="sm:hidden">TV</span>
-              </Button>
-            </Link>
+    <>
+      {/* Header Nubofact */}
+      <NubofactHeader />
+
+      {/* Main Content con fondo beige Nubofact */}
+      <div className="min-h-screen bg-[hsl(var(--nubofact-background))]">
+        <div className="space-y-3 pt-3 px-4 md:px-16 pb-8">
+          {/* Filtros Dashboard */}
+          <DashboardFilters
+            establecimiento="OFICINA PRINCIPAL"
+            periodo="POR FECHA"
+            fechaDel="01/01/2025"
+          />
+
+          {/* 2. KPIs (5 tarjetas estilo Nubofact) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+            <MetricCard
+              variant="nubofact"
+              icon={FileText}
+              title="CPE Emitidos"
+              value={stats.cpeEmitidos}
+            />
+            <MetricCard
+              variant="nubofact"
+              icon={CreditCard}
+              title="Total CPE"
+              value={formatCurrencyKpi(stats.totalCPE)}
+            />
+            <MetricCard
+              variant="nubofact"
+              icon={FileText}
+              title="Total Notas Venta"
+              value={formatCurrencyKpi(stats.totalNotasVenta)}
+            />
+            <MetricCard
+              variant="nubofact"
+              icon={BarChart3}
+              title="Monto Total General"
+              value={formatCurrencyKpi(stats.montoTotalGeneral)}
+            />
+            <MetricCard
+              variant="nubofact"
+              icon={Wallet}
+              title="Utilidad Neta"
+              value={formatCurrencyKpi(stats.utilidadNeta)}
+            />
           </div>
-        }
-      />
 
-      {/* 1. Barra de Filtros */}
-      <DashboardFilterPanel
-        establecimiento={filtros.establecimiento}
-        periodo={filtros.periodo}
-        fechaDel={filtros.fechaDel}
-        onFiltrosChange={handleFiltrosChange}
-      />
-
-      {/* 2. KPIs (5 tarjetas estilo Nubofact) - Responsividad mejorada */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
-        <MetricCard
-          variant="nubofact"
-          icon={FileText}
-          title="CPE Emitidos"
-          value={stats.cpeEmitidos}
-        />
-        <MetricCard
-          variant="nubofact"
-          icon={CreditCard}
-          title="Total CPE"
-          value={formatCurrencyKpi(stats.totalCPE)}
-        />
-        <MetricCard
-          variant="nubofact"
-          icon={FileText}
-          title="Total Notas Venta"
-          value={formatCurrencyKpi(stats.totalNotasVenta)}
-        />
-        <MetricCard
-          variant="nubofact"
-          icon={BarChart3}
-          title="Monto Total General"
-          value={formatCurrencyKpi(stats.montoTotalGeneral)}
-        />
-        <MetricCard
-          variant="nubofact"
-          icon={Wallet}
-          title="Utilidad Neta"
-          value={formatCurrencyKpi(stats.utilidadNeta)}
-        />
-      </div>
-
-      {/* 3. Paneles de Desglose (3 columnas) con gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* CPE con gráfico de pie */}
-        <DesgloseSummaryPanel
-          title="CPE"
-          items={[
-            { label: 'Total Pagado', value: formatCurrency(stats.cpePagado), highlight: true },
-            { label: 'Total por Pagar', value: formatCurrency(stats.cpePorPagar), highlight: true },
-            { label: 'Total', value: formatCurrency(stats.cpeTotal), highlight: true },
-          ]}
-        >
-          {dataCPEPie.length > 0 && (
-            <ChartContainer
-              config={{
-                pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
-                porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
-              }}
-              className="h-45 w-full"
+          {/* 3. Paneles de Desglose (3 columnas) con gráficos */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* CPE con gráfico de pie */}
+            <DesgloseSummaryPanel
+              title="CPE"
+              items={[
+                { label: 'Total Pagado', value: formatCurrency(stats.cpePagado), highlight: true },
+                { label: 'Total por Pagar', value: formatCurrency(stats.cpePorPagar), highlight: true },
+                { label: 'Total', value: formatCurrency(stats.cpeTotal), highlight: true },
+              ]}
             >
-              <PieChart>
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
-                    />
-                  }
-                />
-                <Pie
-                  data={dataCPEPie}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  label={false}
+              {dataCPEPie.length > 0 && (
+                <ChartContainer
+                  config={{
+                    pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
+                    porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
+                  }}
+                  className="h-45 w-full"
                 >
-                  {dataCPEPie.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend
-                  verticalAlign="bottom"
-                  height={24}
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '11px', color: '#fff' }}
-                />
-              </PieChart>
-            </ChartContainer>
-          )}
-        </DesgloseSummaryPanel>
-
-        {/* Notas de Venta (Boletas) con gráfico de pie */}
-        <DesgloseSummaryPanel
-          title="Notas de Venta"
-          items={[
-            { label: 'Total Pagado', value: formatCurrency(stats.notasVentaPagado), highlight: true },
-            { label: 'Total por Pagar', value: formatCurrency(stats.notasVentaPorPagar), highlight: true },
-            { label: 'Total', value: formatCurrency(stats.notasVentaTotal), highlight: true },
-          ]}
-        >
-          {dataNotasVentaPie.length > 0 && (
-            <ChartContainer
-              config={{
-                pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
-                porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
-              }}
-              className="h-45 w-full"
-            >
-              <PieChart>
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
+                  <PieChart>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => formatCurrency(Number(value))}
+                        />
+                      }
                     />
-                  }
-                />
-                <Pie
-                  data={dataNotasVentaPie}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  label={false}
+                    <Pie
+                      data={dataCPEPie}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={60}
+                      label={false}
+                    >
+                      {dataCPEPie.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend
+                      verticalAlign="bottom"
+                      height={24}
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                    />
+                  </PieChart>
+                </ChartContainer>
+              )}
+            </DesgloseSummaryPanel>
+
+            {/* Notas de Venta (Boletas) con gráfico de pie */}
+            <DesgloseSummaryPanel
+              title="Notas de Venta"
+              items={[
+                { label: 'Total Pagado', value: formatCurrency(stats.notasVentaPagado), highlight: true },
+                { label: 'Total por Pagar', value: formatCurrency(stats.notasVentaPorPagar), highlight: true },
+                { label: 'Total', value: formatCurrency(stats.notasVentaTotal), highlight: true },
+              ]}
+            >
+              {dataNotasVentaPie.length > 0 && (
+                <ChartContainer
+                  config={{
+                    pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
+                    porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
+                  }}
+                  className="h-45 w-full"
                 >
-                  {dataNotasVentaPie.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend
-                  verticalAlign="bottom"
-                  height={24}
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '11px', color: '#fff' }}
-                />
-              </PieChart>
-            </ChartContainer>
-          )}
-        </DesgloseSummaryPanel>
-
-        {/* Totales Generales con gráfico de barras */}
-        <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg font-semibold">Totales Generales</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="text-center">
-                <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
-                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all tabular-nums">
-                  {formatCurrency(stats.totalNotasVenta)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs opacity-70 mb-1">Total CPE</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
-                  {formatCurrency(stats.totalCPE)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs opacity-70 mb-1">Total General</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
-                  {formatCurrency(stats.montoTotalGeneral)}
-                </p>
-              </div>
-            </div>
-            {/* Gráfico de barras */}
-            <ChartContainer
-              config={{
-                total: { label: 'Total (S/)', color: CHART_COLORS.primary },
-              }}
-              className="h-45 w-full"
-            >
-              <BarChart data={dataTotalesBar}>
-                <XAxis
-                  dataKey="name"
-                  stroke="currentColor"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={false}
-                  className="opacity-70"
-                />
-                <YAxis
-                  stroke="currentColor"
-                  fontSize={10}
-                  tickLine={false}
-                  axisLine={false}
-                  width={50}
-                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                  className="opacity-70"
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
+                  <PieChart>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => formatCurrency(Number(value))}
+                        />
+                      }
                     />
-                  }
-                  cursor={{ fill: 'hsl(var(--muted))' }}
-                />
-                <Bar
-                  dataKey="total"
-                  fill={CHART_COLORS.primary}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+                    <Pie
+                      data={dataNotasVentaPie}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={60}
+                      label={false}
+                    >
+                      {dataNotasVentaPie.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend
+                      verticalAlign="bottom"
+                      height={24}
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                    />
+                  </PieChart>
+                </ChartContainer>
+              )}
+            </DesgloseSummaryPanel>
+
+            {/* Totales Generales con gráfico de barras */}
+            <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg font-semibold">Totales Generales</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center">
+                    <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
+                    <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all tabular-nums">
+                      {formatCurrency(stats.totalNotasVenta)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs opacity-70 mb-1">Total CPE</p>
+                    <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
+                      {formatCurrency(stats.totalCPE)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs opacity-70 mb-1">Total General</p>
+                    <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
+                      {formatCurrency(stats.montoTotalGeneral)}
+                    </p>
+                  </div>
+                </div>
+                {/* Gráfico de barras */}
+                <ChartContainer
+                  config={{
+                    total: { label: 'Total (S/)', color: CHART_COLORS.primary },
+                  }}
+                  className="h-45 w-full"
+                >
+                  <BarChart data={dataTotalesBar}>
+                    <XAxis
+                      dataKey="name"
+                      stroke="currentColor"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      className="opacity-70"
+                    />
+                    <YAxis
+                      stroke="currentColor"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      width={50}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                      className="opacity-70"
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => formatCurrency(Number(value))}
+                        />
+                      }
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                    />
+                    <Bar
+                      dataKey="total"
+                      fill={CHART_COLORS.primary}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

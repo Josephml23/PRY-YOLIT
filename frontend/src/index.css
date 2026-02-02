@@ -99,6 +99,14 @@
   --dashboard-dark: 0 0% 96%;
   --dashboard-dark-foreground: 0 0% 10%;
   --dashboard-dark-light: 0 0% 98%;
+  
+  /* Nubofact Brand Colors */
+  --nubofact-primary: 200 60% 19%;      /* #0c5078 - Azul primario */
+  --nubofact-secondary: 200 52% 24%;    /* #164a6b - Azul secundario */
+  --nubofact-header: 203 46% 25%;       /* #234662 - Azul header */
+  --nubofact-header-dark: 203 54% 19%;  /* #1a3548 - Azul header oscuro */
+  --nubofact-background: 35 31% 80%;    /* #cbbfae - Fondo beige */
+  --nubofact-accent: 142 79% 73%;       /* #7bf1a8 - Verde acento */
 }
 
 .dark {
@@ -143,6 +151,14 @@
   --dashboard-dark: 0 0% 8%;
   --dashboard-dark-foreground: 0 0% 98%;
   --dashboard-dark-light: 0 0% 14%;
+  
+  /* Nubofact Brand Colors (dark mode) */
+  --nubofact-primary: 200 60% 25%;
+  --nubofact-secondary: 200 52% 30%;
+  --nubofact-header: 203 46% 30%;
+  --nubofact-header-dark: 203 54% 22%;
+  --nubofact-background: 35 20% 15%;
+  --nubofact-accent: 142 79% 73%;
 }
 
 * {
