@@ -10,9 +10,9 @@ export function DesgloseSummaryPanel({ title, items, children }: DesgloseSummary
       <CardContent className="space-y-3">
         {items.map((item, index) => (
           <div key={index} className="flex items-center justify-between gap-3">
-            <span className="text-xs sm:text-sm opacity-70 flex-shrink-0">{item.label}</span>
+            <span className="text-xs sm:text-sm opacity-70 shrink-0">{item.label}</span>
             <span
-              className={`text-sm sm:text-base font-semibold text-right break-words ${
+              className={`text-sm sm:text-base font-semibold text-right break-all ${
                 item.highlight ? 'text-blue-600 dark:text-blue-300' : ''
               }`}
             >

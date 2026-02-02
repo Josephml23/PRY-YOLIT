@@ -271,19 +271,19 @@ export default function Dashboard() {
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
-                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-words">
+                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all">
                   {formatCurrency(stats.totalNotasVenta)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total CPE</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-words">
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all">
                   {formatCurrency(stats.totalCPE)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total General</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-words">
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all">
                   {formatCurrency(stats.montoTotalGeneral)}
                 </p>
               </div>

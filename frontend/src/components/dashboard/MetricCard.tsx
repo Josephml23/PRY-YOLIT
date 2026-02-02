@@ -31,7 +31,7 @@ export function MetricCard({
               <CardTitle className="text-xs sm:text-sm font-medium opacity-70 leading-tight">
                 {title}
               </CardTitle>
-              <div className="text-lg sm:text-xl lg:text-2xl font-bold leading-tight break-words">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold leading-tight break-all">
                 {value}
               </div>
               {description && (

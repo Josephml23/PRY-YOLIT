@@ -33,7 +33,7 @@ export function DashboardFilterPanel({
     <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
       <CardContent className="p-4 sm:p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <h2 className="text-xl sm:text-2xl font-bold">Dashboard General</h2>
           </div>
           
