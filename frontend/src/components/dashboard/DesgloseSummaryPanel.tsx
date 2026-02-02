@@ -14,7 +14,7 @@ export function DesgloseSummaryPanel({ title, items, children }: DesgloseSummary
     <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none border-l-[3px] border-l-primary/60 relative overflow-hidden">
       {/* Signature Element: Document Receipt Strip */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-[3px] opacity-40"
+        className="absolute left-0 top-0 bottom-0 w-0.75 opacity-40"
         style={{
           background: 'linear-gradient(to bottom, hsl(142 76% 36%), hsl(221 83% 53%))',
         }}

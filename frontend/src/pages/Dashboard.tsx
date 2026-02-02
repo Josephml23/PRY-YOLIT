@@ -124,34 +124,34 @@ export default function Dashboard() {
         onFiltrosChange={handleFiltrosChange}
       />
 
-      {/* 2. KPIs (5 tarjetas navy) - Responsividad mejorada */}
+      {/* 2. KPIs (5 tarjetas estilo Nubofact) - Responsividad mejorada */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard
-          variant="navy"
+          variant="nubofact"
           icon={FileText}
           title="CPE Emitidos"
           value={stats.cpeEmitidos}
         />
         <MetricCard
-          variant="navy"
+          variant="nubofact"
           icon={CreditCard}
           title="Total CPE"
           value={formatCurrencyKpi(stats.totalCPE)}
         />
         <MetricCard
-          variant="navy"
+          variant="nubofact"
           icon={FileText}
           title="Total Notas Venta"
           value={formatCurrencyKpi(stats.totalNotasVenta)}
         />
         <MetricCard
-          variant="navy"
+          variant="nubofact"
           icon={BarChart3}
           title="Monto Total General"
           value={formatCurrencyKpi(stats.montoTotalGeneral)}
         />
         <MetricCard
-          variant="navy"
+          variant="nubofact"
           icon={Wallet}
           title="Utilidad Neta"
           value={formatCurrencyKpi(stats.utilidadNeta)}

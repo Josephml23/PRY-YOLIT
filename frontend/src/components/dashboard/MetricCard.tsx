@@ -21,6 +21,31 @@ export function MetricCard({
   variant = 'default',
 }: MetricCardProps) {
   const isNavy = variant === 'navy';
+  const isNubofact = variant === 'nubofact';
+
+  if (isNubofact) {
+    // Variant Nubofact: Diseño original de Nubofact con colores #0c5078
+    return (
+      <div className={cn(
+        'flex items-center gap-3 p-4 rounded-[10px]',
+        'bg-[#0c5078] text-white',
+        'transition-all duration-200',
+        className
+      )}>
+        <div className="shrink-0 bg-[#164a6b] rounded p-3">
+          <Icon className="h-6 w-6" aria-hidden />
+        </div>
+        <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <p className="text-[12px] font-normal uppercase">
+            {title}
+          </p>
+          <p className="text-[24px] font-bold tabular-nums tracking-tight whitespace-nowrap">
+            {value}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isNavy) {
     // Variant Navy: Professional ledger-style with signature receipt strip
@@ -36,7 +61,7 @@ export function MetricCard({
       )}>
         {/* Subtle receipt strip gradient */}
         <div 
-          className="absolute left-0 top-0 bottom-0 w-[3px] opacity-40"
+          className="absolute left-0 top-0 bottom-0 w-0.75 opacity-40"
           style={{
             background: 'linear-gradient(to bottom, hsl(142 76% 36%), hsl(221 83% 53%))',
           }}

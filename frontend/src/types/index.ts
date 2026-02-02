@@ -71,8 +71,8 @@ export interface MetricCardProps {
   details?: Array<{ label: string; value: string | number }>;
   /** Clases adicionales para la card */
   className?: string;
-  /** Variante del estilo (default: card normal, navy: fondo azul marino con icono grande) */
-  variant?: 'default' | 'navy';
+  /** Variante del estilo (default: card normal, navy: fondo azul marino con icono grande, nubofact: diseño Nubofact original) */
+  variant?: 'default' | 'navy' | 'nubofact';
 }
 
 export interface EmptyStateProps {
