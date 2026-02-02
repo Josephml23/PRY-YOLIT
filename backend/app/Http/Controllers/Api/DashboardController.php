@@ -282,27 +282,29 @@ class DashboardController extends Controller
         $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
 
         // TODOS los CPE (para el KPI "CPE Emitidos")
-        $todosLosCPE = Comprobante::whereIn('tipo_comprobante', ['01', '03', '07', '08'])
+        $todosLosCPE = Comprobante::whereIn('tipo_doc', ['01', '03', '07', '08'])
             ->whereDate('fecha_emision', '>=', $fechaDel)
             ->whereDate('fecha_emision', '<=', $fechaHasta)
             ->where('estado_sunat', 'aceptado')
-            ->whereNull('anulado')
-            ->orWhere('anulado', false)
+            ->where(function($q) {
+                $q->whereNull('anulado')
+                  ->orWhere('anulado', false);
+            })
             ->get();
 
         $cpeEmitidos = $todosLosCPE->count();
 
         // Panel CPE = Facturas (01) + NC (07) + ND (08) - SIN Boletas
-        $cpeSinBoletas = $todosLosCPE->whereIn('tipo_comprobante', ['01', '07', '08']);
+        $cpeSinBoletas = $todosLosCPE->whereIn('tipo_doc', ['01', '07', '08']);
         $totalCPE = $cpeSinBoletas->sum('mto_imp_venta');
         $cpePagado = $cpeSinBoletas->where('pagado', true)->sum('mto_imp_venta');
-        $cpePorPagar = $cpeSinBoletas->where('pagado', false)->sum('mto_imp_venta');
+        $cpePorPagar = $cpeSinBoletas->where('pagado', '!=', true)->sum('mto_imp_venta');
 
         // Panel Notas de Venta = Boletas de Venta (03)
-        $boletas = $todosLosCPE->where('tipo_comprobante', '03');
+        $boletas = $todosLosCPE->where('tipo_doc', '03');
         $totalNotasVenta = $boletas->sum('mto_imp_venta');
         $notasVentaPagado = $boletas->where('pagado', true)->sum('mto_imp_venta');
-        $notasVentaPorPagar = $boletas->where('pagado', false)->sum('mto_imp_venta');
+        $notasVentaPorPagar = $boletas->where('pagado', '!=', true)->sum('mto_imp_venta');
 
         // Utilidad Neta = Ingresos - Egresos
         $ingresos = $todosLosCPE->sum('mto_imp_venta');
@@ -373,8 +375,10 @@ class DashboardController extends Controller
             ->whereDate('fecha_emision', '>=', $fechaDel)
             ->whereDate('fecha_emision', '<=', $fechaHasta)
             ->where('estado_sunat', 'aceptado')
-            ->whereNull('anulado')
-            ->orWhere('anulado', false)
+            ->where(function($q) {
+                $q->whereNull('anulado')
+                  ->orWhere('anulado', false);
+            })
             ->groupBy('hora')
             ->orderBy('hora')
             ->get();
