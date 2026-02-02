@@ -92,6 +92,12 @@ INSERT INTO comprobantes (
 
 ## Notas Técnicas
 
+### Pagado / Por pagar (según Nubefact)
+- **Pagado** y **Por pagar** provienen del estado marcado en Nubefact.
+- En el reporte/exportación CSV de Nubefact aparece la columna **PAGADO** con valores "SI" o "NO".
+- El import mapea: PAGADO = "SI" → `pagado = true`, sino `pagado = false`.
+- Si la mayoría de comprobantes figura como "Por pagar", es porque en Nubefact no están marcados como pagados. No es un error de la API; es el estado que tiene cada documento en Nubefact.
+
 ### Tipos de Comprobantes (NubeFact)
 - `01`: Facturas
 - `03`: Boletas de Venta (= Notas de Venta en esta app)

@@ -1,6 +1,6 @@
 # 📋 PENDIENTES - Plataforma Operativa y Comercial con Facturación Electrónica
 
-**Fecha de actualización:** 23 de enero de 2026  
+**Fecha de actualización:** 28 de enero de 2026  
 **Estado Backend:** ✅ Completo para el alcance del MVP  
 **Estado Frontend:** 🟢 Muy avanzado – faltan solo extras y refinamientos  
 **MVP Operativo:** 🟢 En uso inicial – restan módulos de productos, guías y notificaciones
@@ -29,6 +29,7 @@
   🟡 Notificaciones externas (email/WhatsApp) quedan como post-MVP.
 - **2.7 Dashboards (web y TV)**  
   ✅ Dashboards web y TV funcionando con datos reales (ventas, oportunidades, alertas).  
+  ✅ Sección 1: barra de filtros (establecimiento, período, fecha), 5 KPIs (CPE emitidos, Total CPE, Total Notas Venta, Monto Total General, Utilidad Neta), paneles CPE / Notas de Venta / Totales Generales con gráficos (pie y barras).  
   🟡 Ajustes finos de visualización y nuevos KPIs podrán añadirse en fases posteriores.
 
 ### ✅ MÓDULO 1: FACTURACIÓN ELECTRÓNICA (100%)

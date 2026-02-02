@@ -11,10 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DashboardFiltros, DashboardStats } from '@/types';
-
-const formatCurrency = (value: number): string => {
-  return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+import { formatCurrency, formatCurrencyKpi } from '@/lib/format';
 
 const CHART_COLORS = {
   pagado: '#10b981', // green
@@ -134,31 +131,30 @@ export default function Dashboard() {
           icon={FileText}
           title="CPE Emitidos"
           value={stats.cpeEmitidos}
-          description="Total documentos"
         />
         <MetricCard
           variant="navy"
           icon={CreditCard}
           title="Total CPE"
-          value={formatCurrency(stats.totalCPE)}
+          value={formatCurrencyKpi(stats.totalCPE)}
         />
         <MetricCard
           variant="navy"
           icon={FileText}
           title="Total Notas Venta"
-          value={formatCurrency(stats.totalNotasVenta)}
+          value={formatCurrencyKpi(stats.totalNotasVenta)}
         />
         <MetricCard
           variant="navy"
           icon={BarChart3}
           title="Monto Total General"
-          value={formatCurrency(stats.montoTotalGeneral)}
+          value={formatCurrencyKpi(stats.montoTotalGeneral)}
         />
         <MetricCard
           variant="navy"
           icon={Wallet}
           title="Utilidad Neta"
-          value={formatCurrency(stats.utilidadNeta)}
+          value={formatCurrencyKpi(stats.utilidadNeta)}
         />
       </div>
 
@@ -271,19 +267,19 @@ export default function Dashboard() {
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
-                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all">
+                <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all tabular-nums">
                   {formatCurrency(stats.totalNotasVenta)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total CPE</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all">
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
                   {formatCurrency(stats.totalCPE)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs opacity-70 mb-1">Total General</p>
-                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all">
+                <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
                   {formatCurrency(stats.montoTotalGeneral)}
                 </p>
               </div>

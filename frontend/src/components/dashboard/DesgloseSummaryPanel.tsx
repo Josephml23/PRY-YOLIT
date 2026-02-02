@@ -12,7 +12,7 @@ export function DesgloseSummaryPanel({ title, items, children }: DesgloseSummary
           <div key={index} className="flex items-center justify-between gap-3">
             <span className="text-xs sm:text-sm opacity-70 shrink-0">{item.label}</span>
             <span
-              className={`text-sm sm:text-base font-semibold text-right break-all ${
+              className={`text-sm sm:text-base font-semibold text-right break-all tabular-nums ${
                 item.highlight ? 'text-blue-600 dark:text-blue-300' : ''
               }`}
             >
