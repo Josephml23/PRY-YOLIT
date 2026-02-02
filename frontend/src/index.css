@@ -59,19 +59,19 @@
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  --foreground: 203 46% 25%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 203 46% 25%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
+  --popover-foreground: 203 46% 25%;
+  --primary: 200 60% 19%;
   --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
+  --secondary: 200 52% 24%;
+  --secondary-foreground: 0 0% 98%;
   --muted: 0 0% 96.1%;
   --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  --accent: 142 79% 73%;
+  --accent-foreground: 203 46% 25%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
   --success: 142 76% 36%;
@@ -80,83 +80,83 @@
   --warning-foreground: 0 0% 9%;
   --border: 0 0% 89.8%;
   --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
-  --chart-1: 12 76% 61%;
+  --ring: 200 60% 19%;
+  --chart-1: 0 84.2% 60.2%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 0 0% 3.9%;
-  --sidebar-primary: 0 0% 9%;
+  --chart-4: 38 92% 50%;
+  --chart-5: 142 76% 36%;
+  --sidebar-background: 203 46% 25%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 200 60% 19%;
   --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 96.1%;
-  --sidebar-accent-foreground: 0 0% 9%;
+  --sidebar-accent: 200 52% 24%;
+  --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-border: 0 0% 89.8%;
-  --sidebar-ring: 0 0% 3.9%;
+  --sidebar-ring: 200 60% 19%;
   
-  /* Dashboard Dark Colors (negro oscuro para light mode, fondo claro en light) */
-  --dashboard-dark: 0 0% 96%;
-  --dashboard-dark-foreground: 0 0% 10%;
-  --dashboard-dark-light: 0 0% 98%;
+  /* Dashboard Dark Colors */
+  --dashboard-dark: 203 46% 25%;
+  --dashboard-dark-foreground: 0 0% 98%;
+  --dashboard-dark-light: 203 54% 19%;
   
   /* Nubofact Brand Colors */
-  --nubofact-primary: 200 60% 19%;      /* #0c5078 - Azul primario */
-  --nubofact-secondary: 200 52% 24%;    /* #164a6b - Azul secundario */
-  --nubofact-header: 203 46% 25%;       /* #234662 - Azul header */
-  --nubofact-header-dark: 203 54% 19%;  /* #1a3548 - Azul header oscuro */
-  --nubofact-background: 35 31% 80%;    /* #cbbfae - Fondo beige */
-  --nubofact-accent: 142 79% 73%;       /* #7bf1a8 - Verde acento */
+  --nubofact-primary: 200 60% 19%;
+  --nubofact-secondary: 200 52% 24%;
+  --nubofact-header: 203 46% 25%;
+  --nubofact-header-dark: 203 54% 19%;
+  --nubofact-background: 35 31% 80%;
+  --nubofact-accent: 142 79% 73%;
 }
 
 .dark {
-  --background: 0 0% 3.9%;
+  --background: 203 54% 19%;
   --foreground: 0 0% 98%;
-  --card: 0 0% 3.9%;
+  --card: 203 46% 25%;
   --card-foreground: 0 0% 98%;
-  --popover: 0 0% 3.9%;
+  --popover: 203 46% 25%;
   --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
-  --secondary: 0 0% 14.9%;
+  --primary: 200 60% 35%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 200 52% 30%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --muted: 203 46% 30%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 142 79% 73%;
+  --accent-foreground: 203 46% 25%;
+  --destructive: 0 62.8% 50.6%;
   --destructive-foreground: 0 0% 98%;
   --success: 142 70% 45%;
   --success-foreground: 0 0% 98%;
   --warning: 38 92% 50%;
   --warning-foreground: 0 0% 9%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --sidebar-background: 0 0% 3.9%;
+  --border: 0 0% 30%;
+  --input: 0 0% 30%;
+  --ring: 200 60% 35%;
+  --chart-1: 0 84.2% 65.2%;
+  --chart-2: 173 58% 45%;
+  --chart-3: 197 37% 35%;
+  --chart-4: 38 92% 60%;
+  --chart-5: 142 76% 45%;
+  --sidebar-background: 203 54% 19%;
   --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 0 0% 98%;
-  --sidebar-primary-foreground: 0 0% 9%;
-  --sidebar-accent: 0 0% 14.9%;
+  --sidebar-primary: 200 60% 35%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 200 52% 30%;
   --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 14.9%;
-  --sidebar-ring: 0 0% 83.1%;
+  --sidebar-border: 0 0% 30%;
+  --sidebar-ring: 200 60% 35%;
   
-  /* Dashboard Dark Colors (negro oscuro en dark mode) */
-  --dashboard-dark: 0 0% 8%;
+  /* Dashboard Dark Colors */
+  --dashboard-dark: 203 54% 15%;
   --dashboard-dark-foreground: 0 0% 98%;
-  --dashboard-dark-light: 0 0% 14%;
+  --dashboard-dark-light: 203 46% 20%;
   
   /* Nubofact Brand Colors (dark mode) */
-  --nubofact-primary: 200 60% 25%;
+  --nubofact-primary: 200 60% 35%;
   --nubofact-secondary: 200 52% 30%;
-  --nubofact-header: 203 46% 30%;
-  --nubofact-header-dark: 203 54% 22%;
+  --nubofact-header: 203 46% 25%;
+  --nubofact-header-dark: 203 54% 19%;
   --nubofact-background: 35 20% 15%;
   --nubofact-accent: 142 79% 73%;
 }

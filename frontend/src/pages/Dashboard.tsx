@@ -6,25 +6,18 @@ import { NubofactHeader } from '@/components/layout/NubofactHeader';
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { DesgloseSummaryPanel } from '@/components/dashboard/DesgloseSummaryPanel';
-import { CPERankingPanel } from '@/components/dashboard/CPERankingPanel';
-import { NotasVentaPanel } from '@/components/dashboard/NotasVentaPanel';
-import { TotalComprasPanel } from '@/components/dashboard/TotalComprasPanel';
-import { ProductosTopTable } from '@/components/dashboard/ProductosTopTable';
-import { ClientesTopTable } from '@/components/dashboard/ClientesTopTable';
-import { StockMinimoTable } from '@/components/dashboard/StockMinimoTable';
-import { MonthlyComparisonChart } from '@/components/dashboard/MonthlyComparisonChart';
-import { MonthlyTable } from '@/components/dashboard/MonthlyTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DashboardFiltros, DashboardStats } from '@/types';
 import { formatCurrency, formatCurrencyKpi } from '@/lib/format';
 
 // Vercel Best Practice: Extract constants outside component to prevent recreation on each render
+// Usar paleta de colores shadcn/ui para consistencia
 const CHART_COLORS = {
-  pagado: '#10b981', // green
-  porPagar: '#ef4444', // red
-  primary: '#3b82f6', // blue
-  secondary: '#8b5cf6', // purple
+  pagado: 'hsl(var(--chart-5))', // Verde para pagado
+  porPagar: 'hsl(var(--chart-1))', // Rojo para por pagar
+  primary: 'hsl(var(--primary))', // Azul primario Nubofact
+  secondary: 'hsl(var(--secondary))', // Azul secundario Nubofact
 } as const;
 
 export default function Dashboard() {
@@ -87,74 +80,6 @@ export default function Dashboard() {
     { name: 'Notas Venta', total: stats.totalNotasVenta },
     { name: 'Total General', total: stats.montoTotalGeneral },
   ], [stats.totalCPE, stats.totalNotasVenta, stats.montoTotalGeneral]);
-
-  // TODO: Reemplazar con datos reales del backend
-  // Datos mock para componentes nuevos del diseño Figma
-  const cpeRankingData = useMemo(() => [
-    { name: 'Machala', value: 9, percentage: 90 },
-    { name: 'Balanza', value: 9, percentage: 90 },
-    { name: 'Pesca venta', value: '', percentage: 0 },
-    { name: 'Pesca Grullas', value: 9, percentage: 90 },
-    { name: 'Pesca Orillas', value: 9, percentage: 90 },
-  ], []);
-
-  const totalComprasData = useMemo(() => ({
-    totalCompras: 7543374.65,
-    saldo: 7543374.65,
-    monthlyData: [
-      { month: 'Ene', value: 4200 },
-      { month: 'Feb', value: 3800 },
-      { month: 'Mar', value: 5400 },
-      { month: 'Abr', value: 5800 },
-      { month: 'May', value: 6200 },
-      { month: 'Jun', value: 7000 },
-      { month: 'Jul', value: 6400 },
-      { month: 'Ago', value: 6800 },
-      { month: 'Sep', value: 5900 },
-      { month: 'Oct', value: 7200 },
-      { month: 'Nov', value: 7600 },
-      { month: 'Dic', value: 6500 },
-    ]
-  }), []);
-
-  const stockMinimoData = useMemo(() => [
-    { id: 1, producto: 'POLIPROPLENO LIENSTER SHS-PL-DC', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 2, producto: 'EXTENSIN SELLA BESLIME SMPSIX-SAMIL', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 3, producto: 'AGUIA MOVILIZE EL II USIAMOS', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 4, producto: 'LIPISCAL SOLUCIÓN ANTIBISPARATER SODERACIN DIML', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 5, producto: 'GEL-JABONY TOPIALOSE II.', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-  ], []);
-
-  const monthlyComparisonData = useMemo(() => [
-    { month: 'Enero', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Febrero', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Marzo', facturas: 11000, boletas: 11000, notasVenta: 0, compras: 0 },
-    { month: 'Abril', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Mayo', facturas: 700, boletas: 105556, notasVenta: 57548, compras: 57306 },
-    { month: 'Junio', facturas: 4373, boletas: 93788, notasVenta: 127273, compras: 95692 },
-    { month: 'Julio', facturas: 2338, boletas: 95787, notasVenta: 102626, compras: 104596 },
-    { month: 'Agosto', facturas: 2092, boletas: 197212, notasVenta: 25648, compras: 95397 },
-    { month: 'Septiembre', facturas: 10006, boletas: 193039, notasVenta: 24107, compras: 71079 },
-    { month: 'Octubre', facturas: 6137, boletas: 194259, notasVenta: 43107, compras: 69260 },
-    { month: 'Noviembre', facturas: 7372, boletas: 176532, notasVenta: 120506, compras: 80537 },
-    { month: 'Diciembre', facturas: 3549, boletas: 157618, notasVenta: 118917, compras: 69042 },
-  ], []);
-
-  const monthlyTableData = useMemo(() => [
-    { mes: 'Enero', facturas: 'S/0.00', boletas: 'S/0.00', notasVenta: 'S/7,741.50', compras: 'S/0.00' },
-    { mes: 'Febrero', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Marzo', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Abril', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Mayo', facturas: '760.00', boletas: '105,556.44', notasVenta: '57,548.10', compras: '57,306.75' },
-    { mes: 'Junio', facturas: '4,373.00', boletas: '93,788.09', notasVenta: '127,273.00', compras: '95,692.25' },
-    { mes: 'Julio', facturas: '2,338.44', boletas: '95,787.74', notasVenta: '102,626.00', compras: '104,596.01' },
-    { mes: 'Agosto', facturas: '2,092.00', boletas: '197,212.05', notasVenta: '25,648.00', compras: '95,397.34' },
-    { mes: 'Septiembre', facturas: '10,006.00', boletas: '193,039.69', notasVenta: '24,107.00', compras: '71,079.68' },
-    { mes: 'Octubre', facturas: '6,137.04', boletas: '194,259.74', notasVenta: '43,107.00', compras: '69,260.05' },
-    { mes: 'Noviembre', facturas: '7,372.00', boletas: '176,532.00', notasVenta: '120,506.00', compras: '80,537.30' },
-    { mes: 'Diciembre', facturas: '3,549.00', boletas: '157,618.00', notasVenta: '118,917.00', compras: '69,042.62' },
-    { mes: 'Totales', facturas: '36,289.30', boletas: '1,181,806.06', notasVenta: '707,104.60', compras: '540,914.65', isTotal: true },
-  ], []);
 
   if (loading) {
     return (
@@ -266,7 +191,7 @@ export default function Dashboard() {
                       verticalAlign="bottom"
                       height={24}
                       iconType="circle"
-                      wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                      formatter={(value) => <span className="text-foreground">{value}</span>}
                     />
                   </PieChart>
                 </ChartContainer>
@@ -315,7 +240,7 @@ export default function Dashboard() {
                       verticalAlign="bottom"
                       height={24}
                       iconType="circle"
-                      wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                      formatter={(value) => <span className="text-foreground">{value}</span>}
                     />
                   </PieChart>
                 </ChartContainer>
@@ -323,27 +248,27 @@ export default function Dashboard() {
             </DesgloseSummaryPanel>
 
             {/* Totales Generales con gráfico de barras */}
-            <Card className="border bg-[hsl(var(--dashboard-dark))] text-[hsl(var(--dashboard-dark-foreground))] shadow-lg dark:border-none">
+            <Card className="border bg-card text-card-foreground shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base sm:text-lg font-semibold">Totales Generales</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1">Total Nota Venta</p>
-                    <p className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 break-all tabular-nums">
+                    <p className="text-xs text-muted-foreground mb-1">Total Nota Venta</p>
+                    <p className="text-sm sm:text-base font-bold text-chart-1 break-all tabular-nums">
                       {formatCurrency(stats.totalNotasVenta)}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1">Total CPE</p>
-                    <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
+                    <p className="text-xs text-muted-foreground mb-1">Total CPE</p>
+                    <p className="text-sm sm:text-base font-bold text-chart-2 break-all tabular-nums">
                       {formatCurrency(stats.totalCPE)}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1">Total General</p>
-                    <p className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 break-all tabular-nums">
+                    <p className="text-xs text-muted-foreground mb-1">Total General</p>
+                    <p className="text-sm sm:text-base font-bold text-chart-2 break-all tabular-nums">
                       {formatCurrency(stats.montoTotalGeneral)}
                     </p>
                   </div>
@@ -357,20 +282,18 @@ export default function Dashboard() {
                   <BarChart data={dataTotalesBar}>
                     <XAxis
                       dataKey="name"
-                      stroke="currentColor"
+                      stroke="hsl(var(--foreground))"
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
-                      className="opacity-70"
                     />
                     <YAxis
-                      stroke="currentColor"
+                      stroke="hsl(var(--foreground))"
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
                       width={50}
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                      className="opacity-70"
                     />
                     <ChartTooltip
                       content={
@@ -389,51 +312,6 @@ export default function Dashboard() {
                 </ChartContainer>
               </CardContent>
             </Card>
-          </div>
-
-          {/* FILA 2: Nuevos paneles del diseño Figma (3 columnas) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* CPE Ranking */}
-            <CPERankingPanel data={cpeRankingData} />
-
-            {/* Notas de Venta Panel */}
-            <NotasVentaPanel 
-              ingresos={234}
-              egresos={219.63}
-              flujo={23.32}
-            />
-
-            {/* Total Compras */}
-            <TotalComprasPanel 
-              totalCompras={totalComprasData.totalCompras}
-              saldo={totalComprasData.saldo}
-              monthlyData={totalComprasData.monthlyData}
-            />
-          </div>
-
-          {/* FILA 3: Tablas (3 columnas) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Productos Top */}
-            <ProductosTopTable data={[]} />
-
-            {/* Clientes Top */}
-            <ClientesTopTable data={[]} />
-
-            {/* Stock Mínimo */}
-            <StockMinimoTable 
-              data={stockMinimoData}
-              totalPages={52}
-              onPedido={(id) => console.log('Pedido producto:', id)}
-            />
-          </div>
-
-          {/* FILA 4: Gráfico grande y Tabla resumen (2 columnas) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Gráfico de barras agrupadas */}
-            <MonthlyComparisonChart data={monthlyComparisonData} />
-
-            {/* Tabla resumen mensual */}
-            <MonthlyTable data={monthlyTableData} />
           </div>
         </div>
       </div>

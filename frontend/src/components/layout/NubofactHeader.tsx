@@ -11,6 +11,7 @@ import {
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface NavItem {
   label: string;
@@ -66,7 +67,10 @@ export function NubofactHeader() {
         </div>
 
         {/* User Info */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
             <User className="h-6 w-6 text-gray-600" />
           </div>
