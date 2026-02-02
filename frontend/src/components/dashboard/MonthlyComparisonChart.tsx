@@ -51,7 +51,7 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
       </div>
 
       {/* Gráfico */}
-      <div className="h-[400px] w-full">
+      <div className="h-100 w-full">
         <ChartContainer
           config={CHART_CONFIG}
           className="h-full w-full"

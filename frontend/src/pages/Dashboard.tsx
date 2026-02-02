@@ -1,30 +1,28 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { FileText, CreditCard, BarChart3, Wallet } from 'lucide-react';
-import { dashboardApi } from '@/services/api';
-import { NubofactHeader } from '@/components/layout/NubofactHeader';
-import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
-import { MetricCard } from '@/components/dashboard/MetricCard';
-import { CPERankingPanel } from '@/components/dashboard/CPERankingPanel';
-import { NotasVentaPanel } from '@/components/dashboard/NotasVentaPanel';
-import { TotalComprasPanel } from '@/components/dashboard/TotalComprasPanel';
-import { ProductosTopTable } from '@/components/dashboard/ProductosTopTable';
-import { ClientesTopTable } from '@/components/dashboard/ClientesTopTable';
-import { StockMinimoTable } from '@/components/dashboard/StockMinimoTable';
-import { MonthlyComparisonChart } from '@/components/dashboard/MonthlyComparisonChart';
-import { MonthlyTable } from '@/components/dashboard/MonthlyTable';
-import type { DashboardFiltros, DashboardStats } from '@/types';
-import { formatCurrencyKpi } from '@/lib/format';
-
-
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { FileText, CreditCard, BarChart3, Wallet } from "lucide-react";
+import { dashboardApi } from "@/services/api";
+import { NubofactHeader } from "@/components/layout/NubofactHeader";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { CPERankingPanel } from "@/components/dashboard/CPERankingPanel";
+import { NotasVentaPanel } from "@/components/dashboard/NotasVentaPanel";
+import { TotalComprasPanel } from "@/components/dashboard/TotalComprasPanel";
+import { ProductosTopTable } from "@/components/dashboard/ProductosTopTable";
+import { ClientesTopTable } from "@/components/dashboard/ClientesTopTable";
+import { StockMinimoTable } from "@/components/dashboard/StockMinimoTable";
+import { MonthlyComparisonChart } from "@/components/dashboard/MonthlyComparisonChart";
+import { MonthlyTable } from "@/components/dashboard/MonthlyTable";
+import type { DashboardFiltros, DashboardStats } from "@/types";
+import { formatCurrencyKpi } from "@/lib/format";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<DashboardFiltros>({
-    establecimiento: '1',
-    periodo: 'ESTE_AÑO',
-    fechaDel: '2025-01-01', // Año con datos reales
+    establecimiento: "1",
+    periodo: "ESTE_AÑO",
+    fechaDel: "2025-01-01", // Año con datos reales
   });
-  
+
   const [stats, setStats] = useState<DashboardStats>({
     cpeEmitidos: 0,
     totalCPE: 0,
@@ -47,7 +45,7 @@ export default function Dashboard() {
         const data = await dashboardApi.getStats(filtros);
         setStats(data);
       } catch (error) {
-        console.error('Error al cargar stats del dashboard:', error);
+        console.error("Error al cargar stats del dashboard:", error);
       } finally {
         setLoading(false);
       }
@@ -57,76 +55,261 @@ export default function Dashboard() {
   }, [filtros]);
 
   // React Best Practice: Memoize callbacks to prevent child re-renders
-  const handleFiltrosChange = useCallback((nuevosFiltros: { establecimiento: string; periodo: string; fechaDel: string }) => {
-    setFiltros(nuevosFiltros as DashboardFiltros);
-  }, []);
+  const handleFiltrosChange = useCallback(
+    (nuevosFiltros: {
+      establecimiento: string;
+      periodo: string;
+      fechaDel: string;
+    }) => {
+      setFiltros(nuevosFiltros as DashboardFiltros);
+    },
+    [],
+  );
 
   // Datos mock para componentes de Figma
-  const cpeRankingData = useMemo(() => [
-    { name: 'Machala', value: 9, percentage: 90 },
-    { name: 'Balanza', value: 9, percentage: 90 },
-    { name: 'Pesca venta', value: '', percentage: 0 },
-    { name: 'Pesca Grullas', value: 9, percentage: 90 },
-    { name: 'Pesca Orillas', value: 9, percentage: 90 },
-  ], []);
+  const cpeRankingData = useMemo(
+    () => [
+      { name: "Machala", value: 9, percentage: 90 },
+      { name: "Balanza", value: 9, percentage: 90 },
+      { name: "Pesca venta", value: "", percentage: 0 },
+      { name: "Pesca Grullas", value: 9, percentage: 90 },
+      { name: "Pesca Orillas", value: 9, percentage: 90 },
+    ],
+    [],
+  );
 
-  const totalComprasData = useMemo(() => ({
-    totalCompras: 7543374.65,
-    saldo: 7543374.65,
-    monthlyData: [
-      { month: 'Ene', value: 4200 },
-      { month: 'Feb', value: 3800 },
-      { month: 'Mar', value: 5400 },
-      { month: 'Abr', value: 5800 },
-      { month: 'May', value: 6200 },
-      { month: 'Jun', value: 7000 },
-      { month: 'Jul', value: 6400 },
-      { month: 'Ago', value: 6800 },
-      { month: 'Sep', value: 5900 },
-      { month: 'Oct', value: 7200 },
-      { month: 'Nov', value: 7600 },
-      { month: 'Dic', value: 6500 },
-    ]
-  }), []);
+  const totalComprasData = useMemo(
+    () => ({
+      totalCompras: 7543374.65,
+      saldo: 7543374.65,
+      monthlyData: [
+        { month: "Ene", value: 4200 },
+        { month: "Feb", value: 3800 },
+        { month: "Mar", value: 5400 },
+        { month: "Abr", value: 5800 },
+        { month: "May", value: 6200 },
+        { month: "Jun", value: 7000 },
+        { month: "Jul", value: 6400 },
+        { month: "Ago", value: 6800 },
+        { month: "Sep", value: 5900 },
+        { month: "Oct", value: 7200 },
+        { month: "Nov", value: 7600 },
+        { month: "Dic", value: 6500 },
+      ],
+    }),
+    [],
+  );
 
-  const stockMinimoData = useMemo(() => [
-    { id: 1, producto: 'POLIPROPLENO LIENSTER SHS-PL-DC', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 2, producto: 'EXTENSIN SELLA BESLIME SMPSIX-SAMIL', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 3, producto: 'AGUIA MOVILIZE EL II USIAMOS', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 4, producto: 'LIPISCAL SOLUCIÓN ANTIBISPARATER SODERACIN DIML', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-    { id: 5, producto: 'GEL-JABONY TOPIALOSE II.', stock: '0.00', estado: 'AGOTADO' as const, almacen: 'Oficina Principal' },
-  ], []);
+  const stockMinimoData = useMemo(
+    () => [
+      {
+        id: 1,
+        producto: "POLIPROPLENO LIENSTER SHS-PL-DC",
+        stock: "0.00",
+        estado: "AGOTADO" as const,
+        almacen: "Oficina Principal",
+      },
+      {
+        id: 2,
+        producto: "EXTENSIN SELLA BESLIME SMPSIX-SAMIL",
+        stock: "0.00",
+        estado: "AGOTADO" as const,
+        almacen: "Oficina Principal",
+      },
+      {
+        id: 3,
+        producto: "AGUIA MOVILIZE EL II USIAMOS",
+        stock: "0.00",
+        estado: "AGOTADO" as const,
+        almacen: "Oficina Principal",
+      },
+      {
+        id: 4,
+        producto: "LIPISCAL SOLUCIÓN ANTIBISPARATER SODERACIN DIML",
+        stock: "0.00",
+        estado: "AGOTADO" as const,
+        almacen: "Oficina Principal",
+      },
+      {
+        id: 5,
+        producto: "GEL-JABONY TOPIALOSE II.",
+        stock: "0.00",
+        estado: "AGOTADO" as const,
+        almacen: "Oficina Principal",
+      },
+    ],
+    [],
+  );
 
-  const monthlyComparisonData = useMemo(() => [
-    { month: 'Enero', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Febrero', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Marzo', facturas: 11000, boletas: 11000, notasVenta: 0, compras: 0 },
-    { month: 'Abril', facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-    { month: 'Mayo', facturas: 700, boletas: 105556, notasVenta: 57548, compras: 57306 },
-    { month: 'Junio', facturas: 4373, boletas: 93788, notasVenta: 127273, compras: 95692 },
-    { month: 'Julio', facturas: 2338, boletas: 95787, notasVenta: 102626, compras: 104596 },
-    { month: 'Agosto', facturas: 2092, boletas: 197212, notasVenta: 25648, compras: 95397 },
-    { month: 'Septiembre', facturas: 10006, boletas: 193039, notasVenta: 24107, compras: 71079 },
-    { month: 'Octubre', facturas: 6137, boletas: 194259, notasVenta: 43107, compras: 69260 },
-    { month: 'Noviembre', facturas: 7372, boletas: 176532, notasVenta: 120506, compras: 80537 },
-    { month: 'Diciembre', facturas: 3549, boletas: 157618, notasVenta: 118917, compras: 69042 },
-  ], []);
+  const monthlyComparisonData = useMemo(
+    () => [
+      { month: "Enero", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
+      { month: "Febrero", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
+      {
+        month: "Marzo",
+        facturas: 11000,
+        boletas: 11000,
+        notasVenta: 0,
+        compras: 0,
+      },
+      { month: "Abril", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
+      {
+        month: "Mayo",
+        facturas: 700,
+        boletas: 105556,
+        notasVenta: 57548,
+        compras: 57306,
+      },
+      {
+        month: "Junio",
+        facturas: 4373,
+        boletas: 93788,
+        notasVenta: 127273,
+        compras: 95692,
+      },
+      {
+        month: "Julio",
+        facturas: 2338,
+        boletas: 95787,
+        notasVenta: 102626,
+        compras: 104596,
+      },
+      {
+        month: "Agosto",
+        facturas: 2092,
+        boletas: 197212,
+        notasVenta: 25648,
+        compras: 95397,
+      },
+      {
+        month: "Septiembre",
+        facturas: 10006,
+        boletas: 193039,
+        notasVenta: 24107,
+        compras: 71079,
+      },
+      {
+        month: "Octubre",
+        facturas: 6137,
+        boletas: 194259,
+        notasVenta: 43107,
+        compras: 69260,
+      },
+      {
+        month: "Noviembre",
+        facturas: 7372,
+        boletas: 176532,
+        notasVenta: 120506,
+        compras: 80537,
+      },
+      {
+        month: "Diciembre",
+        facturas: 3549,
+        boletas: 157618,
+        notasVenta: 118917,
+        compras: 69042,
+      },
+    ],
+    [],
+  );
 
-  const monthlyTableData = useMemo(() => [
-    { mes: 'Enero', facturas: 'S/0.00', boletas: 'S/0.00', notasVenta: 'S/7,741.50', compras: 'S/0.00' },
-    { mes: 'Febrero', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Marzo', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Abril', facturas: '0.00', boletas: '0.00', notasVenta: '0.00', compras: '0.00' },
-    { mes: 'Mayo', facturas: '760.00', boletas: '105,556.44', notasVenta: '57,548.10', compras: '57,306.75' },
-    { mes: 'Junio', facturas: '4,373.00', boletas: '93,788.09', notasVenta: '127,273.00', compras: '95,692.25' },
-    { mes: 'Julio', facturas: '2,338.44', boletas: '95,787.74', notasVenta: '102,626.00', compras: '104,596.01' },
-    { mes: 'Agosto', facturas: '2,092.00', boletas: '197,212.05', notasVenta: '25,648.00', compras: '95,397.34' },
-    { mes: 'Septiembre', facturas: '10,006.00', boletas: '193,039.69', notasVenta: '24,107.00', compras: '71,079.68' },
-    { mes: 'Octubre', facturas: '6,137.04', boletas: '194,259.74', notasVenta: '43,107.00', compras: '69,260.05' },
-    { mes: 'Noviembre', facturas: '7,372.00', boletas: '176,532.00', notasVenta: '120,506.00', compras: '80,537.30' },
-    { mes: 'Diciembre', facturas: '3,549.00', boletas: '157,618.00', notasVenta: '118,917.00', compras: '69,042.62' },
-    { mes: 'Totales', facturas: '36,289.30', boletas: '1,181,806.06', notasVenta: '707,104.60', compras: '540,914.65', isTotal: true },
-  ], []);
+  const monthlyTableData = useMemo(
+    () => [
+      {
+        mes: "Enero",
+        facturas: "S/0.00",
+        boletas: "S/0.00",
+        notasVenta: "S/7,741.50",
+        compras: "S/0.00",
+      },
+      {
+        mes: "Febrero",
+        facturas: "0.00",
+        boletas: "0.00",
+        notasVenta: "0.00",
+        compras: "0.00",
+      },
+      {
+        mes: "Marzo",
+        facturas: "0.00",
+        boletas: "0.00",
+        notasVenta: "0.00",
+        compras: "0.00",
+      },
+      {
+        mes: "Abril",
+        facturas: "0.00",
+        boletas: "0.00",
+        notasVenta: "0.00",
+        compras: "0.00",
+      },
+      {
+        mes: "Mayo",
+        facturas: "760.00",
+        boletas: "105,556.44",
+        notasVenta: "57,548.10",
+        compras: "57,306.75",
+      },
+      {
+        mes: "Junio",
+        facturas: "4,373.00",
+        boletas: "93,788.09",
+        notasVenta: "127,273.00",
+        compras: "95,692.25",
+      },
+      {
+        mes: "Julio",
+        facturas: "2,338.44",
+        boletas: "95,787.74",
+        notasVenta: "102,626.00",
+        compras: "104,596.01",
+      },
+      {
+        mes: "Agosto",
+        facturas: "2,092.00",
+        boletas: "197,212.05",
+        notasVenta: "25,648.00",
+        compras: "95,397.34",
+      },
+      {
+        mes: "Septiembre",
+        facturas: "10,006.00",
+        boletas: "193,039.69",
+        notasVenta: "24,107.00",
+        compras: "71,079.68",
+      },
+      {
+        mes: "Octubre",
+        facturas: "6,137.04",
+        boletas: "194,259.74",
+        notasVenta: "43,107.00",
+        compras: "69,260.05",
+      },
+      {
+        mes: "Noviembre",
+        facturas: "7,372.00",
+        boletas: "176,532.00",
+        notasVenta: "120,506.00",
+        compras: "80,537.30",
+      },
+      {
+        mes: "Diciembre",
+        facturas: "3,549.00",
+        boletas: "157,618.00",
+        notasVenta: "118,917.00",
+        compras: "69,042.62",
+      },
+      {
+        mes: "Totales",
+        facturas: "36,289.30",
+        boletas: "1,181,806.06",
+        notasVenta: "707,104.60",
+        compras: "540,914.65",
+        isTotal: true,
+      },
+    ],
+    [],
+  );
 
   if (loading) {
     return (
@@ -144,11 +327,11 @@ export default function Dashboard() {
       {/* Dashboard General Section with Filters - fondo beige */}
       <div className="bg-[#cbbfae] py-3">
         <div className="max-w-350 mx-auto px-16">
-          <DashboardFilters 
+          <DashboardFilters
             establecimiento={filtros.establecimiento}
             periodo={filtros.periodo}
             fechaDel={filtros.fechaDel}
-            onFiltrosChange={handleFiltrosChange} 
+            onFiltrosChange={handleFiltrosChange}
           />
         </div>
       </div>
@@ -157,7 +340,7 @@ export default function Dashboard() {
       <div className="bg-[#cbbfac] pb-4">
         <div className="max-w-350 mx-auto px-16">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <MetricCard 
+            <MetricCard
               variant="nubofact"
               icon={FileText}
               title="CPE Emitidos"
@@ -192,17 +375,13 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Content */}
-      <div className="p-4">
-        <div className="max-w-350 mx-auto space-y-4">
-          {/* FILA 1: Nuevos paneles del diseño Figma (3 columnas) */}
+      <div className="pb-4">
+        <div className="max-w-350 mx-auto px-16 space-y-4">
+          {/* FILA 1: Paneles alineados con las métricas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <CPERankingPanel data={cpeRankingData} />
-            <NotasVentaPanel 
-              ingresos={234}
-              egresos={219.63}
-              flujo={23.32}
-            />
-            <TotalComprasPanel 
+            <NotasVentaPanel ingresos={234} egresos={219.63} flujo={23.32} />
+            <TotalComprasPanel
               totalCompras={totalComprasData.totalCompras}
               saldo={totalComprasData.saldo}
               monthlyData={totalComprasData.monthlyData}
@@ -213,10 +392,10 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <ProductosTopTable data={[]} />
             <ClientesTopTable data={[]} />
-            <StockMinimoTable 
+            <StockMinimoTable
               data={stockMinimoData}
               totalPages={52}
-              onPedido={(id) => console.log('Pedido producto:', id)}
+              onPedido={(id) => console.log("Pedido producto:", id)}
             />
           </div>
 

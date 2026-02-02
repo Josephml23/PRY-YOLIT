@@ -23,6 +23,7 @@ export function ProductosTopTable({ data, className }: ProductosTopTableProps) {
         <CardTitle className="text-sm font-semibold">Productor Top</CardTitle>
       </CardHeader>
       <CardContent className="bg-muted p-4 min-h-70">
+        
         {/* Dropdown */}
         <div className="mb-3">
           <select className="w-full bg-background text-foreground border border-input rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary">

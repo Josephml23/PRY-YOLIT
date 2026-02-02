@@ -37,16 +37,16 @@ export function DashboardFilters({
     onFiltrosChange?.({ establecimiento, periodo, fechaDel: e.target.value });
   };
   return (
-    <div className={cn('bg-[hsl(var(--nubofact-primary))] rounded-[10px] p-4', className)}>
+    <div className={cn('bg-primary rounded-[10px] p-4', className)}>
       <div className="flex items-center justify-between">
         {/* Left: Title + Filters */}
         <div className="flex items-center gap-8">
           {/* Title */}
           <div className="flex flex-col gap-1">
-            <h1 className="text-white text-xl font-bold leading-7">
+            <h1 className="text-primary-foreground text-xl font-bold leading-7">
               Dashboard General
             </h1>
-            <p className="text-white/80 text-xs">
+            <p className="text-primary-foreground/80 text-xs">
               Resumen de operaciones y rendimiento
             </p>
           </div>
@@ -55,7 +55,7 @@ export function DashboardFilters({
           <div className="flex items-center gap-4">
             {/* Establecimiento */}
             <div className="flex flex-col gap-1">
-              <label className="text-white text-xs uppercase">
+              <label className="text-primary-foreground text-xs uppercase">
                 ESTABLECIMIENTO
               </label>
               <input
@@ -70,7 +70,7 @@ export function DashboardFilters({
 
             {/* Periodo */}
             <div className="flex flex-col gap-1">
-              <label className="text-white text-xs uppercase">
+              <label className="text-primary-foreground text-xs uppercase">
                 PERIODO
               </label>
               <select
@@ -86,7 +86,7 @@ export function DashboardFilters({
 
             {/* Fecha Del */}
             <div className="flex flex-col gap-1">
-              <label className="text-white text-xs uppercase">
+              <label className="text-primary-foreground text-xs uppercase">
                 FECHA DEL
               </label>
               <input
@@ -101,7 +101,7 @@ export function DashboardFilters({
 
         {/* Right: Help Icon */}
         <div className="opacity-40">
-          <span className="text-white text-2xl">?</span>
+          <span className="text-primary-foreground text-2xl">?</span>
         </div>
       </div>
     </div>
