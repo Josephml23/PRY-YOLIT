@@ -1,357 +1,61 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Receipt, TrendingUp, CheckCircle, Building2, AlertTriangle, Bell, Search } from 'lucide-react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import api from '@/services/api';
+import { FileText, CreditCard, BarChart3, Wallet } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { dashboardApi } from '@/services/api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { FilterBar } from '@/components/filters/FilterBar';
+import { DashboardFilterPanel } from '@/components/dashboard/DashboardFilterPanel';
+import { DesgloseSummaryPanel } from '@/components/dashboard/DesgloseSummaryPanel';
+import { Button } from '@/components/ui/button';
+import type { DashboardFiltros, DashboardStats } from '@/types';
 
-const DIAS = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, '0'));
-
-const MESES = [
-  { value: '01', label: 'enero' },
-  { value: '02', label: 'febrero' },
-  { value: '03', label: 'marzo' },
-  { value: '04', label: 'abril' },
-  { value: '05', label: 'mayo' },
-  { value: '06', label: 'junio' },
-  { value: '07', label: 'julio' },
-  { value: '08', label: 'agosto' },
-  { value: '09', label: 'setiembre' },
-  { value: '10', label: 'octubre' },
-  { value: '11', label: 'noviembre' },
-  { value: '12', label: 'diciembre' },
-];
-
-const ANIOS = (() => {
-  const currentYear = new Date().getFullYear();
-  const startYear = currentYear - 2;
-  const endYear = currentYear + 1;
-  const years: string[] = [];
-  for (let year = startYear; year <= endYear; year += 1) {
-    years.push(String(year));
-  }
-  return years;
-})();
-
-interface Comprobante {
-  id: number;
-  tipo_doc: string;
-  serie: string;
-  correlativo: number | string;
-  cliente_razon_social: string;
-  mto_imp_venta?: number | string;
-  total?: number | string;
-  estado_sunat: string;
-  fecha_emision: string;
-  pagado?: boolean;
-  anulado?: boolean;
-  enviado_cliente?: boolean;
-}
-
-interface Empresa {
-  id: number;
-  ruc: string;
-  razon_social: string;
-  nombre_comercial: string;
-}
-
-interface SlaResumen {
-  total: number;
-  en_plazo: number;
-  proximo_vencer: number;
-  vencidos: number;
-}
-
-interface AlertasResumen {
-  total_no_leidas: number;
-  por_prioridad: Record<string, number>;
-}
-
-interface ClienteResumen {
-  cliente_tipo_doc: string;
-  cliente_num_doc: string;
-  cliente_razon_social: string;
-  cantidad: number;
-  total: number;
-}
-
-interface ClienteEntidadFiltro {
-  id: number;
-  num_doc: string;
-  denominacion: string;
-}
-
-interface VentaMes {
-  mes: string;
-  total: number;
-  cantidad: number;
-}
-
-interface VentaMesApi {
-  mes: string;
-  total: number | string;
-  cantidad: number | string;
-}
+const formatCurrency = (value: number): string => {
+  return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
 export default function Dashboard() {
-  const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalFacturado: 0,
-    totalComprobantes: 0,
-    tasaAceptacion: 0,
+  const [filtros, setFiltros] = useState<DashboardFiltros>({
+    establecimiento: '1',
+    periodo: 'ESTE_MES',
+    fechaDel: new Date().toISOString().split('T')[0],
   });
-
-  const [totalesPorTipo, setTotalesPorTipo] = useState({
-    facturas: 0,
-    boletas: 0,
-    notasCredito: 0,
-    notasDebito: 0,
+  
+  const [stats, setStats] = useState<DashboardStats>({
+    cpeEmitidos: 0,
+    totalCPE: 0,
+    cpePagado: 0,
+    cpePorPagar: 0,
+    cpeTotal: 0,
+    totalNotasVenta: 0,
+    notasVentaPagado: 0,
+    notasVentaPorPagar: 0,
+    notasVentaTotal: 0,
+    montoTotalGeneral: 0,
+    utilidadNeta: 0,
+    ventasPorHora: [],
   });
-
-  const [totalClientesRegistrados, setTotalClientesRegistrados] = useState(0);
-
-  const [slaResumen, setSlaResumen] = useState<SlaResumen>({
-    total: 0,
-    en_plazo: 0,
-    proximo_vencer: 0,
-    vencidos: 0,
-  });
-
-  const [alertasResumen, setAlertasResumen] = useState<AlertasResumen>({
-    total_no_leidas: 0,
-    por_prioridad: {},
-  });
-
-  const [clientesTop, setClientesTop] = useState<ClienteResumen[]>([]);
-  const [ventasMes, setVentasMes] = useState<VentaMes[]>([]);
-
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
-  const [clienteDocumento, setClienteDocumento] = useState('');
-
-  const [desdeDia, setDesdeDia] = useState('');
-  const [desdeMes, setDesdeMes] = useState('');
-  const [desdeAnio, setDesdeAnio] = useState('');
-  const [hastaDia, setHastaDia] = useState('');
-  const [hastaMes, setHastaMes] = useState('');
-  const [hastaAnio, setHastaAnio] = useState('');
-
-  const [clientesFiltro, setClientesFiltro] = useState<ClienteEntidadFiltro[]>([]);
-  const [clienteBusqueda, setClienteBusqueda] = useState('');
-
-  const parseMonto = (valor: unknown): number => {
-    if (valor === null || valor === undefined) return 0;
-    if (typeof valor === 'number') {
-      return Number.isNaN(valor) ? 0 : valor;
-    }
-    if (typeof valor === 'string') {
-      const cleaned = valor.replace(/[^0-9.-]/g, '');
-      const num = Number(cleaned);
-      return Number.isNaN(num) ? 0 : num;
-    }
-    return 0;
-  };
 
   useEffect(() => {
-    if (desdeDia && desdeMes && desdeAnio) {
-      setFechaDesde(`${desdeAnio}-${desdeMes}-${desdeDia}`);
-    } else {
-      setFechaDesde('');
-    }
-  }, [desdeDia, desdeMes, desdeAnio]);
-
-  useEffect(() => {
-    if (hastaDia && hastaMes && hastaAnio) {
-      setFechaHasta(`${hastaAnio}-${hastaMes}-${hastaDia}`);
-    } else {
-      setFechaHasta('');
-    }
-  }, [hastaDia, hastaMes, hastaAnio]);
-
-  useEffect(() => {
-    const obtenerClientesFiltro = async () => {
+    const cargarStats = async () => {
       try {
-        const res = await api.get('/v1/clientes', { params: { per_page: 1000 } });
-        const raw = Array.isArray(res.data) ? res.data : (res.data.data || []);
-        setClientesFiltro(raw as ClienteEntidadFiltro[]);
+        setLoading(true);
+        const data = await dashboardApi.getStats(filtros);
+        setStats(data);
       } catch (error) {
-        console.error('Error al cargar clientes para filtro:', error);
+        console.error('Error al cargar stats del dashboard:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    obtenerClientesFiltro();
-  }, []);
+    cargarStats();
+  }, [filtros]);
 
-  const cargarDatos = useCallback(async () => {
-    try {
-      const [comprobantesRes, empresasRes, dashboardRes, ventasMesRes] = await Promise.all([
-        api.get('/facturacion/comprobantes', {
-          params: {
-            per_page: 5000,
-            fecha_desde: fechaDesde || undefined,
-            fecha_hasta: fechaHasta || undefined,
-            cliente_num_doc: clienteDocumento || undefined,
-          },
-        }),
-        api.get('/v1/empresas'),
-        api.get('/v1/dashboard', {
-          params: {
-            fecha_desde: fechaDesde || undefined,
-            fecha_hasta: fechaHasta || undefined,
-            cliente_num_doc: clienteDocumento || undefined,
-          },
-        }),
-        api.get('/v1/dashboard/ventas-mes', {
-          params: {
-            fecha_desde: fechaDesde || undefined,
-            fecha_hasta: fechaHasta || undefined,
-            cliente_num_doc: clienteDocumento || undefined,
-          },
-        }),
-      ]);
-
-      const comprobantesData = Array.isArray(comprobantesRes.data)
-        ? comprobantesRes.data
-        : (comprobantesRes.data.data || []);
-      const empresasData = Array.isArray(empresasRes.data)
-        ? empresasRes.data
-        : (empresasRes.data.data || []);
-
-      setComprobantes(comprobantesData);
-      setEmpresas(empresasData);
-
-      // Considerar solo comprobantes vigentes (no anulados y aceptados por SUNAT)
-      const comprobantesVigentes = comprobantesData.filter((c: Comprobante) =>
-        !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado'
-      );
-
-      // Calcular estadísticas de facturación solo con comprobantes vigentes
-      const totalFacturado = comprobantesVigentes.reduce(
-        (sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0),
-        0
-      );
-      const aceptados = comprobantesData.filter((c: Comprobante) => c.estado_sunat?.toLowerCase() === 'aceptado').length;
-      const tasaAceptacion = comprobantesData.length > 0 ? (aceptados / comprobantesData.length) * 100 : 0;
-
-      setStats({
-        totalFacturado,
-        totalComprobantes: comprobantesData.length,
-        tasaAceptacion,
-      });
-
-      // Totales por tipo de comprobante (solo vigentes)
-      const totalFacturas = comprobantesVigentes
-        .filter((c: Comprobante) => c.tipo_doc === '01')
-        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
-      const totalBoletas = comprobantesVigentes
-        .filter((c: Comprobante) => c.tipo_doc === '03')
-        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
-      const totalNotasCredito = comprobantesVigentes
-        .filter((c: Comprobante) => c.tipo_doc === '07')
-        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
-      const totalNotasDebito = comprobantesVigentes
-        .filter((c: Comprobante) => c.tipo_doc === '08')
-        .reduce((sum: number, c: Comprobante) => sum + parseMonto(c.mto_imp_venta ?? c.total ?? 0), 0);
-
-      setTotalesPorTipo({
-        facturas: totalFacturas,
-        boletas: totalBoletas,
-        notasCredito: totalNotasCredito,
-        notasDebito: totalNotasDebito,
-      });
-
-      // SLA y alertas desde el endpoint de dashboard
-      const dashboardData = dashboardRes.data?.data || dashboardRes.data || {};
-      const sla = dashboardData.sla || {};
-      const alertas = dashboardData.alertas || {};
-      const clientes = dashboardData.clientes || {};
-
-      setSlaResumen({
-        total: sla.total ?? 0,
-        en_plazo: sla.en_plazo ?? 0,
-        proximo_vencer: sla.proximo_vencer ?? 0,
-        vencidos: sla.vencidos ?? 0,
-      });
-
-      setAlertasResumen({
-        total_no_leidas: alertas.total_no_leidas ?? 0,
-        por_prioridad: alertas.por_prioridad ?? {},
-      });
-
-      const topClientes = Array.isArray(clientes.top_clientes) ? clientes.top_clientes : [];
-      setClientesTop(topClientes);
-
-      setTotalClientesRegistrados(clientes.total_clientes ?? 0);
-
-      const ventasDataRaw = ventasMesRes.data?.data || ventasMesRes.data || [];
-      const ventasNormalizadas: VentaMes[] = Array.isArray(ventasDataRaw)
-        ? (ventasDataRaw as VentaMesApi[]).map((v) => ({
-            mes: v.mes,
-            total: Number(v.total) || 0,
-            cantidad: Number(v.cantidad) || 0,
-          }))
-        : [];
-      setVentasMes(ventasNormalizadas);
-    } catch (error) {
-      console.error('Error al cargar datos:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fechaDesde, fechaHasta, clienteDocumento]);
-
-  useEffect(() => {
-    cargarDatos();
-  }, [cargarDatos]);
-
-  const limpiarFiltros = () => {
-    setFechaDesde('');
-    setFechaHasta('');
-    setClienteDocumento('');
-    setClienteBusqueda('');
-    setDesdeDia('');
-    setDesdeMes('');
-    setDesdeAnio('');
-    setHastaDia('');
-    setHastaMes('');
-    setHastaAnio('');
+  const handleFiltrosChange = (nuevosFiltros: DashboardFiltros) => {
+    setFiltros(nuevosFiltros);
   };
-
-  const datosFacturacionMensual = ventasMes.length > 0
-    ? ventasMes.map((v) => ({ mes: v.mes, monto: v.total }))
-    : [
-        { mes: 'Ene', monto: 0 },
-        { mes: 'Feb', monto: 0 },
-        { mes: 'Mar', monto: 0 },
-        { mes: 'Abr', monto: 0 },
-        { mes: 'May', monto: 0 },
-        { mes: 'Jun', monto: 0 },
-      ];
-
-  // Datos para gráficos basados en comprobantes reales
-  const tiposComprobantes = [
-    { tipo: 'Facturas', cantidad: comprobantes.filter(c => c.tipo_doc === '01').length },
-    { tipo: 'Boletas', cantidad: comprobantes.filter(c => c.tipo_doc === '03').length },
-    { tipo: 'NC', cantidad: comprobantes.filter(c => c.tipo_doc === '07').length },
-    { tipo: 'ND', cantidad: comprobantes.filter(c => c.tipo_doc === '08').length },
-  ].filter(t => t.cantidad > 0);
-
-  const estadosSunat = [
-    { estado: 'Anulado', cantidad: comprobantes.filter(c => c.anulado).length },
-    { estado: 'Aceptado', cantidad: comprobantes.filter(c => !c.anulado).length },
-  ].filter(e => e.cantidad > 0);
-
-  const ultimosComprobantes = comprobantes
-    .sort((a, b) => new Date(b.fecha_emision).getTime() - new Date(a.fecha_emision).getTime())
-    .slice(0, 5);
 
   if (loading) {
     return (
@@ -386,537 +90,120 @@ export default function Dashboard() {
         }
       />
 
-      <FilterBar onClear={limpiarFiltros} clearLabel="Limpiar filtros">
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5 items-end w-full">
-            <div>
-              <Label htmlFor="fecha-desde" className="text-xs font-medium text-muted-foreground">Fecha desde</Label>
-              <div className="mt-1 flex flex-wrap gap-2">
-                <select
-                  aria-label="Día desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-16"
-                  value={desdeDia}
-                  onChange={(e) => setDesdeDia(e.target.value)}
-                >
-                  <option value="">Día</option>
-                  {DIAS.map((dia) => (
-                    <option key={dia} value={dia}>{parseInt(dia, 10)}</option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Mes desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:flex-1"
-                  value={desdeMes}
-                  onChange={(e) => setDesdeMes(e.target.value)}
-                >
-                  <option value="">Mes</option>
-                  {MESES.map((mes) => (
-                    <option key={mes.value} value={mes.value}>{mes.label}</option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Año desde"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-20"
-                  value={desdeAnio}
-                  onChange={(e) => setDesdeAnio(e.target.value)}
-                >
-                  <option value="">Año</option>
-                  {ANIOS.map((anio) => (
-                    <option key={anio} value={anio}>{anio}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="fecha-hasta" className="text-xs font-medium text-muted-foreground">Fecha hasta</Label>
-              <div className="mt-1 flex flex-wrap gap-2">
-                <select
-                  aria-label="Día hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-16"
-                  value={hastaDia}
-                  onChange={(e) => setHastaDia(e.target.value)}
-                >
-                  <option value="">Día</option>
-                  {DIAS.map((dia) => (
-                    <option key={dia} value={dia}>{parseInt(dia, 10)}</option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Mes hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:flex-1"
-                  value={hastaMes}
-                  onChange={(e) => setHastaMes(e.target.value)}
-                >
-                  <option value="">Mes</option>
-                  {MESES.map((mes) => (
-                    <option key={mes.value} value={mes.value}>{mes.label}</option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Año hasta"
-                  className="h-9 rounded-full border bg-background px-3 text-xs w-full sm:w-20"
-                  value={hastaAnio}
-                  onChange={(e) => setHastaAnio(e.target.value)}
-                >
-                  <option value="">Año</option>
-                  {ANIOS.map((anio) => (
-                    <option key={anio} value={anio}>{anio}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="md:col-span-2 lg:col-span-2">
-              <Label htmlFor="cliente-doc" className="text-xs font-medium text-muted-foreground">Cliente (RUC / Razón social)</Label>
-              <div className="mt-1 space-y-1">
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    id="cliente-doc"
-                    type="text"
-                    placeholder="Buscar cliente por RUC o nombre"
-                    value={clienteBusqueda}
-                    onChange={(e) => setClienteBusqueda(e.target.value)}
-                    className="h-8 pl-7 pr-2 text-xs"
-                  />
-                </div>
-                <select
-                  aria-label="Seleccionar cliente"
-                  className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-xs max-h-32 overflow-y-auto"
-                  size={5}
-                  value={clienteDocumento}
-                  onChange={(e) => setClienteDocumento(e.target.value)}
-                >
-                  <option value="">Todos los clientes</option>
-                  {clientesFiltro
-                    .filter((cliente) => {
-                      const term = clienteBusqueda.toLowerCase();
-                      if (!term) return true;
-                      return (
-                        cliente.num_doc.toLowerCase().includes(term) ||
-                        cliente.denominacion.toLowerCase().includes(term)
-                      );
-                    })
-                    .map((cliente) => (
-                      <option key={cliente.id} value={cliente.num_doc}>
-                        {cliente.num_doc} {cliente.denominacion}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </div>
-          </div>
-      </FilterBar>
+      {/* 1. Barra de Filtros */}
+      <DashboardFilterPanel
+        establecimiento={filtros.establecimiento}
+        periodo={filtros.periodo}
+        fechaDel={filtros.fechaDel}
+        onFiltrosChange={handleFiltrosChange}
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
+      {/* 2. KPIs (5 tarjetas navy) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <MetricCard
-          title="Total Facturado"
-          value={`S/ ${stats.totalFacturado.toFixed(2)}`}
-          icon={Receipt}
-          description={`${comprobantes.filter(c => !c.anulado && c.estado_sunat?.toLowerCase() === 'aceptado').length} comprobantes vigentes (aceptados)`}
-          details={[
-            { label: 'Total de FACTURAS', value: `S/ ${totalesPorTipo.facturas.toFixed(2)}` },
-            { label: 'Total de BOLETAS DE VENTA', value: `S/ ${totalesPorTipo.boletas.toFixed(2)}` },
-            { label: 'Total de NOTAS DE CRÉDITO', value: `S/ ${totalesPorTipo.notasCredito.toFixed(2)}` },
-            { label: 'Total de NOTAS DE DÉBITO', value: `S/ ${totalesPorTipo.notasDebito.toFixed(2)}` },
+          variant="navy"
+          icon={FileText}
+          title="CPE Emitidos"
+          value={stats.cpeEmitidos}
+          description="Total documentos"
+        />
+        <MetricCard
+          variant="navy"
+          icon={CreditCard}
+          title="Total CPE"
+          value={formatCurrency(stats.totalCPE)}
+        />
+        <MetricCard
+          variant="navy"
+          icon={FileText}
+          title="Total Notas Venta"
+          value={formatCurrency(stats.totalNotasVenta)}
+        />
+        <MetricCard
+          variant="navy"
+          icon={BarChart3}
+          title="Monto Total General"
+          value={formatCurrency(stats.montoTotalGeneral)}
+        />
+        <MetricCard
+          variant="navy"
+          icon={Wallet}
+          title="Utilidad Neta"
+          value={formatCurrency(stats.utilidadNeta)}
+        />
+      </div>
+
+      {/* 3. Paneles de Desglose (3 columnas) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* CPE */}
+        <DesgloseSummaryPanel
+          title="CPE"
+          items={[
+            { label: 'Total Pagado', value: formatCurrency(stats.cpePagado), highlight: true },
+            { label: 'Total por Pagar', value: formatCurrency(stats.cpePorPagar), highlight: true },
+            { label: 'Total', value: formatCurrency(stats.cpeTotal), highlight: true },
           ]}
         />
-        <MetricCard
-          title="Comprobantes Emitidos"
-          value={stats.totalComprobantes}
-          icon={TrendingUp}
-          description="Total en el sistema"
-        />
-        <MetricCard
-          title="Clientes y Proveedores registrados"
-          value={totalClientesRegistrados}
-          icon={Building2}
-          description="Registros en el sistema"
-        />
-        <MetricCard
-          title="Tasa de Aceptación"
-          value={`${stats.tasaAceptacion.toFixed(1)}%`}
-          icon={CheckCircle}
-          description="Comprobantes aceptados por SUNAT"
-        />
-      </div>
 
-      {/* SLA y Alertas */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning" />
-                SLA de Oportunidades
-              </CardTitle>
-              <CardDescription>
-                Estado de las oportunidades con SLA configurado
-              </CardDescription>
+        {/* Notas de Venta (Boletas) */}
+        <DesgloseSummaryPanel
+          title="Notas de Venta"
+          items={[
+            { label: 'Total Pagado', value: formatCurrency(stats.notasVentaPagado), highlight: true },
+            { label: 'Total por Pagar', value: formatCurrency(stats.notasVentaPorPagar), highlight: true },
+            { label: 'Total', value: formatCurrency(stats.notasVentaTotal), highlight: true },
+          ]}
+        />
+
+        {/* Totales Generales + Gráfico */}
+        <div className="border-none bg-[hsl(var(--dashboard-navy))] text-white shadow-lg rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Totales Generales</h3>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="text-center">
+              <p className="text-xs text-white/70">Total Nota Venta</p>
+              <p className="text-lg font-bold text-red-300">{formatCurrency(stats.totalNotasVenta)}</p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {slaResumen.total === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No hay oportunidades con SLA configurado aún.
-              </p>
-            ) : (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">En plazo</span>
-                  <span className="font-medium text-success">
-                    {slaResumen.en_plazo}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Próximos a vencer</span>
-                  <span className="font-medium text-warning">
-                    {slaResumen.proximo_vencer}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Vencidos</span>
-                  <span className="font-medium text-destructive">
-                    {slaResumen.vencidos}
-                  </span>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Total con SLA: {slaResumen.total}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Bell className="h-4 w-4 text-primary" />
-                Alertas
-              </CardTitle>
-              <CardDescription>
-                Alertas pendientes por prioridad
-              </CardDescription>
+            <div className="text-center">
+              <p className="text-xs text-white/70">Total Comprobantes</p>
+              <p className="text-lg font-bold text-blue-300">{formatCurrency(stats.totalCPE)}</p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {alertasResumen.total_no_leidas === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No hay alertas pendientes.
-              </p>
-            ) : (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Total no leídas</span>
-                  <span className="font-medium">
-                    {alertasResumen.total_no_leidas}
-                  </span>
-                </div>
-                <div className="mt-2 space-y-1 text-xs">
-                  {Object.keys(alertasResumen.por_prioridad).map((prioridad) => (
-                    <div key={prioridad} className="flex items-center justify-between">
-                      <span className="capitalize text-muted-foreground">{prioridad}</span>
-                      <span className="font-medium">
-                        {alertasResumen.por_prioridad[prioridad]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Gráficos principales */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-          <CardHeader>
-            <CardTitle>Facturación Mensual</CardTitle>
-            <CardDescription>
-              Ingresos de los últimos 6 meses
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pb-0">
-            <ChartContainer
-              config={{
-                monto: {
-                  label: "Monto (S/)",
-                  color: "hsl(var(--chart-1))",
-                },
-              }}
-              className="aspect-4/3 w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
-              role="img"
-              aria-label={`Facturación mensual: ${datosFacturacionMensual.map((d) => `${d.mes} S/ ${Number(d.monto).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`).join(', ')}`}
-            >
-              <BarChart
-                data={datosFacturacionMensual}
-                margin={{ top: 5, right: 5, bottom: 0, left: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+            <div className="text-center">
+              <p className="text-xs text-white/70">Total General</p>
+              <p className="text-lg font-bold text-blue-300">{formatCurrency(stats.montoTotalGeneral)}</p>
+            </div>
+          </div>
+          {/* Gráfico de líneas por hora */}
+          {stats.ventasPorHora.length > 0 && (
+            <ResponsiveContainer width="100%" height={120}>
+              <LineChart data={stats.ventasPorHora}>
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#60a5fa"
+                  strokeWidth={2}
+                  dot={false}
+                />
                 <XAxis
-                  dataKey="mes"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={14}
-                  tickLine={false}
-                  axisLine={false}
-                  style={{ fontSize: '14px' }}
+                  dataKey="hora"
+                  stroke="#fff"
+                  fontSize={10}
+                  interval="preserveStartEnd"
                 />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={14}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value / 1000}k`}
-                  style={{ fontSize: '14px' }}
+                <YAxis stroke="#fff" fontSize={10} width={40} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--dashboard-navy))',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#fff',
+                  }}
+                  formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Ventas']}
                 />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => (
-                        <div className="flex w-full flex-1 justify-between items-center gap-2 leading-none">
-                          <span className="text-muted-foreground">Monto (S/)</span>
-                          <span className="text-foreground font-mono font-medium tabular-nums">
-                            S/ {Number(value).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      )}
-                    />
-                  }
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
-                />
-                <Bar
-                  dataKey="monto"
-                  fill="var(--color-monto)"
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {tiposComprobantes.length > 0 && (
-          <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-            <CardHeader>
-              <CardTitle>Tipos de Comprobantes</CardTitle>
-              <CardDescription>
-                Distribución por tipo de documento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-0">
-              <ChartContainer
-                config={{
-                  Facturas: {
-                    label: "Facturas",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  Boletas: {
-                    label: "Boletas",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  NC: {
-                    label: "Notas de Crédito",
-                    color: "hsl(var(--chart-3))",
-                  },
-                  ND: {
-                    label: "Notas de Débito",
-                    color: "hsl(var(--chart-4))",
-                  },
-                }}
-                className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
-              >
-                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={tiposComprobantes}
-                    dataKey="cantidad"
-                    nameKey="tipo"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="65%"
-                  >
-                    {tiposComprobantes.map((entry) => (
-                      <Cell key={entry.tipo} fill={`var(--color-${entry.tipo})`} />
-                    ))}
-                  </Pie>
-                  <Legend
-                    verticalAlign="top"
-                    height={40}
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                  />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Segunda fila */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-        {estadosSunat.length > 0 && (
-          <Card className="hover:shadow-lg transition-shadow overflow-hidden">
-            <CardHeader>
-              <CardTitle>Comprobantes Anulados</CardTitle>
-              <CardDescription>
-                Distribución de comprobantes anulados vs no anulados
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-0">
-              <ChartContainer
-                config={{
-                  Anulado: {
-                    label: "Anulado",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  Aceptado: {
-                    label: "Aceptado",
-                    color: "hsl(var(--chart-4))",
-                  },
-                }}
-                className="aspect-square w-full min-h-112.5 sm:min-h-125 lg:max-h-137.5"
-              >
-                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={estadosSunat}
-                    dataKey="cantidad"
-                    nameKey="estado"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="40%"
-                    outerRadius="65%"
-                    label={{
-                      fill: 'hsl(var(--foreground))',
-                      fontSize: 14,
-                      fontWeight: 600,
-                    }}
-                    labelLine={false}
-                  >
-                    {estadosSunat.map((entry) => (
-                      <Cell key={entry.estado} fill={`var(--color-${entry.estado})`} />
-                    ))}
-                  </Pie>
-                  <Legend 
-                    verticalAlign="top" 
-                    height={40}
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '14px', fontWeight: 500 }}
-                  />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle>Actividad Reciente</CardTitle>
-            <CardDescription>
-              Últimos comprobantes emitidos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {ultimosComprobantes.length > 0 ? (
-              <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
-                {ultimosComprobantes.map((doc) => (
-                  <div key={doc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2">
-                    <div className="space-y-1 flex-1">
-                      <p className="text-sm font-medium leading-none">{doc.serie}-{doc.correlativo}</p>
-                      <p className="text-sm text-muted-foreground truncate">{doc.cliente_razon_social}</p>
-                    </div>
-                    <div className="text-left sm:text-right space-y-1 shrink-0">
-                      <p className="text-sm font-medium">S/ {Number(doc.mto_imp_venta ?? 0).toFixed(2)}</p>
-                      <p className={`text-xs font-medium ${
-                        doc.estado_sunat?.toLowerCase() === 'aceptado'
-                          ? 'text-success'
-                          : doc.estado_sunat?.toLowerCase() === 'rechazado'
-                          ? 'text-destructive'
-                          : 'text-warning'
-                      }`}>
-                        {doc.estado_sunat || 'Pendiente'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No hay comprobantes emitidos</p>
-                <p className="text-sm">Comienza emitiendo tu primer comprobante</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Clientes principales */}
-      {clientesTop.length > 0 && (
-        <div className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle>Top Clientes por Facturación</CardTitle>
-              <CardDescription>
-                Basado en comprobantes importados desde NubeFact
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-100 overflow-y-auto pr-2">
-                {clientesTop.map((cliente) => (
-                  <div
-                    key={`${cliente.cliente_tipo_doc}-${cliente.cliente_num_doc}`}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors gap-2"
-                  >
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-none truncate">
-                        {cliente.cliente_razon_social}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {cliente.cliente_tipo_doc} {cliente.cliente_num_doc}
-                      </p>
-                    </div>
-                    <div className="text-left sm:text-right space-y-1 shrink-0">
-                      <p className="text-sm font-medium">
-                        S/ {parseFloat(cliente.total?.toString() || '0').toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {cliente.cantidad} comprobante(s)
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
-      )}
-
-      {/* Tercera fila - Empresas */}
-      {empresas.length > 0 && (
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle>Empresas Registradas</CardTitle>
-            <CardDescription>
-              Empresas emisoras de comprobantes electrónicos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {empresas.slice(0, 4).map((empresa) => (
-                <div key={empresa.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Building2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium leading-none truncate">{empresa.nombre_comercial || empresa.razon_social}</p>
-                    <p className="text-sm text-muted-foreground">RUC: {empresa.ruc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      </div>
     </div>
   );
 }

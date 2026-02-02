@@ -121,6 +121,7 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('dashboard/tv', [DashboardController::class, 'tv']);
     Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
+    Route::get('dashboard/stats', [DashboardController::class, 'getStats']);
 
     // Entidades (clientes y proveedores)
     Route::get('entidades', [EntidadController::class, 'index']);

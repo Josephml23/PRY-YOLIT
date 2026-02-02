@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { DashboardFiltros, DashboardStats } from '@/types';
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000/api',
@@ -28,5 +29,18 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Dashboard API
+export const dashboardApi = {
+  getStats: async (filtros: DashboardFiltros): Promise<DashboardStats> => {
+    const params = new URLSearchParams({
+      establecimiento: filtros.establecimiento,
+      periodo: filtros.periodo,
+      fecha_del: filtros.fechaDel,
+    });
+    const response = await api.get(`/v1/dashboard/stats?${params}`);
+    return response.data;
+  },
+};
 
 export default api;

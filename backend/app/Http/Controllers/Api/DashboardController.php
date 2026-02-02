@@ -267,4 +267,126 @@ class DashboardController extends Controller
             'data' => $ventas
         ]);
     }
+
+    /**
+     * Dashboard Section 1: Stats con filtros
+     * GET /api/dashboard/stats?establecimiento=1&periodo=POR_FECHA&fecha_del=2026-01-15
+     */
+    public function getStats(Request $request): JsonResponse
+    {
+        $establecimiento = $request->get('establecimiento', '1');
+        $periodo = $request->get('periodo', 'ESTE_MES');
+        $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+
+        // Calcular fecha_hasta según período
+        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+
+        // TODOS los CPE (para el KPI "CPE Emitidos")
+        $todosLosCPE = Comprobante::whereIn('tipo_comprobante', ['01', '03', '07', '08'])
+            ->whereDate('fecha_emision', '>=', $fechaDel)
+            ->whereDate('fecha_emision', '<=', $fechaHasta)
+            ->where('estado_sunat', 'aceptado')
+            ->whereNull('anulado')
+            ->orWhere('anulado', false)
+            ->get();
+
+        $cpeEmitidos = $todosLosCPE->count();
+
+        // Panel CPE = Facturas (01) + NC (07) + ND (08) - SIN Boletas
+        $cpeSinBoletas = $todosLosCPE->whereIn('tipo_comprobante', ['01', '07', '08']);
+        $totalCPE = $cpeSinBoletas->sum('mto_imp_venta');
+        $cpePagado = $cpeSinBoletas->where('pagado', true)->sum('mto_imp_venta');
+        $cpePorPagar = $cpeSinBoletas->where('pagado', false)->sum('mto_imp_venta');
+
+        // Panel Notas de Venta = Boletas de Venta (03)
+        $boletas = $todosLosCPE->where('tipo_comprobante', '03');
+        $totalNotasVenta = $boletas->sum('mto_imp_venta');
+        $notasVentaPagado = $boletas->where('pagado', true)->sum('mto_imp_venta');
+        $notasVentaPorPagar = $boletas->where('pagado', false)->sum('mto_imp_venta');
+
+        // Utilidad Neta = Ingresos - Egresos
+        $ingresos = $todosLosCPE->sum('mto_imp_venta');
+        $egresos = 0; // TODO: implementar cuando exista módulo de compras
+        $utilidadNeta = $ingresos - $egresos;
+
+        // Ventas por hora (para gráfico)
+        $ventasPorHora = $this->getVentasPorHora($fechaDel, $fechaHasta);
+
+        return response()->json([
+            'cpeEmitidos' => $cpeEmitidos,
+            'totalCPE' => round($totalCPE, 2),
+            'cpePagado' => round($cpePagado, 2),
+            'cpePorPagar' => round($cpePorPagar, 2),
+            'cpeTotal' => round($totalCPE, 2),
+            'totalNotasVenta' => round($totalNotasVenta, 2),
+            'notasVentaPagado' => round($notasVentaPagado, 2),
+            'notasVentaPorPagar' => round($notasVentaPorPagar, 2),
+            'notasVentaTotal' => round($totalNotasVenta, 2),
+            'montoTotalGeneral' => round($ingresos, 2),
+            'utilidadNeta' => round($utilidadNeta, 2),
+            'ventasPorHora' => $ventasPorHora,
+        ]);
+    }
+
+    /**
+     * Calcular fecha_hasta según el período seleccionado
+     */
+    private function calcularFechaHasta(string $periodo, string $fechaDel): string
+    {
+        $fecha = \Carbon\Carbon::parse($fechaDel);
+
+        switch ($periodo) {
+            case 'HOY':
+                return $fecha->format('Y-m-d');
+            case 'ESTA_SEMANA':
+                return $fecha->copy()->endOfWeek()->format('Y-m-d');
+            case 'ESTE_MES':
+                return $fecha->copy()->endOfMonth()->format('Y-m-d');
+            case 'ESTE_AÑO':
+                return $fecha->copy()->endOfYear()->format('Y-m-d');
+            case 'POR_FECHA':
+            default:
+                // Por defecto, si es POR_FECHA, usar 30 días desde fecha_del
+                return $fecha->copy()->addDays(30)->format('Y-m-d');
+        }
+    }
+
+    /**
+     * Obtener ventas por hora del período
+     */
+    private function getVentasPorHora(string $fechaDel, string $fechaHasta): array
+    {
+        // Generar array de 24 horas con total = 0
+        $ventasPorHora = [];
+        for ($hora = 0; $hora < 24; $hora++) {
+            $ventasPorHora[] = [
+                'hora' => str_pad($hora, 2, '0', STR_PAD_LEFT) . 'h',
+                'total' => 0,
+            ];
+        }
+
+        // Consultar ventas agrupadas por hora
+        $ventas = Comprobante::selectRaw("
+            EXTRACT(HOUR FROM fecha_emision) as hora,
+            SUM(mto_imp_venta) as total
+            ")
+            ->whereDate('fecha_emision', '>=', $fechaDel)
+            ->whereDate('fecha_emision', '<=', $fechaHasta)
+            ->where('estado_sunat', 'aceptado')
+            ->whereNull('anulado')
+            ->orWhere('anulado', false)
+            ->groupBy('hora')
+            ->orderBy('hora')
+            ->get();
+
+        // Actualizar valores reales
+        foreach ($ventas as $venta) {
+            $horaIndex = (int)$venta->hora;
+            if ($horaIndex >= 0 && $horaIndex < 24) {
+                $ventasPorHora[$horaIndex]['total'] = round($venta->total, 2);
+            }
+        }
+
+        return $ventasPorHora;
+    }
 }
