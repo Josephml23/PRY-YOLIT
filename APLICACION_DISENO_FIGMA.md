@@ -2,27 +2,205 @@
 
 **Fecha:** 2 de febrero de 2026  
 **Diseño fuente:** https://www.figma.com/design/498osHkA9mi6Y9eAoevl1w/Nubofact-design?node-id=1-2&m=dev  
-**Commit:** 0f2b959
+**Commit inicial:** 0f2b959 (métricas)  
+**Commit completo:** b9d56b2 (diseño completo)
 
 ---
 
 ## 📋 Resumen
 
-Se ha implementado el diseño visual de Nubofact desde Figma, aplicando su paleta de colores y estructura de componentes al dashboard existente de la plataforma.
+Se ha implementado el **diseño visual completo de Nubofact** desde Figma, aplicando su paleta de colores, estructura de componentes y layout al dashboard de la plataforma.
+
+### ✅ Implementado en este commit:
+- **Variables CSS** con colores de marca Nubofact
+- **Header completo** con navegación y usuario
+- **Panel de filtros** estilo Nubofact
+- **Fondo beige** (#cbbfae) en todo el dashboard
+- **Layout completo** según diseño original
 
 ---
 
 ## 🎨 Colores Aplicados
 
-### Paleta de Nubofact
-- **Fondo principal tarjetas:** `#0c5078` (azul oscuro Nubofact)
-- **Fondo iconos:** `#164a6b` (azul intermedio)
-- **Texto:** `#ffffff` (blanco)
-- **Background general:** `#cbbfae` (beige claro - visto en diseño)
+### Paleta de Nubofact (Variables CSS)
+```css
+/* Light Mode */
+--nubofact-primary: 200 60% 19%;      /* #0c5078 - Azul primario (métricas, filtros) */
+--nubofact-secondary: 200 52% 24%;    /* #164a6b - Azul secundario (iconos) */
+--nubofact-header: 203 46% 25%;       /* #234662 - Azul header principal */
+--nubofact-header-dark: 203 54% 19%;  /* #1a3548 - Azul header tabs */
+--nubofact-background: 35 31% 80%;    /* #cbbfae - Fondo beige */
+--nubofact-accent: 142 79% 73%;       /* #7bf1a8 - Verde acento (rol usuario) */
+
+/* Dark Mode */
+--nubofact-primary: 200 60% 25%;
+--nubofact-secondaImplementados
+
+### 1. Variables CSS (frontend/src/index.css)
+
+**Agregadas al theme:**
+```css
+/* Nubofact Brand Colors */
+--nubofact-primary: 200 60% 19%;
+--nubofact-secondary: 200 52% 24%;
+--nubofact-header: 203 46% 25%;
+--nubofact-header-dark: 203 54% 19%;
+--nubofact-background: 35 31% 80%;
+--nubofact-accent: 142 79% 73%;
+```
+
+**Sistema HSL:** Formato `H S% L%` para compatibilidad con `hsl(var(--variable))`
+
+---
+
+### 2. NubofactHeader (frontend/src/components/layout/NubofactHeader.tsx)
+
+**Nueva implementación completa** basada en Figma nodo 1:4
+
+#### Estructura HTML (adaptada de Figma)
+```tsx
+<header className="bg-[hsl(var(--nubofact-header))] text-white">
+  {/* Top Bar - altura 64px */}
+  <div className="flex items-center justify-between px-4 h-16">
+    {/* Logo + Navigation */}
+    <div className="flex items-center gap-4">
+      {/* Logo NUBOFACT */}
+      <div className="bg-white rounded px-2 py-1 h-12">
+        <span className="text-[hsl(var(--nubofact-primary))] font-bold text-lg">
+          NUBOFACT
+        </span>
+      </div>
+      
+      {/* Menú navegación: 6 items con dropdowns */}
+      <nav className="flex items-center gap-1">
+        {/* Mantenimiento, Compras, Inventario, CPE's, Archivo De Caja, Reportes */}
+      </nav>
+    </div>
+    
+    {/* User Info */}
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-full bg-gray-300">
+        <User className="h-6 w-6" />
+      </div>
+      <div className="text-right">
+        <span className="text-[hsl(var(--nubofact-accent))] text-xs">
+          Administrador
+        </span>
+        <span className="text-xs">PRODUCCION</span>
+      </div>
+    </div>
+  </div>
+  
+  {/* Tabs Bar - altura 36px */}
+  <div className="bg-[hsl(var(--nubofact-header-dark))] h-9">
+    <Link className={activeTab ? 'bg-gray-200 text-gray-900' : 'text-white'}>
+      Dashboard
+    </Link>
+    <Link>Dashboard gra</Link>
+  </div>
+</header>
+```
+
+#### Navegación implementada
+| Item | Icon | Path | Dropdown |
+|------|------|------|----------|
+| Mantenimiento | Settings | /mantenimiento | ✓ |
+| Compras | ShoppingCart | /compras | ✓ |
+| Inventario | Package | /inventario | ✓ |
+| CPE's | FileText | /cpes | ✓ |
+| Archivo De Caja | Archive | /archivo-caja | ✓ |
+| Reportes | BarChart3 | /reportes | ✓ |
+
+#### Estados y efectos
+- **Hover:** `hover:bg-white/10` en items de navegación
+- **Active:** `bg-white/20` en ruta activa
+- **Tab activo:** `bg-gray-200 text-gray-900`
+- **Tab inactivo:** `text-white hover:bg-white/10`
+
+---
+
+### 3. DashboardFilters (frontend/src/components/dashboard/DashboardFilters.tsx)
+
+**Nueva implementación** basada en Figma nodo 1:76
+
+#### Estructura HTML
+```tsx
+<div className="bg-[hsl(var(--nubofact-primary))] rounded-[10px] p-4">
+  <div className="flex items-center justify-between">
+    {/* Left: Title + Filters */}
+    <div className="flex items-center gap-8">
+      {/* Title */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-white text-xl font-bold leading-7">
+          Dashboard General
+        </h1>
+        <p className="text-white/80 text-xs">
+          Resumen de operaciones y rendimiento
+        </p>
+      </div>
+      
+      {/* Filters: 3 inputs */}
+      <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-white text-xs uppercase">
+            ESTABLECIMIENTO
+          </label>
+          <input className="bg-white rounded px-3 py-1.5 text-xs w-48 h-7" />
+        </div>
+        {/* PERIODO, FECHA DEL ... */}
+      </div>
+    </div>
+    
+    {/* Right: Help Icon */}
+    <div className="opacity-40">
+      <span className="text-white text-2xl">?</span>
+    </div>
+  </div>
+</div>
+```
+
+#### Props interface
+```typescript
+interface DashboardFiltersProps {
+  establecimiento?: string;
+  periodo?: string;
+  fechaDel?: string;
+  onEstablecimientoChange?: (value: string) => void;
+  onPeriodoChange?: (value: string) => void;
+  onFechaDelChange?: (value: string) => void;
+  className?: string;
+}
+```
+
+#### Especificaciones de diseño
+- **Background:** `#0c5078` (--nubofact-primary)
+- **Border radius:** 10px
+- **Padding:** 16px
+- **Altura:** 80px (auto)
+- **Inputs:** bg-white, h-7, text-xs, placeholder text-black/50
+- **Labels:** uppercase, text-xs, text-white
+- **Help icon:** opacity-40, text-2xl
+
+---
+
+### 4. MetricCard (frontend/src/components/dashboard/MetricCard.tsx)
+
+**Variante 'nubofact' añadida** (ya existente desde commit anterior
+### Uso en componentes
+| Componente | Color Variable | Valor Hex | Uso |
+|------------|----------------|-----------|-----|
+| MetricCard background | `--nubofact-primary` | #0c5078 | Fondo de tarjetas KPI |
+| MetricCard icon box | `--nubofact-secondary` | #164a6b | Contenedor de iconos |
+| Header principal | `--nubofact-header` | #234662 | Barra navegación superior |
+| Header tabs | `--nubofact-header-dark` | #1a3548 | Barra de tabs Dashboard |
+| Dashboard background | `--nubofact-background` | #cbbfae | Fondo general de página |
+| Rol usuario | `--nubofact-accent` | #7bf1a8 | Texto "Administrador" |
+| DashboardFilters | `--nubofact-primary` | #0c5078 | Panel de filtros |
 
 ### Mapeo anterior → nuevo
-- Antes: `bg-[hsl(var(--dashboard-dark))]` (CSS variable)
-- Ahora: `bg-[#0c5078]` (valor directo del diseño)
+- Antes: `bg-[hsl(var(--dashboard-dark))]` (CSS variable genérica)
+- Ahora: `bg-[hsl(var(--nubofact-primary))]` (valor directo del diseño)
+- Beneficio: Colores exactos de marca Nubofact en todo el dashboard
 
 ---
 
@@ -134,21 +312,11 @@ variant?: 'default' | 'navy' | 'nubofact';
 
 ### Elementos NO implementados (pendientes)
 
-❌ **Header navegación** (nodo 1:4)
-- Menú principal con dropdowns
-- Avatar de usuario
-- Tabs "Dashboard" / "Dashboard gra"
-
-❌ **Filtros superiores** (nodo 1:76)
-- Título "Dashboard General"
-- Selects: ESTABLECIMIENTO, PERIODO, FECHA DEL
-- Icono de ayuda "?"
-
-❌ **Sección CPE** (nodo 1:162)
+❌ **Sección CPE detallada** (nodo 1:162)
 - Lista de items con barras de progreso
 - Números + nombres (Machala, Balanza, etc.)
 
-❌ **Sección Notas de Venta** (nodo 1:215)
+❌ **Sección Notas de Venta detallada** (nodo 1:215)
 - Métricas Ingresos/Egresos/M Flujo
 - Checkboxes "Consultar gráfos"
 - Gráfico de barras pequeño
@@ -164,25 +332,30 @@ variant?: 'default' | 'navy' | 'nubofact';
 - Gráfico anual Facturas/Boletas/Notas/Compras
 - Tabla mensual de totales
 
+**NOTA:** Los componentes de gráficos básicos (CPE, Notas Venta, Totales) ya existen y están integrados en el Dashboard.
+
 ---
 
 ## ✅ Estado de Implementación
 
-### Completado (Fase 1)
-- ✅ MetricCard variante 'nubofact' con colores exactos
-- ✅ Estructura HTML coincidente con Figma (flex horizontal)
-- ✅ Tipografía: uppercase títulos, tabular-nums valores
-- ✅ Iconos con fondo #164a6b
-- ✅ Grid responsive 5 columnas
-- ✅ Integración con Dashboard existente
+### Completado (100%)
+- ✅ **Variables CSS Nubofact** con sistema de colores HSL
+- ✅ **MetricCard** variante 'nubofact' con colores exactos
+- ✅ **NubofactHeader** con navegación completa
+- ✅ **DashboardFilters** panel de filtros estilo Nubofact
+- ✅ **Layout Dashboard** con fondo beige y estructura completa
+- ✅ **Estructura HTML** coincidente con Figma (flex horizontal en métricas)
+- ✅ **Tipografía** uppercase títulos, tabular-nums valores
+- ✅ **Iconos** con fondo #164a6b en contenedores rounded
+- ✅ **Grid responsive** 5 columnas para métricas
+- ✅ **Integración** con componentes existentes (charts, desglose)
 
 ### Pendiente (Fases futuras)
-- ⏳ Header con navegación principal
-- ⏳ Filtros superiores (establecimiento, periodo, fecha)
-- ⏳ Secciones de gráficos (CPE, Notas Venta, Compras)
+- ⏳ Secciones de gráficos avanzados (CPE, Notas Venta detalladas)
 - ⏳ Tablas de datos (Productor Top, Clientes Top, Stock Mínimo)
 - ⏳ Gráfico anual comparativo
 - ⏳ Tabla mensual de totales
+- ⏳ Modo Dashboard TV con diseño Nubofact
 
 ---
 
@@ -209,12 +382,19 @@ variant?: 'default' | 'navy' | 'nubofact';
 
 ## 🔄 Próximos Pasos
 
-### Fase 2: Componentes de datos
-1. Implementar `CPEListPanel` (nodo 1:162)
+### Fase Actual: Layout y Diseño Visual ✅ COMPLETADO
+- ✅ Variables CSS con colores Nubofact
+- ✅ Header con navegación completa
+- ✅ Panel de filtros estilo Nubofact
+- ✅ Layout con fondo beige
+- ✅ Métricas KPI estilo Nubofact
+
+### Fase 2: Componentes de datos avanzados
+1. Implementar `CPEDetailPanel` (nodo 1:162)
    - Lista con progress bars
    - Integrar con datos reales del backend
 
-2. Implementar `NotasVentaSummary` (nodo 1:215)
+2. Implementar `NotasVentaDetailPanel` (nodo 1:215)
    - Métricas Ingresos/Egresos/Flujo
    - Checkboxes para filtros
    - Mini gráfico de barras
@@ -242,7 +422,11 @@ variant?: 'default' | 'navy' | 'nubofact';
 
 - **Diseño Figma:** https://www.figma.com/design/498osHkA9mi6Y9eAoevl1w/Nubofact-design?node-id=1-2&m=dev
 - **Metadata Figma (nodo 1:103):** Métricas KPI horizontales
-- **Commit inicial:** 0f2b959
+- Commits:**
+- `0f2b959` - Variante 'nubofact' en MetricCard
+- `b9d56b2` - Diseño completo con header, filtros y variables CSS
+
+****Commit inicial:** 0f2b959
 - **Interface Design Skill:** [.github/skills/interface-design/SKILL.md](file://.github/skills/interface-design/SKILL.md)
 - **DESIGN_CONTEXT.md:** [frontend/docs/DESIGN_CONTEXT.md](frontend/docs/DESIGN_CONTEXT.md)
 
