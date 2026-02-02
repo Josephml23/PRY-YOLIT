@@ -39,7 +39,7 @@ export function DashboardFilterPanel({
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
             {/* Establecimiento */}
-            <div className="flex-1 min-w-[180px]">
+            <div className="flex-1 min-w-45">
               <Label htmlFor="establecimiento" className="text-xs font-medium mb-1.5 opacity-80">
                 Establecimiento
               </Label>
@@ -56,7 +56,7 @@ export function DashboardFilterPanel({
             </div>
 
             {/* Período */}
-            <div className="flex-1 min-w-[180px]">
+            <div className="flex-1 min-w-45">
               <Label htmlFor="periodo" className="text-xs font-medium mb-1.5 opacity-80">
                 Período
               </Label>
@@ -76,7 +76,7 @@ export function DashboardFilterPanel({
 
             {/* Fecha del (solo si período = POR_FECHA) */}
             {periodo === 'POR_FECHA' && (
-              <div className="flex-1 min-w-[180px]">
+              <div className="flex-1 min-w-45">
                 <Label htmlFor="fecha-del" className="text-xs font-medium mb-1.5 opacity-80">
                   Fecha del
                 </Label>

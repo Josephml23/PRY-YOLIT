@@ -61,15 +61,15 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <Sidebar className="border-r">
-          <SidebarContent>
-            <div className="border-b flex items-center justify-center overflow-hidden" style={{ height: '56px', padding: '0', margin: '0', lineHeight: '0' }}>
+      <div className="flex min-h-screen w-full bg-[hsl(var(--nubofact-background))]">
+        <Sidebar className="border-r bg-[#234662]">
+          <SidebarContent className="bg-[#234662]">
+            <div className="border-b border-[#1a3548] flex items-center justify-center overflow-hidden" style={{ height: '56px', padding: '0', margin: '0', lineHeight: '0' }}>
               <Link to="/app" className="flex items-center justify-center w-full h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ padding: '0', margin: '0', lineHeight: '0' }}>
                 <img
                   src={LOGO_URL}
                   alt="Nubofact - Sistema de Facturacion Electronica"
-                  className="w-full h-full object-contain dark:invert-0"
+                  className="w-full h-full object-contain"
                   style={LOGO_STYLES}
                   fetchPriority="high"
                 />
@@ -77,7 +77,7 @@ export function AppLayout() {
             </div>
             
             <SidebarGroup>
-              <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-white/70">Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {MENU_ITEMS.map((item) => (
@@ -85,6 +85,7 @@ export function AppLayout() {
                       <SidebarMenuButton 
                         asChild
                         isActive={location.pathname === item.url}
+                        className="text-white hover:bg-[#1a3548] data-[active=true]:bg-[#1a3548]"
                       >
                         <Link to={item.url}>
                           <item.icon className="w-4 h-4" aria-hidden="true" />
@@ -101,7 +102,7 @@ export function AppLayout() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild className="text-white hover:bg-[#1a3548]">
                       <Link to="/app/configuracion">
                         <Settings className="w-4 h-4" />
                         <span>Configuración</span>
@@ -109,7 +110,7 @@ export function AppLayout() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton>
+                    <SidebarMenuButton className="text-white hover:bg-[#1a3548]">
                       <LogOut className="w-4 h-4" />
                       <span>Cerrar Sesión</span>
                     </SidebarMenuButton>
@@ -121,15 +122,7 @@ export function AppLayout() {
         </Sidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-card text-card-foreground px-4 md:px-6" style={{ height: '56px' }}>
-            <SidebarTrigger className="shrink-0 text-card-foreground hover:bg-muted" />
-            <div className="flex-1 min-w-0" />
-            <ThemeToggle />
-          </header>
-          
-          <div className="p-0 max-w-7xl mx-auto w-full">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </SidebarProvider>
