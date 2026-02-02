@@ -62,7 +62,7 @@ export function NotasVentaPanel({
               checked={consultarGrafos}
               onChange={(e) => setConsultarGrafos(e.target.checked)}
             />
-            <label htmlFor="consultar" className="text-xs text-gray-700 cursor-pointer">
+            <label htmlFor="consultar" className="text-xs text-foreground cursor-pointer">
               Consultar gráfos:
             </label>
           </div>
@@ -74,18 +74,18 @@ export function NotasVentaPanel({
               checked={filtrarProducto}
               onChange={(e) => setFiltrarProducto(e.target.checked)}
             />
-            <label htmlFor="filtrar" className="text-xs text-muted-foreground cursor-pointer">
+            <label htmlFor="filtrar" className="text-xs text-foreground cursor-pointer">
               Filtrar por producto
             </label>
           </div>
         </div>
 
         {/* Gráfico de barras vertical */}
-        <div className="h-32 flex items-end justify-center gap-1 bg-gray-300 dark:bg-gray-700 rounded p-2">
+        <div className="h-32 flex items-end justify-center gap-1 bg-secondary/30 rounded p-2">
           {normalizedData.map((height, index) => (
             <div
               key={index}
-              className="w-6 bg-white rounded-t transition-all duration-300 hover:bg-[hsl(var(--nubofact-primary))]"
+              className="w-6 bg-card rounded-t transition-all duration-300 hover:bg-primary"
               style={{ height: `${height}%` }}
               title={`${chartData[index]}`}
             />

@@ -35,14 +35,14 @@ export function CPERankingPanel({ data, className }: CPERankingPanelProps) {
             return (
               <div key={index} className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-3 flex-1">
-                  <span className="text-gray-700 w-6">{index + 1}</span>
-                  <span className="text-gray-800 flex-1">{item.name}</span>
+                  <span className="text-foreground w-6">{index + 1}</span>
+                  <span className="text-foreground font-medium flex-1">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-gray-700 w-12 text-right">{item.value}</span>
-                  <div className="w-20 h-2 bg-white rounded-full overflow-hidden">
+                  <span className="text-foreground w-12 text-right">{item.value}</span>
+                  <div className="w-20 h-2 bg-secondary/30 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-[hsl(var(--nubofact-primary))] transition-all duration-300"
+                      className="h-full bg-primary transition-all duration-300"
                       style={{ width: `${Math.min(barWidth, 100)}%` }}
                     />
                   </div>

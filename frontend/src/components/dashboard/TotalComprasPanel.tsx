@@ -35,18 +35,18 @@ export function TotalComprasPanel({
       <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">Total Compras</CardTitle>
       </CardHeader>
-      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
+      <CardContent className="bg-muted p-4 min-h-70">
         {/* Resumen boxes */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-white rounded-lg p-3 text-center">
-            <div className="text-xs text-gray-600 mb-1">Total Compras</div>
+          <div className="bg-card border border-border rounded-lg p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">Total Compras</div>
             <div className="text-cyan-500 text-lg font-semibold">
               {formatCurrency(totalCompras)}
             </div>
           </div>
-          <div className="bg-white rounded-lg p-3 text-center">
-            <div className="text-xs text-gray-600 mb-1">Saldo</div>
-            <div className="text-lg font-semibold">
+          <div className="bg-card border border-border rounded-lg p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">Saldo</div>
+            <div className="text-cyan-500 text-lg font-semibold">
               {formatCurrency(saldo)}
             </div>
           </div>

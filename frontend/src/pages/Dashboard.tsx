@@ -137,7 +137,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-200">
+    <div className="min-h-screen bg-[#cbbfac]">
       {/* Header Nubofact */}
       <NubofactHeader />
 

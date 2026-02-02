@@ -21,7 +21,7 @@ export function MonthlyTable({ data, className }: MonthlyTableProps) {
     <div className={`bg-muted rounded-lg shadow-md p-4 min-h-70 ${className}`}>
       <div className="bg-card border border-border rounded overflow-hidden">
         <table className="w-full text-xs">
-          <thead className="bg-[hsl(var(--nubofact-primary))] text-white">
+          <thead className="bg-primary text-primary-foreground">
             <tr>
               <th className="px-3 py-2 text-left">Mes</th>
               <th className="px-3 py-2 text-right">Facturas</th>

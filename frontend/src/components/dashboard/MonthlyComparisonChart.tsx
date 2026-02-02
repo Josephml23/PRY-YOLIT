@@ -37,9 +37,9 @@ const LEGEND_ITEMS = [
 
 export function MonthlyComparisonChart({ data, className }: MonthlyComparisonChartProps) {
   return (
-    <div className={`bg-gray-300 dark:bg-gray-700 rounded-lg shadow-md p-4 ${className}`}>
+    <div className={`bg-muted rounded-lg shadow-md p-4 min-h-70 ${className}`}>
       {/* Leyenda */}
-      <div className="bg-white dark:bg-gray-800 rounded p-2 mb-2">
+      <div className="bg-card border border-border rounded p-2 mb-2">
         <div className="flex gap-4 text-xs flex-wrap">
           {LEGEND_ITEMS.map(({ label, color }) => (
             <div key={label} className="flex items-center gap-1">
@@ -58,17 +58,17 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
         >
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#666" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 dataKey="month"
                 angle={-45}
                 textAnchor="end"
                 height={100}
-                tick={{ fill: '#333', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
                 interval={0}
               />
               <YAxis 
-                tick={{ fill: '#333', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
                 tickFormatter={(value) => `S/ ${(value / 1000).toFixed(0)}k`}
               />
               <ChartTooltip

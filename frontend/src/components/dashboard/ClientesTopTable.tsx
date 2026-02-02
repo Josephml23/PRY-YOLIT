@@ -19,10 +19,10 @@ interface ClientesTopTableProps {
 export function ClientesTopTable({ data, className }: ClientesTopTableProps) {
   return (
     <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-[hsl(var(--nubofact-primary))] text-white px-4 py-3">
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
         <CardTitle className="text-sm font-semibold">Clientes Top</CardTitle>
       </CardHeader>
-      <CardContent className="bg-gray-200 dark:bg-gray-800 p-4 min-h-[280px]">
+      <CardContent className="bg-muted p-4 min-h-70">
         {/* Dropdown */}
         <div className="mb-3">
           <select className="w-full bg-background text-foreground border border-input rounded px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary">
