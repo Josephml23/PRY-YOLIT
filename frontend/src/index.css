@@ -95,9 +95,9 @@
   --sidebar-border: 0 0% 89.8%;
   --sidebar-ring: 0 0% 3.9%;
   
-  /* Dashboard Navy Colors */
-  --dashboard-navy: 210 60% 18%;
-  --dashboard-navy-light: 210 55% 25%;
+  /* Dashboard Dark Colors (negro oscuro) */
+  --dashboard-dark: 0 0% 12%;
+  --dashboard-dark-light: 0 0% 18%;
 }
 
 .dark {
@@ -138,9 +138,9 @@
   --sidebar-border: 0 0% 14.9%;
   --sidebar-ring: 0 0% 83.1%;
   
-  /* Dashboard Navy Colors (darker in dark mode) */
-  --dashboard-navy: 210 65% 15%;
-  --dashboard-navy-light: 210 60% 20%;
+  /* Dashboard Dark Colors (negro oscuro en dark mode) */
+  --dashboard-dark: 0 0% 8%;
+  --dashboard-dark-light: 0 0% 14%;
 }
 
 * {

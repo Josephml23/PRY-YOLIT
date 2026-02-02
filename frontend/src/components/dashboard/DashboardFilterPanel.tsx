@@ -30,8 +30,8 @@ export function DashboardFilterPanel({
   };
 
   return (
-    <Card className="border-none bg-[hsl(var(--dashboard-navy))] text-white shadow-lg">
-      <CardContent className="p-6">
+    <Card className="border-none bg-[hsl(var(--dashboard-dark))] text-white shadow-lg">
+      <CardContent className="p-4 sm:p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           <div className="shrink-0">
             <h2 className="text-2xl font-bold text-white">Dashboard General</h2>
@@ -49,7 +49,7 @@ export function DashboardFilterPanel({
                 value={establecimiento}
                 onChange={(e) => handleEstablecimientoChange(e.target.value)}
               >
-                <option value="1" className="bg-[hsl(var(--dashboard-navy))] text-white">
+                <option value="1" className="bg-[hsl(var(--dashboard-dark))] text-white">
                   OFICINA PRINCIPAL
                 </option>
               </select>
@@ -67,7 +67,7 @@ export function DashboardFilterPanel({
                 onChange={(e) => handlePeriodoChange(e.target.value as DashboardFilterPanelProps['periodo'])}
               >
                 {PERIODOS.map((p) => (
-                  <option key={p.value} value={p.value} className="bg-[hsl(var(--dashboard-navy))] text-white">
+                  <option key={p.value} value={p.value} className="bg-[hsl(var(--dashboard-dark))] text-white">
                     {p.label}
                   </option>
                 ))}

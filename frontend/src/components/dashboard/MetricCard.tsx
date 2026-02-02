@@ -14,25 +14,25 @@ export function MetricCard({
   const isNavy = variant === 'navy';
 
   if (isNavy) {
-    // Variant Navy: Fondo azul marino, icono grande a la izquierda, texto blanco
+    // Variant Navy: Fondo negro oscuro, icono grande a la izquierda, texto blanco
     return (
       <Card className={cn(
         'hover:shadow-lg transition-shadow border-none',
-        'bg-[hsl(var(--dashboard-navy))] text-white',
+        'bg-[hsl(var(--dashboard-dark))] text-white',
         className
       )}>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
+        <CardContent className="p-4 sm:p-5 md:p-6">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="shrink-0">
-              <Icon className="h-12 w-12 text-white/90" aria-hidden />
+              <Icon className="h-10 w-10 sm:h-12 sm:w-12 text-white/90" aria-hidden />
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-sm font-medium text-white/80 mb-1">
+              <CardTitle className="text-xs sm:text-sm font-medium text-white/80 mb-0.5 sm:mb-1">
                 {title}
               </CardTitle>
-              <div className="text-2xl font-bold text-white">{value}</div>
+              <div className="text-xl sm:text-2xl font-bold text-white truncate">{value}</div>
               {description && (
-                <p className="text-xs text-white/70 mt-1">{description}</p>
+                <p className="text-xs text-white/70 mt-0.5 sm:mt-1 line-clamp-1">{description}</p>
               )}
             </div>
           </div>

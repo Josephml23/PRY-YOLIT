@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, CreditCard, BarChart3, Wallet } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { dashboardApi } from '@/services/api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { DashboardFilterPanel } from '@/components/dashboard/DashboardFilterPanel';
 import { DesgloseSummaryPanel } from '@/components/dashboard/DesgloseSummaryPanel';
 import { Button } from '@/components/ui/button';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DashboardFiltros, DashboardStats } from '@/types';
 
 const formatCurrency = (value: number): string => {
   return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const CHART_COLORS = {
+  pagado: '#10b981', // green
+  porPagar: '#ef4444', // red
+  primary: '#3b82f6', // blue
+  secondary: '#8b5cf6', // purple
 };
 
 export default function Dashboard() {
@@ -57,6 +65,25 @@ export default function Dashboard() {
     setFiltros(nuevosFiltros);
   };
 
+  // Datos para gráfico de pie de CPE
+  const dataCPEPie = [
+    { name: 'Pagado', value: stats.cpePagado, color: CHART_COLORS.pagado },
+    { name: 'Por Pagar', value: stats.cpePorPagar, color: CHART_COLORS.porPagar },
+  ].filter(item => item.value > 0);
+
+  // Datos para gráfico de pie de Notas de Venta
+  const dataNotasVentaPie = [
+    { name: 'Pagado', value: stats.notasVentaPagado, color: CHART_COLORS.pagado },
+    { name: 'Por Pagar', value: stats.notasVentaPorPagar, color: CHART_COLORS.porPagar },
+  ].filter(item => item.value > 0);
+
+  // Datos para gráfico de barras de Totales Generales
+  const dataTotalesBar = [
+    { name: 'CPE', total: stats.totalCPE },
+    { name: 'Notas Venta', total: stats.totalNotasVenta },
+    { name: 'Total General', total: stats.montoTotalGeneral },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -66,13 +93,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
       <PageHeader
         title="Dashboard"
         description="Resumen general de facturación electrónica"
         actions={
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               Actualizado: {new Date().toLocaleDateString('es-PE', {
                 day: '2-digit',
                 month: 'short',
@@ -83,7 +110,8 @@ export default function Dashboard() {
             </div>
             <Link to="/app/dashboard-tv" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-2">
-                <span>Modo TV</span>
+                <span className="hidden sm:inline">Modo TV</span>
+                <span className="sm:hidden">TV</span>
               </Button>
             </Link>
           </div>
@@ -98,8 +126,8 @@ export default function Dashboard() {
         onFiltrosChange={handleFiltrosChange}
       />
 
-      {/* 2. KPIs (5 tarjetas navy) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 2. KPIs (5 tarjetas navy) - Responsividad mejorada */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard
           variant="navy"
           icon={FileText}
@@ -133,9 +161,9 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 3. Paneles de Desglose (3 columnas) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* CPE */}
+      {/* 3. Paneles de Desglose (3 columnas) con gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* CPE con gráfico de pie */}
         <DesgloseSummaryPanel
           title="CPE"
           items={[
@@ -143,9 +171,48 @@ export default function Dashboard() {
             { label: 'Total por Pagar', value: formatCurrency(stats.cpePorPagar), highlight: true },
             { label: 'Total', value: formatCurrency(stats.cpeTotal), highlight: true },
           ]}
-        />
+        >
+          {dataCPEPie.length > 0 && (
+            <ChartContainer
+              config={{
+                pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
+                porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
+              }}
+              className="h-[180px] w-full"
+            >
+              <PieChart>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  }
+                />
+                <Pie
+                  data={dataCPEPie}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  label={false}
+                >
+                  {dataCPEPie.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Legend
+                  verticalAlign="bottom"
+                  height={24}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                />
+              </PieChart>
+            </ChartContainer>
+          )}
+        </DesgloseSummaryPanel>
 
-        {/* Notas de Venta (Boletas) */}
+        {/* Notas de Venta (Boletas) con gráfico de pie */}
         <DesgloseSummaryPanel
           title="Notas de Venta"
           items={[
@@ -153,55 +220,102 @@ export default function Dashboard() {
             { label: 'Total por Pagar', value: formatCurrency(stats.notasVentaPorPagar), highlight: true },
             { label: 'Total', value: formatCurrency(stats.notasVentaTotal), highlight: true },
           ]}
-        />
+        >
+          {dataNotasVentaPie.length > 0 && (
+            <ChartContainer
+              config={{
+                pagado: { label: 'Pagado', color: CHART_COLORS.pagado },
+                porPagar: { label: 'Por Pagar', color: CHART_COLORS.porPagar },
+              }}
+              className="h-[180px] w-full"
+            >
+              <PieChart>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  }
+                />
+                <Pie
+                  data={dataNotasVentaPie}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  label={false}
+                >
+                  {dataNotasVentaPie.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Legend
+                  verticalAlign="bottom"
+                  height={24}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '11px', color: '#fff' }}
+                />
+              </PieChart>
+            </ChartContainer>
+          )}
+        </DesgloseSummaryPanel>
 
-        {/* Totales Generales + Gráfico */}
-        <div className="border-none bg-[hsl(var(--dashboard-navy))] text-white shadow-lg rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Totales Generales</h3>
-          <div className="grid grid-cols-3 gap-2 mb-4">
+        {/* Totales Generales con gráfico de barras */}
+        <div className="border-none bg-[hsl(var(--dashboard-dark))] text-white shadow-lg rounded-lg p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Totales Generales</h3>
+          <div className="grid grid-cols-3 gap-2 mb-3 sm:mb-4">
             <div className="text-center">
               <p className="text-xs text-white/70">Total Nota Venta</p>
-              <p className="text-lg font-bold text-red-300">{formatCurrency(stats.totalNotasVenta)}</p>
+              <p className="text-sm sm:text-base font-bold text-red-300 truncate">{formatCurrency(stats.totalNotasVenta)}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-white/70">Total Comprobantes</p>
-              <p className="text-lg font-bold text-blue-300">{formatCurrency(stats.totalCPE)}</p>
+              <p className="text-xs text-white/70">Total CPE</p>
+              <p className="text-sm sm:text-base font-bold text-blue-300 truncate">{formatCurrency(stats.totalCPE)}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-white/70">Total General</p>
-              <p className="text-lg font-bold text-blue-300">{formatCurrency(stats.montoTotalGeneral)}</p>
+              <p className="text-sm sm:text-base font-bold text-blue-300 truncate">{formatCurrency(stats.montoTotalGeneral)}</p>
             </div>
           </div>
-          {/* Gráfico de líneas por hora */}
-          {stats.ventasPorHora.length > 0 && (
-            <ResponsiveContainer width="100%" height={120}>
-              <LineChart data={stats.ventasPorHora}>
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#60a5fa"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <XAxis
-                  dataKey="hora"
-                  stroke="#fff"
-                  fontSize={10}
-                  interval="preserveStartEnd"
-                />
-                <YAxis stroke="#fff" fontSize={10} width={40} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--dashboard-navy))',
-                    border: 'none',
-                    borderRadius: '6px',
-                    color: '#fff',
-                  }}
-                  formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Ventas']}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          {/* Gráfico de barras */}
+          <ChartContainer
+            config={{
+              total: { label: 'Total (S/)', color: CHART_COLORS.primary },
+            }}
+            className="h-[180px] w-full"
+          >
+            <BarChart data={dataTotalesBar}>
+              <XAxis
+                dataKey="name"
+                stroke="#fff"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="#fff"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                width={50}
+                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                }
+                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+              />
+              <Bar
+                dataKey="total"
+                fill={CHART_COLORS.primary}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ChartContainer>
         </div>
       </div>
     </div>
