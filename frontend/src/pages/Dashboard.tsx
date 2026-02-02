@@ -27,8 +27,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<DashboardFiltros>({
     establecimiento: '1',
-    periodo: 'ESTE_MES',
-    fechaDel: new Date().toISOString().split('T')[0],
+    periodo: 'ESTE_AÑO',
+    fechaDel: '2025-01-01', // Año con datos reales
   });
   
   const [stats, setStats] = useState<DashboardStats>({
