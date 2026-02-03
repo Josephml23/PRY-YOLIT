@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import type { UnidadMedida, UnidadMedidaFormData } from '@/types';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
@@ -39,7 +39,7 @@ import { toast } from 'sonner';
 
 export default function UnidadesMedida() {
   const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingUnidad, setEditingUnidad] = useState<UnidadMedida | null>(null);
@@ -52,7 +52,6 @@ export default function UnidadesMedida() {
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Form data
   const [formData, setFormData] = useState<UnidadMedidaFormData>({
@@ -62,48 +61,43 @@ export default function UnidadesMedida() {
     activo: true,
   });
 
-  const fetchUnidades = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = {
-        page: currentPage,
-        per_page: itemsPerPage,
-      };
-
-      if (valorFiltro) {
-        params[tipoFiltro] = valorFiltro;
-      }
-
-      const response = await api.unidadesMedida.listar(params);
-      
-      // La API retorna la estructura Laravel paginada
-      const apiResponse = response.data as unknown as {
-        success: boolean;
-        data: {
-          data: UnidadMedida[];
-          last_page: number;
-        };
-      };
-      
-      if (apiResponse.success) {
-        setUnidades(apiResponse.data.data || []);
-        setTotalPages(apiResponse.data.last_page || 1);
-      }
-    } catch (error) {
-      toast.error('Error al cargar las unidades de medida');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, itemsPerPage, valorFiltro, tipoFiltro]);
-
   useEffect(() => {
+    const fetchUnidades = async () => {
+      try {
+        setLoading(true);
+        const response = await api.unidadesMedida.listar();
+        setUnidades(response.data);
+      } catch (error) {
+        toast.error('Error al cargar las unidades de medida');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUnidades();
-  }, [fetchUnidades]);
+  }, []);
+
+  const unidadesFiltradas = unidades.filter((unidad) => {
+    const valorBusqueda = valorFiltro.toLowerCase();
+    if (tipoFiltro === 'descripcion') {
+      return unidad.descripcion.toLowerCase().includes(valorBusqueda);
+    } else if (tipoFiltro === 'codigo') {
+      return unidad.codigo.toLowerCase().includes(valorBusqueda);
+    } else if (tipoFiltro === 'simbolo') {
+      return unidad.simbolo.toLowerCase().includes(valorBusqueda);
+    }
+    return true;
+  });
+
+  const totalItems = unidadesFiltradas.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const unidadesPaginadas = unidadesFiltradas.slice(startIndex, endIndex);
 
   const handleSearch = () => {
     setCurrentPage(1);
-    fetchUnidades();
   };
 
   const handleNew = () => {
@@ -138,10 +132,10 @@ export default function UnidadesMedida() {
 
     try {
       await api.unidadesMedida.eliminar(deletingId);
+      setUnidades(unidades.filter((u) => u.id !== deletingId));
       toast.success('Unidad de medida eliminada correctamente');
       setShowDeleteModal(false);
       setDeletingId(null);
-      fetchUnidades();
     } catch (error) {
       toast.error('Error al eliminar la unidad de medida');
       console.error(error);
@@ -165,14 +159,16 @@ export default function UnidadesMedida() {
         toast.success('Unidad de medida creada correctamente');
       }
       setShowModal(false);
-      fetchUnidades();
+      // Recargar datos
+      const response = await api.unidadesMedida.listar();
+      setUnidades(response.data);
     } catch (error) {
       toast.error('Error al guardar la unidad de medida');
       console.error(error);
     }
   };
 
-  if (loading && unidades.length === 0) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg">Cargando...</div>
@@ -269,14 +265,14 @@ export default function UnidadesMedida() {
                   Cargando...
                 </TableCell>
               </TableRow>
-            ) : unidades.length === 0 ? (
+            ) : unidadesPaginadas.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   No se encontraron unidades de medida
                 </TableCell>
               </TableRow>
             ) : (
-              unidades.map((unidad, index) => (
+              unidadesPaginadas.map((unidad, index) => (
                 <TableRow key={unidad.id}>
                   <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                   <TableCell>

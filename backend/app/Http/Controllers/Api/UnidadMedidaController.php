@@ -30,13 +30,9 @@ class UnidadMedidaController extends Controller
             $query->where('simbolo', 'ILIKE', '%' . $request->simbolo . '%');
         }
 
-        $perPage = $request->get('per_page', 10);
-        $unidades = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $unidades = $query->orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $unidades
-        ]);
+        return response()->json($unidades);
     }
 
     public function store(Request $request)
