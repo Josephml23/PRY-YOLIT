@@ -1,9 +1,23 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Plus, MapPin, Upload } from 'lucide-react';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
-import type { Cliente } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { Cliente, ClienteFormData } from '@/types';
+
+const initialFormData: ClienteFormData = {
+  tipo_doc: '6',
+  num_doc: '',
+  denominacion: '',
+  razon_comercial: '',
+  direccion: '',
+  email: '',
+  telefono: '',
+};
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -12,9 +26,11 @@ export default function Clientes() {
   const [filtroBuscar, setFiltroBuscar] = useState('');
   const [filtroCuenta, setFiltroCuenta] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+  const [formData, setFormData] = useState<ClienteFormData>(initialFormData);
   const itemsPerPage = 10;
-
-  const { toast } = useToast();
 
   const fetchClientes = useCallback(async () => {
     try {
@@ -40,16 +56,14 @@ export default function Clientes() {
         direccion: entidad.direccion ?? '',
         email: entidad.email ?? '',
         telefono: entidad.telefono ?? '',
-        created_by: entidad.created_by || 'US-UNORD-CAAA',
+        created_by: entidad.created_by || 'ADMINISTRADOR - CAJA',
         created_at: entidad.created_at || new Date().toISOString(),
       }));
       setClientes(clientesMapped);
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'No se pudo cargar la lista de clientes',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -76,24 +90,86 @@ export default function Clientes() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const clientesPaginados = clientesFiltrados.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleEdit = (id: number) => {
-    console.log('Editar cliente:', id);
-    toast({ title: 'Info', description: 'Funcionalidad de edición en desarrollo' });
+  const handleEdit = (cliente: Cliente) => {
+    setSelectedCliente(cliente);
+    setFormData({
+      tipo_doc: cliente.tipo_doc,
+      num_doc: cliente.num_doc || '',
+      denominacion: cliente.denominacion,
+      razon_comercial: cliente.razon_comercial || '',
+      direccion: cliente.direccion || '',
+      email: cliente.email || '',
+      telefono: cliente.telefono || '',
+    });
+    setIsEditModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar este cliente?')) return;
+  const handleDelete = (cliente: Cliente) => {
+    setSelectedCliente(cliente);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedCliente) return;
 
     try {
-      await api.clientes.eliminar(id);
-      toast({ title: 'Éxito', description: 'Cliente eliminado correctamente' });
+      await api.clientes.eliminar(selectedCliente.id);
+      toast.success('Éxito', {
+        description: 'Cliente eliminado correctamente',
+      });
+      setIsDeleteModalOpen(false);
+      setSelectedCliente(null);
       fetchClientes();
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'No se pudo eliminar el cliente',
-        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCliente) return;
+
+    try {
+      await api.clientes.actualizar(selectedCliente.id, formData);
+      toast.success('Éxito', {
+        description: 'Cliente actualizado correctamente',
+      });
+      setIsEditModalOpen(false);
+      setSelectedCliente(null);
+      setFormData(initialFormData);
+      fetchClientes();
+    } catch (error) {
+      console.error(error);
+      toast.error('Error', {
+        description: 'No se pudo actualizar el cliente',
+      });
+    }
+  };
+
+  const handleNewCliente = () => {
+    setSelectedCliente(null);
+    setFormData(initialFormData);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveNew = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await api.clientes.crear(formData);
+      toast.success('Éxito', {
+        description: 'Cliente creado correctamente',
+      });
+      setIsEditModalOpen(false);
+      setFormData(initialFormData);
+      fetchClientes();
+    } catch (error) {
+      console.error(error);
+      toast.error('Error', {
+        description: 'No se pudo crear el cliente',
       });
     }
   };
@@ -122,8 +198,34 @@ export default function Clientes() {
       
       <div className="container mx-auto px-4 py-6">
         {/* Header del módulo */}
-        <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3">
+        <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Módulo de Clientes</h1>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleNewCliente}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Nuevo
+            </Button>
+            <Button
+              onClick={() => toast.info('Funcionalidad de Zona en desarrollo')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="sm"
+            >
+              <MapPin className="h-4 w-4 mr-1" />
+              Zona
+            </Button>
+            <Button
+              onClick={() => toast.info('Funcionalidad de Importar en desarrollo')}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              size="sm"
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Importar
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -209,7 +311,7 @@ export default function Clientes() {
                           {startIndex + index + 1}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <div className="text-foreground font-medium">{cliente.created_by || 'US-UNORD-CAAA'}</div>
+                          <div className="text-foreground font-medium">{cliente.created_by || 'ADMINISTRADOR - CAJA'}</div>
                           <div className="text-xs text-muted-foreground">
                             FECHA: {fecha}
                           </div>
@@ -230,14 +332,14 @@ export default function Clientes() {
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleEdit(cliente.id)}
+                              onClick={() => handleEdit(cliente)}
                               className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
                               title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(cliente.id)}
+                              onClick={() => handleDelete(cliente)}
                               className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors"
                               title="Eliminar"
                             >
@@ -306,6 +408,134 @@ export default function Clientes() {
           )}
         </div>
       </div>
+
+      {/* Modal de Edición/Nuevo Cliente */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
+          <DialogHeader>
+            <DialogTitle>{selectedCliente ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
+            <DialogDescription>
+              {selectedCliente ? 'Modifica los datos del cliente' : 'Completa los datos del nuevo cliente'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={selectedCliente ? handleSaveEdit : handleSaveNew} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_doc">Tipo Doc *</Label>
+                <Input
+                  id="tipo_doc"
+                  value={formData.tipo_doc}
+                  onChange={(e) => setFormData({ ...formData, tipo_doc: e.target.value })}
+                  placeholder="6 (RUC), 1 (DNI), etc."
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="num_doc">N° Doc *</Label>
+                <Input
+                  id="num_doc"
+                  value={formData.num_doc}
+                  onChange={(e) => setFormData({ ...formData, num_doc: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="denominacion">Razón Social / Nombre *</Label>
+                <Input
+                  id="denominacion"
+                  value={formData.denominacion}
+                  onChange={(e) => setFormData({ ...formData, denominacion: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="razon_comercial">Nombre Comercial</Label>
+                <Input
+                  id="razon_comercial"
+                  value={formData.razon_comercial}
+                  onChange={(e) => setFormData({ ...formData, razon_comercial: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="direccion">Dirección</Label>
+                <Input
+                  id="direccion"
+                  value={formData.direccion}
+                  onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setSelectedCliente(null);
+                  setFormData(initialFormData);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {selectedCliente ? 'Actualizar' : 'Crear'} Cliente
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmación de Eliminación */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="max-w-md bg-card">
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro que desea eliminar el cliente <strong>{selectedCliente?.denominacion}</strong>?
+              Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setSelectedCliente(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
