@@ -432,7 +432,11 @@ export default function DigitalizacionDocumentos() {
           <DialogHeader>
             <DialogTitle>Subir Documento</DialogTitle>
             <DialogDescription>
-              Selecciona un PDF o imagen de factura para extraer los datos automáticamente
+              Selecciona un PDF o imagen de factura. El sistema procesará el documento y extraerá los datos automáticamente.
+              <br />
+              <span className="text-amber-600 dark:text-amber-500 text-xs mt-1 block">
+                ⚠️ Nota: El OCR está en modo prueba y generará datos de ejemplo. La integración con OCR real está pendiente.
+              </span>
             </DialogDescription>
           </DialogHeader>
           
@@ -495,6 +499,9 @@ export default function DigitalizacionDocumentos() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editMode ? 'Editar Datos Extraídos' : 'Detalle del Documento'}</DialogTitle>
+            <DialogDescription>
+              {editMode ? 'Modifica los datos extraídos del documento' : 'Visualiza los datos extraídos por el OCR'}
+            </DialogDescription>
           </DialogHeader>
           
           {selectedDocumento && (
@@ -522,7 +529,11 @@ export default function DigitalizacionDocumentos() {
                 </div>
                 <div>
                   <Label>Fecha Emisión</Label>
-                  <Input type="date" value={selectedDocumento.fecha_emision || ''} disabled={!editMode} />
+                  <Input 
+                    type="date" 
+                    value={selectedDocumento.fecha_emision ? new Date(selectedDocumento.fecha_emision).toISOString().split('T')[0] : ''} 
+                    disabled={!editMode} 
+                  />
                 </div>
                 <div>
                   <Label>Moneda</Label>
