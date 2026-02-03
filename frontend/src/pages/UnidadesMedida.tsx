@@ -345,15 +345,14 @@ export default function UnidadesMedida() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              variant="outline"
-              size="sm"
+              className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="h-4 w-4" />
               Anterior
-            </Button>
+            </button>
 
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let page;
@@ -368,31 +367,28 @@ export default function UnidadesMedida() {
               }
 
               return (
-                <Button
+                <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  variant="outline"
-                  size="sm"
-                  className={
+                  className={`px-3 py-1 text-sm border border-border rounded transition-colors ${
                     currentPage === page
-                      ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-background hover:bg-muted'
-                  }
+                  }`}
                 >
                   {page}
-                </Button>
+                </button>
               );
             })}
 
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              variant="outline"
-              size="sm"
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
             >
               Siguiente
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

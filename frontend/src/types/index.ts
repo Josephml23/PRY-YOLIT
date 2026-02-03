@@ -225,6 +225,21 @@ export interface UnidadMedidaFormData {
   activo: boolean;
 }
 
+export interface Transaccion {
+  id: number;
+  descripcion: string;
+  tipo: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface TransaccionFormData {
+  descripcion: string;
+  tipo: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

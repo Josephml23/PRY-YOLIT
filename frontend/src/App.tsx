@@ -22,6 +22,7 @@ const Categorias = lazy(() => import('@/pages/Categorias'));
 const Marcas = lazy(() => import('@/pages/Marcas'));
 const Atributos = lazy(() => import('@/pages/Atributos'));
 const UnidadesMedida = lazy(() => import('@/pages/UnidadesMedida'));
+const Transacciones = lazy(() => import('@/pages/Transacciones'));
 const Facturacion = lazy(() => import('@/pages/Facturacion'));
 const FacturacionNubefact = lazy(() => import('@/pages/FacturacionNubefact'));
 const Oportunidades = lazy(() => import('@/pages/Oportunidades'));

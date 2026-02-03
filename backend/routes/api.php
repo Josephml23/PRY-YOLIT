@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\MarcaController;
 use App\Http\Controllers\Api\AtributoController;
 use App\Http\Controllers\Api\UnidadMedidaController;
+use App\Http\Controllers\Api\TransaccionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -245,4 +246,11 @@ Route::prefix('v1')->group(function () {
     Route::get('unidades-medida/{id}', [UnidadMedidaController::class, 'show']);
     Route::put('unidades-medida/{id}', [UnidadMedidaController::class, 'update']);
     Route::delete('unidades-medida/{id}', [UnidadMedidaController::class, 'destroy']);
+
+    // Transacciones
+    Route::get('transacciones', [TransaccionController::class, 'index']);
+    Route::post('transacciones', [TransaccionController::class, 'store']);
+    Route::get('transacciones/{id}', [TransaccionController::class, 'show']);
+    Route::put('transacciones/{id}', [TransaccionController::class, 'update']);
+    Route::delete('transacciones/{id}', [TransaccionController::class, 'destroy']);
 });
