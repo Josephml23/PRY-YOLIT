@@ -185,6 +185,7 @@ export default function Categorias() {
             </div>
             <div className="flex items-end">
               <Button
+                onClick={() => toast.info('Funcionalidad de exportación en desarrollo')}
                 className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto"
                 size="sm"
               >
