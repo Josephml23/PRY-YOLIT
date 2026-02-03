@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { Pencil, Trash2, Plus, MapPin, Upload } from 'lucide-react';
+import { Pencil, Trash2, Plus, MapPin, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -367,8 +367,9 @@ export default function Clientes() {
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                     >
+                      <ChevronLeft className="h-4 w-4" />
                       Anterior
                     </button>
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -399,9 +400,10 @@ export default function Clientes() {
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                     >
                       Siguiente
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 )}
