@@ -313,13 +313,16 @@ export default function ListaCompras() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 mx-auto">
+                        <button 
+                          onClick={() => toast.info('Funcionalidad de visualización de productos en desarrollo')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 mx-auto"
+                        >
                           <Eye className="h-3 w-3" />
                           Ver
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">{compra.moneda}</td>
-                      <td className="px-4 py-3 text-sm text-foreground text-right font-medium">{compra.total.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-sm text-foreground text-right font-medium">{Number(compra.total).toFixed(2)}</td>
                       <td className="px-4 py-3 text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
