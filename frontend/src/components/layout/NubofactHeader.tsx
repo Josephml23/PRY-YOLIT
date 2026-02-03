@@ -97,7 +97,7 @@ export function NubofactHeader() {
                 fontSize="32"
                 style={{ fill: 'rgb(var(--nubofact-logo-text))', transition: 'fill 0.3s ease' }}
               >
-                Nubefact
+                Nubofact
               </text>
               
               <circle 
