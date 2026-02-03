@@ -467,6 +467,20 @@ export const api = {
       apiClient.delete<ApiResponse<unknown>>(`/v1/entidades/${id}`),
   },
 
+  // Alias para proveedores
+  proveedores: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<Entidad[]>('/v1/entidades', { params: { ...params, es_proveedor: true } }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<Entidad>>(`/v1/entidades/${id}`),
+    crear: (data: EntidadFormData) =>
+      apiClient.post<ApiResponse<Entidad>>('/v1/entidades', { ...data, es_proveedor: true }),
+    actualizar: (id: number, data: Partial<EntidadFormData>) =>
+      apiClient.put<ApiResponse<Entidad>>(`/v1/entidades/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/entidades/${id}`),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>

@@ -50,6 +50,31 @@ export interface ClienteFormData {
   telefono: string;
 }
 
+/** Proveedor tal como se muestra en listados y formularios CRUD */
+export interface Proveedor {
+  id: number;
+  tipo_doc: string;
+  num_doc?: string;
+  denominacion: string;
+  razon_comercial?: string | null;
+  direccion?: string | null;
+  email?: string | null;
+  telefono?: string | null;
+  created_by?: string;
+  created_at?: string;
+}
+
+/** Datos del formulario de proveedor (crear/editar) */
+export interface ProveedorFormData {
+  tipo_doc: string;
+  num_doc: string;
+  denominacion: string;
+  razon_comercial: string;
+  direccion: string;
+  email: string;
+  telefono: string;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {
