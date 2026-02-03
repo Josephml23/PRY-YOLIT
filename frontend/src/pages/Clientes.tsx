@@ -1,41 +1,37 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { Search, Users, Edit, Trash2, Plus } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { DataTable, type DataTableColumn } from '@/components/data/DataTable';
-import type { Cliente, ClienteFormData } from '@/types';
-
-const initialFormData: ClienteFormData = {
-  tipo_doc: '6',
-  num_doc: '',
-  denominacion: '',
-  razon_comercial: '',
-  direccion: '',
-  email: '',
-  telefono: '',
-};
+import { Pencil, Trash2 } from 'lucide-react';
+import { NubofactHeader } from '@/components/layout/NubofactHeader';
+import type { Cliente } from '@/types';
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [formData, setFormData] = useState<ClienteFormData>(initialFormData);
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroBuscar, setFiltroBuscar] = useState('');
+  const [filtroCuenta, setFiltroCuenta] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { toast } = useToast();
 
   const fetchClientes = useCallback(async () => {
     try {
-      const response = await api.clientes.listar(searchTerm ? { search: searchTerm } : undefined);
+      const response = await api.clientes.listar();
 
-      const clientesMapped: Cliente[] = response.data.map((entidad: { id: number; tipo_doc?: string; num_doc?: string; denominacion?: string; razon_comercial?: string | null; direccion?: string | null; email?: string | null; telefono?: string | null }) => ({
+      const clientesMapped: Cliente[] = response.data.map((entidad: { 
+        id: number; 
+        tipo_doc?: string; 
+        num_doc?: string; 
+        denominacion?: string; 
+        razon_comercial?: string | null; 
+        direccion?: string | null; 
+        email?: string | null; 
+        telefono?: string | null;
+        created_by?: string;
+        created_at?: string;
+      }) => ({
         id: entidad.id,
         tipo_doc: entidad.tipo_doc || '',
         num_doc: entidad.num_doc || '',
@@ -44,6 +40,8 @@ export default function Clientes() {
         direccion: entidad.direccion ?? '',
         email: entidad.email ?? '',
         telefono: entidad.telefono ?? '',
+        created_by: entidad.created_by || 'US-UNORD-CAAA',
+        created_at: entidad.created_at || new Date().toISOString(),
       }));
       setClientes(clientesMapped);
     } catch (error) {
@@ -56,49 +54,31 @@ export default function Clientes() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, toast]);
+  }, [toast]);
 
   useEffect(() => {
     fetchClientes();
   }, [fetchClientes]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Filtrar clientes
+  const clientesFiltrados = clientes.filter((cliente) => {
+    const matchNombre = cliente.denominacion.toLowerCase().includes(filtroNombre.toLowerCase());
+    const matchBuscar = 
+      (cliente.num_doc || '').toLowerCase().includes(filtroBuscar.toLowerCase()) ||
+      cliente.denominacion.toLowerCase().includes(filtroBuscar.toLowerCase()) ||
+      (cliente.created_by || '').toLowerCase().includes(filtroBuscar.toLowerCase());
+    
+    return matchNombre && matchBuscar;
+  });
 
-    try {
-      if (editingCliente) {
-        await api.clientes.actualizar(editingCliente.id, formData);
-        toast({ title: 'Éxito', description: 'Cliente actualizado correctamente' });
-      } else {
-        await api.clientes.crear(formData);
-        toast({ title: 'Éxito', description: 'Cliente creado correctamente' });
-      }
-      setIsDialogOpen(false);
-      setEditingCliente(null);
-      setFormData(initialFormData);
-      fetchClientes();
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar el cliente',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Paginación
+  const totalPages = Math.ceil(clientesFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const clientesPaginados = clientesFiltrados.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleEdit = (cliente: Cliente) => {
-    setEditingCliente(cliente);
-    setFormData({
-      tipo_doc: cliente.tipo_doc,
-      num_doc: cliente.num_doc || '',
-      denominacion: cliente.denominacion,
-      razon_comercial: cliente.razon_comercial || '',
-      direccion: cliente.direccion || '',
-      email: cliente.email || '',
-      telefono: cliente.telefono || '',
-    });
-    setIsDialogOpen(true);
+  const handleEdit = (id: number) => {
+    console.log('Editar cliente:', id);
+    toast({ title: 'Info', description: 'Funcionalidad de edición en desarrollo' });
   };
 
   const handleDelete = async (id: number) => {
@@ -118,204 +98,214 @@ export default function Clientes() {
     }
   };
 
-  const filteredClientes = clientes.filter((cliente) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      cliente.denominacion.toLowerCase().includes(term) ||
-      (cliente.num_doc || '').toLowerCase().includes(term) ||
-      (cliente.razon_comercial || '').toLowerCase().includes(term)
-    );
-  });
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const fecha = date.toISOString().split('T')[0];
+    const hora = date.toTimeString().split(' ')[0];
+    return { fecha, hora };
+  };
 
-  const columns: DataTableColumn<Cliente>[] = [
-    { id: 'tipo_doc', header: 'Tipo Doc', className: 'w-20 font-mono text-sm', cell: (r) => r.tipo_doc },
-    { id: 'num_doc', header: 'N° Doc', className: 'w-32 font-mono text-sm', cell: (r) => r.num_doc || '' },
-    {
-      id: 'denominacion',
-      header: 'Razón Social / Nombre',
-      className: 'min-w-40 max-w-60 text-sm',
-      cell: (r) => <div className="truncate" title={r.denominacion}>{r.denominacion}</div>,
-    },
-    {
-      id: 'razon_comercial',
-      header: 'Nombre Comercial',
-      className: 'min-w-32 max-w-48 hidden md:table-cell text-sm text-muted-foreground',
-      cell: (r) => <div className="truncate" title={r.razon_comercial || '-'}>{r.razon_comercial || '-'}</div>,
-    },
-    {
-      id: 'direccion',
-      header: 'Dirección',
-      className: 'min-w-32 max-w-56 hidden lg:table-cell text-sm text-muted-foreground',
-      cell: (r) => <div className="truncate" title={r.direccion || '-'}>{r.direccion || '-'}</div>,
-    },
-    {
-      id: 'email',
-      header: 'Email',
-      className: 'min-w-28 max-w-40 hidden lg:table-cell text-sm text-muted-foreground',
-      cell: (r) => <div className="truncate" title={r.email || '-'}>{r.email || '-'}</div>,
-    },
-    {
-      id: 'telefono',
-      header: 'Teléfono',
-      className: 'w-24 hidden xl:table-cell text-sm text-muted-foreground',
-      cell: (r) => r.telefono || '-',
-    },
-    {
-      id: 'acciones',
-      header: 'Acciones',
-      className: 'w-28 text-center',
-      cell: (r) => (
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" onClick={() => handleEdit(r)} aria-label="Editar cliente">
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => handleDelete(r.id)} aria-label="Eliminar cliente">
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <NubofactHeader />
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center py-8 text-muted-foreground">Cargando clientes...</div>
         </div>
-      ),
-    },
-  ];
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
-      <PageHeader
-        title="Clientes"
-        description="Gestiona tus clientes (entidades) importados desde NubeFact y creados manualmente"
-        actions={
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) setEditingCliente(null);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Cliente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
-                <DialogDescription>Completa los datos del cliente</DialogDescription>
-              </DialogHeader>
+    <div className="min-h-screen bg-background">
+      <NubofactHeader />
+      
+      <div className="container mx-auto px-4 py-6">
+        {/* Header del módulo */}
+        <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3">
+          <h1 className="text-xl font-semibold">Módulo de Clientes</h1>
+        </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tipo_doc">Tipo Doc *</Label>
-                    <Input
-                      id="tipo_doc"
-                      value={formData.tipo_doc}
-                      onChange={(e) => setFormData({ ...formData, tipo_doc: e.target.value })}
-                      placeholder="6 (RUC), 1 (DNI), etc."
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="num_doc">N° Doc *</Label>
-                    <Input
-                      id="num_doc"
-                      value={formData.num_doc}
-                      onChange={(e) => setFormData({ ...formData, num_doc: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="denominacion">Razón Social / Nombre *</Label>
-                    <Input
-                      id="denominacion"
-                      value={formData.denominacion}
-                      onChange={(e) => setFormData({ ...formData, denominacion: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="razon_comercial">Nombre Comercial</Label>
-                    <Input
-                      id="razon_comercial"
-                      value={formData.razon_comercial}
-                      onChange={(e) => setFormData({ ...formData, razon_comercial: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="direccion">Dirección</Label>
-                    <Input
-                      id="direccion"
-                      value={formData.direccion}
-                      onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono</Label>
-                    <Input
-                      id="telefono"
-                      value={formData.telefono}
-                      onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">{editingCliente ? 'Actualizar' : 'Crear'} Cliente</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        }
-      />
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* Filtros */}
+        <div className="bg-muted/50 px-4 py-4 border-x border-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <CardTitle>Lista de Clientes</CardTitle>
-              <CardDescription>
-                {clientes.length} cliente{clientes.length !== 1 ? 's' : ''} encontrado{clientes.length !== 1 ? 's' : ''}
-              </CardDescription>
+              <label className="block text-sm font-medium mb-1 text-foreground">
+                Nombre
+              </label>
+              <input
+                type="text"
+                value={filtroNombre}
+                onChange={(e) => {
+                  setFiltroNombre(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Filtrar por nombre..."
+              />
             </div>
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
-              <Input
-                placeholder="Buscar cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onBlur={fetchClientes}
-                className="pl-8"
-                aria-label="Buscar cliente por nombre, documento o razón comercial"
+            <div>
+              <label className="block text-sm font-medium mb-1 text-foreground">
+                Buscar
+              </label>
+              <input
+                type="text"
+                value={filtroBuscar}
+                onChange={(e) => {
+                  setFiltroBuscar(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Código o nombre..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-foreground">
+                A cuenta
+              </label>
+              <input
+                type="text"
+                value={filtroCuenta}
+                onChange={(e) => setFiltroCuenta(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Cuenta..."
               />
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable<Cliente>
-            columns={columns}
-            data={filteredClientes}
-            loading={loading}
-            emptyState={{
-              icon: Users,
-              title: 'No se encontraron clientes',
-              description: searchTerm ? 'Prueba con otro criterio de búsqueda.' : 'Crea tu primer cliente con el botón Nuevo Cliente.',
-            }}
-            getRowId={(row) => row.id}
-          />
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Tabla */}
+        <div className="bg-card border border-border rounded-b-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-primary text-primary-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Creado por Usuario</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Clientes</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Zona</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Datos</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientesPaginados.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      {filtroNombre || filtroBuscar 
+                        ? 'No se encontraron clientes con los filtros aplicados' 
+                        : 'No hay clientes registrados'}
+                    </td>
+                  </tr>
+                ) : (
+                  clientesPaginados.map((cliente, index) => {
+                    const { fecha, hora } = formatDateTime(cliente.created_at || new Date().toISOString());
+                    return (
+                      <tr 
+                        key={cliente.id}
+                        className="border-b border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {startIndex + index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="text-foreground font-medium">{cliente.created_by || 'US-UNORD-CAAA'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            FECHA: {fecha}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            HORA: {hora}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="text-foreground font-semibold">{cliente.num_doc || 'S/D'}</div>
+                          <div className="text-foreground">{cliente.denominacion}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {cliente.direccion || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {cliente.email || '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleEdit(cliente.id)}
+                              className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(cliente.id)}
+                              className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-border bg-muted/30">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, clientesFiltrados.length)} de {clientesFiltrados.length} clientes
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Anterior
+                  </button>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let page;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 text-sm border border-border rounded transition-colors ${
+                          currentPage === page
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-background hover:bg-muted'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

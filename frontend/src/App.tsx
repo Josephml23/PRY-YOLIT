@@ -38,11 +38,13 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard-caja" element={<DashboardTv />} />
             <Route path="/landing" element={<Landing />} />
+            <Route path="/mantenimiento/clientes" element={<Clientes />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />
               <Route path="empresas" element={<Empresas />} />
               <Route path="clientes" element={<Clientes />} />
+              <Route path="mantenimiento/clientes" element={<Clientes />} />
               <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
               <Route path="facturacion" element={<Facturacion />} />

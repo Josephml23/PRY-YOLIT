@@ -34,6 +34,8 @@ export interface Cliente {
   direccion?: string | null;
   email?: string | null;
   telefono?: string | null;
+  created_by?: string;
+  created_at?: string;
 }
 
 /** Datos del formulario de cliente (crear/editar) */
