@@ -125,6 +125,46 @@ export interface PersonalFormData {
   activo: boolean;
 }
 
+export interface CuentaBancaria {
+  id: number;
+  descripcion: string;
+  numero: string;
+  balance: number;
+  abreviatura?: string;
+  banco?: string;
+  moneda: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface CuentaBancariaFormData {
+  descripcion: string;
+  numero: string;
+  balance: number;
+  abreviatura: string;
+  banco: string;
+  moneda: string;
+  activo: boolean;
+}
+
+export interface Banco {
+  id: number;
+  abreviatura?: string;
+  descripcion: string;
+  imagen?: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface BancoFormData {
+  abreviatura: string;
+  descripcion: string;
+  imagen?: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

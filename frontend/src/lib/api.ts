@@ -509,6 +509,38 @@ export const api = {
       apiClient.delete<ApiResponse<unknown>>(`/v1/personal/${id}`),
   },
 
+  // Cuentas Bancarias
+  cuentasBancarias: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/cuentas-bancarias', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<any>>(`/v1/cuentas-bancarias/${id}`),
+    crear: (data: any) =>
+      apiClient.post<ApiResponse<any>>('/v1/cuentas-bancarias', data),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/cuentas-bancarias/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/cuentas-bancarias/${id}`),
+  },
+
+  // Bancos
+  bancos: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/bancos', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<any>>(`/v1/bancos/${id}`),
+    crear: (data: any) =>
+      apiClient.post<ApiResponse<any>>('/v1/bancos', data),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/bancos/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/bancos/${id}`),
+    subirImagen: (id: number, formData: FormData) =>
+      apiClient.post<ApiResponse<any>>(`/v1/bancos/${id}/upload-image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>

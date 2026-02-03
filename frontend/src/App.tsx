@@ -16,6 +16,8 @@ const Clientes = lazy(() => import('@/pages/Clientes'));
 const Proveedores = lazy(() => import('@/pages/Proveedores'));
 const Vendedores = lazy(() => import('@/pages/Vendedores'));
 const Personal = lazy(() => import('@/pages/Personal'));
+const CuentasBancarias = lazy(() => import('@/pages/CuentasBancarias'));
+const Bancos = lazy(() => import('@/pages/Bancos'));
 const Facturacion = lazy(() => import('@/pages/Facturacion'));
 const FacturacionNubefact = lazy(() => import('@/pages/FacturacionNubefact'));
 const Oportunidades = lazy(() => import('@/pages/Oportunidades'));
@@ -45,6 +47,8 @@ function App() {
             <Route path="/mantenimiento/proveedores" element={<Proveedores />} />
             <Route path="/mantenimiento/vendedores" element={<Vendedores />} />
             <Route path="/mantenimiento/personal" element={<Personal />} />
+            <Route path="/mantenimiento/cuentas-bancarias" element={<CuentasBancarias />} />
+            <Route path="/mantenimiento/bancos" element={<Bancos />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />
@@ -55,6 +59,8 @@ function App() {
               <Route path="mantenimiento/proveedores" element={<Proveedores />} />
               <Route path="mantenimiento/vendedores" element={<Vendedores />} />
               <Route path="mantenimiento/personal" element={<Personal />} />
+              <Route path="mantenimiento/cuentas-bancarias" element={<CuentasBancarias />} />
+              <Route path="mantenimiento/bancos" element={<Bancos />} />
               <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
               <Route path="facturacion" element={<Facturacion />} />

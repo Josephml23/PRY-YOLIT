@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\SerieController;
 use App\Http\Controllers\Api\VendedorController;
 use App\Http\Controllers\Api\PersonalController;
+use App\Http\Controllers\Api\CuentaBancariaController;
+use App\Http\Controllers\Api\BancoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -196,4 +198,19 @@ Route::prefix('v1')->group(function () {
     Route::get('personal/{id}', [PersonalController::class, 'show']);
     Route::put('personal/{id}', [PersonalController::class, 'update']);
     Route::delete('personal/{id}', [PersonalController::class, 'destroy']);
+
+    // Cuentas Bancarias
+    Route::get('cuentas-bancarias', [CuentaBancariaController::class, 'index']);
+    Route::post('cuentas-bancarias', [CuentaBancariaController::class, 'store']);
+    Route::get('cuentas-bancarias/{id}', [CuentaBancariaController::class, 'show']);
+    Route::put('cuentas-bancarias/{id}', [CuentaBancariaController::class, 'update']);
+    Route::delete('cuentas-bancarias/{id}', [CuentaBancariaController::class, 'destroy']);
+
+    // Bancos
+    Route::get('bancos', [BancoController::class, 'index']);
+    Route::post('bancos', [BancoController::class, 'store']);
+    Route::get('bancos/{id}', [BancoController::class, 'show']);
+    Route::put('bancos/{id}', [BancoController::class, 'update']);
+    Route::delete('bancos/{id}', [BancoController::class, 'destroy']);
+    Route::post('bancos/{id}/upload-image', [BancoController::class, 'uploadImage']);
 });
