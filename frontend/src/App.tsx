@@ -20,6 +20,7 @@ const CuentasBancarias = lazy(() => import('@/pages/CuentasBancarias'));
 const Bancos = lazy(() => import('@/pages/Bancos'));
 const Categorias = lazy(() => import('@/pages/Categorias'));
 const Marcas = lazy(() => import('@/pages/Marcas'));
+const Atributos = lazy(() => import('@/pages/Atributos'));
 const Facturacion = lazy(() => import('@/pages/Facturacion'));
 const FacturacionNubefact = lazy(() => import('@/pages/FacturacionNubefact'));
 const Oportunidades = lazy(() => import('@/pages/Oportunidades'));
@@ -53,6 +54,7 @@ function App() {
             <Route path="/mantenimiento/bancos" element={<Bancos />} />
             <Route path="/mantenimiento/categorias" element={<Categorias />} />
             <Route path="/mantenimiento/marcas" element={<Marcas />} />
+            <Route path="/mantenimiento/atributos" element={<Atributos />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />
@@ -67,6 +69,7 @@ function App() {
               <Route path="mantenimiento/bancos" element={<Bancos />} />
               <Route path="mantenimiento/categorias" element={<Categorias />} />
               <Route path="mantenimiento/marcas" element={<Marcas />} />
+              <Route path="mantenimiento/atributos" element={<Atributos />} />
               <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
               <Route path="facturacion" element={<Facturacion />} />

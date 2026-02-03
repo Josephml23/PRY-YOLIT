@@ -569,6 +569,20 @@ export const api = {
       apiClient.delete<ApiResponse<unknown>>(`/v1/marcas/${id}`),
   },
 
+  // Atributos
+  atributos: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/atributos', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<any>>(`/v1/atributos/${id}`),
+    crear: (data: any) =>
+      apiClient.post<ApiResponse<any>>('/v1/atributos', data),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/atributos/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/atributos/${id}`),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>

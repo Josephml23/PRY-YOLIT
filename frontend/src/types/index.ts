@@ -193,6 +193,21 @@ export interface MarcaFormData {
   activo: boolean;
 }
 
+export interface Atributo {
+  id: number;
+  codigo?: string;
+  descripcion: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface AtributoFormData {
+  codigo?: string;
+  descripcion: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

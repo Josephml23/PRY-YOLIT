@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\CuentaBancariaController;
 use App\Http\Controllers\Api\BancoController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\MarcaController;
+use App\Http\Controllers\Api\AtributoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -229,4 +230,11 @@ Route::prefix('v1')->group(function () {
     Route::get('marcas/{id}', [MarcaController::class, 'show']);
     Route::put('marcas/{id}', [MarcaController::class, 'update']);
     Route::delete('marcas/{id}', [MarcaController::class, 'destroy']);
+
+    // Atributos
+    Route::get('atributos', [AtributoController::class, 'index']);
+    Route::post('atributos', [AtributoController::class, 'store']);
+    Route::get('atributos/{id}', [AtributoController::class, 'show']);
+    Route::put('atributos/{id}', [AtributoController::class, 'update']);
+    Route::delete('atributos/{id}', [AtributoController::class, 'destroy']);
 });
