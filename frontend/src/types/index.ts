@@ -75,6 +75,31 @@ export interface ProveedorFormData {
   telefono: string;
 }
 
+/** Vendedor tal como se muestra en listados y formularios CRUD */
+export interface Vendedor {
+  id: number;
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  porcentaje_comision: number;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+  ventas_cpe?: number;
+  ventas_nv?: number;
+  total_ventas?: number;
+  total_comision?: number;
+}
+
+/** Datos del formulario de vendedor (crear/editar) */
+export interface VendedorFormData {
+  nombre: string;
+  email: string;
+  telefono: string;
+  porcentaje_comision: number;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {
