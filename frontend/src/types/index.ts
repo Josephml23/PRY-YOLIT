@@ -100,6 +100,31 @@ export interface VendedorFormData {
   activo: boolean;
 }
 
+/** Personal tal como se muestra en listados y formularios CRUD */
+export interface Personal {
+  id: number;
+  nombre: string;
+  numero?: string;
+  puesto_asignado?: string;
+  salario_base: number;
+  email?: string;
+  telefono?: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+/** Datos del formulario de personal (crear/editar) */
+export interface PersonalFormData {
+  nombre: string;
+  numero: string;
+  puesto_asignado: string;
+  salario_base: number;
+  email: string;
+  telefono: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

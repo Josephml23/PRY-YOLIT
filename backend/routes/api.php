@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\NubefactSyncController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\SerieController;
 use App\Http\Controllers\Api\VendedorController;
+use App\Http\Controllers\Api\PersonalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -188,4 +189,11 @@ Route::prefix('v1')->group(function () {
     Route::get('vendedores/{id}', [VendedorController::class, 'show']);
     Route::put('vendedores/{id}', [VendedorController::class, 'update']);
     Route::delete('vendedores/{id}', [VendedorController::class, 'destroy']);
+
+    // Personal
+    Route::get('personal', [PersonalController::class, 'index']);
+    Route::post('personal', [PersonalController::class, 'store']);
+    Route::get('personal/{id}', [PersonalController::class, 'show']);
+    Route::put('personal/{id}', [PersonalController::class, 'update']);
+    Route::delete('personal/{id}', [PersonalController::class, 'destroy']);
 });
