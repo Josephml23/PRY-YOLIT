@@ -52,7 +52,7 @@ const mantenimientoItems: DropdownItem[] = [
   { label: 'Unidades de Medida', path: '/mantenimiento/unidades-medida', icon: Ruler },
   { label: 'Tipo de transacciones - Inventario', path: '/mantenimiento/tipo-transacciones', icon: ArrowLeftRight },
   { label: 'Conductores', path: '/mantenimiento/conductores', icon: UserCircle },
-  { label: 'Vehículos de Transporte', path: '/mantenimiento/vehiculos-transporte', icon: TruckIcon },
+  { label: 'Vehículos de Transporte', path: '/mantenimiento/vehiculos', icon: TruckIcon },
 ];
 
 const navItems: NavItem[] = [
