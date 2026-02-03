@@ -417,13 +417,13 @@ export default function Clientes() {
               <div className="flex gap-1 flex-wrap">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || totalPages === 0}
                   className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Anterior
                 </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                {totalPages > 0 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let page;
                   if (totalPages <= 5) {
                     page = i + 1;
@@ -450,7 +450,7 @@ export default function Clientes() {
                 })}
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || totalPages === 0}
                   className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                 >
                   Siguiente
