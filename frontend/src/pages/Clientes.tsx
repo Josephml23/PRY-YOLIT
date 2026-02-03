@@ -17,6 +17,7 @@ const initialFormData: ClienteFormData = {
   direccion: '',
   email: '',
   telefono: '',
+  a_cuenta: false,
 };
 
 export default function Clientes() {
@@ -100,6 +101,7 @@ export default function Clientes() {
       direccion: cliente.direccion || '',
       email: cliente.email || '',
       telefono: cliente.telefono || '',
+      a_cuenta: cliente.a_cuenta || false,
     });
     setIsEditModalOpen(true);
   };
@@ -486,6 +488,19 @@ export default function Clientes() {
                   onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="a_cuenta"
+                checked={formData.a_cuenta || false}
+                onChange={(e) => setFormData({ ...formData, a_cuenta: e.target.checked })}
+                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              />
+              <Label htmlFor="a_cuenta" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                A cuenta
+              </Label>
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

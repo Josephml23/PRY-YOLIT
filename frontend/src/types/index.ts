@@ -34,6 +34,7 @@ export interface Cliente {
   direccion?: string | null;
   email?: string | null;
   telefono?: string | null;
+  a_cuenta?: boolean;
   created_by?: string;
   created_at?: string;
 }
@@ -47,6 +48,7 @@ export interface ClienteFormData {
   direccion: string;
   email: string;
   telefono: string;
+  a_cuenta?: boolean;
 }
 
 // --- Props de componentes compartidos ---
