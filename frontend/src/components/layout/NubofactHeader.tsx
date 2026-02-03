@@ -58,7 +58,7 @@ const mantenimientoItems: DropdownItem[] = [
 ];
 
 const comprasItems: DropdownItem[] = [
-  { label: 'Listas de Compras', path: '/compras/listas', icon: ClipboardList },
+  { label: 'Lista de Compras', path: '/compras/listas', icon: ClipboardList },
   { label: 'Nuevas Compras', path: '/compras/nuevas', icon: Plus },
 ];
 

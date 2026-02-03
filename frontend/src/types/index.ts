@@ -278,6 +278,45 @@ export interface ConductorFormData {
   activo: boolean;
 }
 
+export interface Compra {
+  id: number;
+  actividad: string;
+  fecha_actividad: string;
+  proveedor_id: number;
+  proveedor_nombre: string;
+  proveedor_ruc: string;
+  estado: string;
+  tipo_comprobante: string;
+  serie_comprobante: string;
+  numero_comprobante: string;
+  comprobante_completo: string;
+  tipo_comprobante_desc: string;
+  moneda: string;
+  total: number;
+  cantidad_productos: number;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface CompraFormData {
+  actividad: string;
+  fecha_actividad: string;
+  proveedor_id: number;
+  proveedor_nombre: string;
+  proveedor_ruc: string;
+  estado: string;
+  tipo_comprobante: string;
+  serie_comprobante: string;
+  numero_comprobante: string;
+  comprobante_completo: string;
+  tipo_comprobante_desc: string;
+  moneda: string;
+  total: number;
+  cantidad_productos: number;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {
