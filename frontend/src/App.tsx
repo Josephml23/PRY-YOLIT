@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -61,6 +61,7 @@ function App() {
             <Route path="/mantenimiento/unidades-medida" element={<UnidadesMedida />} />
             <Route path="/mantenimiento/tipo-transacciones" element={<Transacciones />} />
             <Route path="/mantenimiento/vehiculos" element={<Vehiculos />} />
+            <Route path="/mantenimiento/vehiculos-transporte" element={<Navigate to="/mantenimiento/vehiculos" replace />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />

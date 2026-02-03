@@ -341,7 +341,7 @@ export default function Vehiculos() {
 
       {/* Modal Crear/Editar */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
             <DialogTitle>
               {editingVehiculo ? 'Editar Vehículo' : 'Nuevo Vehículo'}
