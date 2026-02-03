@@ -148,6 +148,7 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard/productos-top', [DashboardController::class, 'getProductosTop']);
     Route::get('dashboard/clientes-top', [DashboardController::class, 'getClientesTop']);
     Route::get('dashboard/stock-minimo', [DashboardController::class, 'getStockMinimo']);
+    Route::get('dashboard/monthly-comparison', [DashboardController::class, 'getMonthlyComparison']);
 
     // Entidades (clientes y proveedores)
     Route::get('entidades', [EntidadController::class, 'index']);

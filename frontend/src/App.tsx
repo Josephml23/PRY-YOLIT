@@ -35,7 +35,9 @@ function App() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard-caja" element={<DashboardTv />} />
+            <Route path="/landing" element={<Landing />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />

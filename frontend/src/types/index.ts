@@ -103,9 +103,11 @@ export interface DashboardFiltros {
   /** ID del establecimiento seleccionado */
   establecimiento: string;
   /** Tipo de período para el dashboard */
-  periodo: 'POR_FECHA' | 'HOY' | 'ESTA_SEMANA' | 'ESTE_MES' | 'ESTE_AÑO';
+  periodo: 'COMPLETO' | 'POR_FECHA' | 'HOY' | 'ESTA_SEMANA' | 'ESTE_MES' | 'ESTE_AÑO';
   /** Fecha inicial (formato YYYY-MM-DD) */
   fechaDel: string;
+  /** Fecha final (formato YYYY-MM-DD) - solo para POR_FECHA */
+  fechaHasta?: string;
 }
 
 export interface CPERankingItem {
@@ -219,4 +221,32 @@ export interface DesgloseSummaryPanelProps {
     /** Si debe resaltarse en azul */
     highlight?: boolean;
   }>;
+}
+
+export interface MonthlyComparisonData {
+  /** Mes del año */
+  mes: string;
+  /** Total de facturas */
+  facturas: number;
+  /** Total de boletas */
+  boletas: number;
+  /** Total de notas de venta */
+  notasVenta: number;
+  /** Total de compras */
+  compras: number;
+}
+
+export interface MonthlyTableRow {
+  /** Mes del año */
+  mes: string;
+  /** Total de facturas formateado */
+  facturas: string;
+  /** Total de boletas formateado */
+  boletas: string;
+  /** Total de notas de venta formateado */
+  notasVenta: string;
+  /** Total de compras formateado */
+  compras: string;
+  /** Si es la fila de totales */
+  isTotal?: boolean;
 }

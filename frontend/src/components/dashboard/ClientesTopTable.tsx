@@ -33,15 +33,15 @@ export function ClientesTopTable({ data, className }: ClientesTopTableProps) {
           </select>
         </div>
 
-        {/* Tabla */}
-        <div className="bg-card rounded overflow-hidden border border-border">
+        {/* Tabla con scroll horizontal para responsividad */}
+        <div className="bg-card rounded overflow-x-auto border border-border">
           <table className="w-full text-xs">
             <thead className="bg-primary text-primary-foreground">
               <tr>
-                <th className="px-3 py-2 text-left">#</th>
-                <th className="px-3 py-2 text-left">Cliente</th>
-                <th className="px-3 py-2 text-left">Trans</th>
-                <th className="px-3 py-2 text-left">Total</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">#</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Cliente</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Trans</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Total</th>
               </tr>
             </thead>
             <tbody>

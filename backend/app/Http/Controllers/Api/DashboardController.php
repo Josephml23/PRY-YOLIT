@@ -269,16 +269,19 @@ class DashboardController extends Controller
 
     /**
      * Dashboard Section 1: Stats con filtros
-     * GET /api/dashboard/stats?establecimiento=1&periodo=POR_FECHA&fecha_del=2026-01-15
+     * GET /api/dashboard/stats?establecimiento=1&periodo=POR_FECHA&fecha_del=2026-01-15&fecha_hasta=2026-02-15
      */
     public function getStats(Request $request): JsonResponse
     {
         $establecimiento = $request->get('establecimiento', '1');
         $periodo = $request->get('periodo', 'ESTE_MES');
         $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $fechaHasta = $request->get('fecha_hasta', null);
 
-        // Calcular fecha_hasta según período
-        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        // Calcular fecha_hasta según período o usar la proporcionada
+        if (!$fechaHasta) {
+            $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        }
 
         // PostgreSQL Best Practice: Single aggregated query with conditional sums
         // Avoid loading all records into memory then filtering in PHP
@@ -348,6 +351,9 @@ class DashboardController extends Controller
                 return $fecha->copy()->endOfMonth()->format('Y-m-d');
             case 'ESTE_AÑO':
                 return $fecha->copy()->endOfYear()->format('Y-m-d');
+            case 'COMPLETO':
+                // Para "COMPLETO", usar fecha actual como límite superior
+                return now()->format('Y-m-d');
             case 'POR_FECHA':
             default:
                 // Por defecto, si es POR_FECHA, usar 30 días desde fecha_del
@@ -398,16 +404,19 @@ class DashboardController extends Controller
 
     /**
      * Dashboard Section 2: Ranking de CPE por establecimiento
-     * GET /api/dashboard/cpe-ranking?establecimiento=1&periodo=ESTE_AÑO&fecha_del=2026-01-01
+     * GET /api/dashboard/cpe-ranking?establecimiento=1&periodo=ESTE_AÑO&fecha_del=2026-01-01&fecha_hasta=2026-12-31
      */
     public function getCPERanking(Request $request): JsonResponse
     {
         $establecimiento = $request->get('establecimiento', '1');
         $periodo = $request->get('periodo', 'ESTE_MES');
         $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $fechaHasta = $request->get('fecha_hasta', null);
 
-        // Calcular fecha_hasta según período
-        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        // Calcular fecha_hasta según período o usar la proporcionada
+        if (!$fechaHasta) {
+            $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        }
 
         // Obtener ranking de CPE por tipo de comprobante
         $rankingData = Comprobante::selectRaw("
@@ -462,9 +471,13 @@ class DashboardController extends Controller
         $establecimiento = $request->get('establecimiento', '1');
         $periodo = $request->get('periodo', 'ESTE_MES');
         $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $fechaHasta = $request->get('fecha_hasta', null);
         $limit = $request->get('limit', 5);
         
-        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        // Calcular fecha_hasta según período o usar la proporcionada
+        if (!$fechaHasta) {
+            $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        }
 
         $productosTop = DB::table('comprobante_items as ci')
             ->join('comprobantes as c', 'ci.comprobante_id', '=', 'c.id')
@@ -513,9 +526,13 @@ class DashboardController extends Controller
         $establecimiento = $request->get('establecimiento', '1');
         $periodo = $request->get('periodo', 'ESTE_MES');
         $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $fechaHasta = $request->get('fecha_hasta', null);
         $limit = $request->get('limit', 5);
         
-        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        // Calcular fecha_hasta según período o usar la proporcionada
+        if (!$fechaHasta) {
+            $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+        }
 
         $clientesTop = Comprobante::select([
                 'cliente_razon_social as cliente',
@@ -599,7 +616,157 @@ class DashboardController extends Controller
             'total' => $productos->count(),
             'current_page' => (int)$page,
             'per_page' => (int)$perPage,
-            'total_pages' => ceil($productos->count() / $perPage)
+            'total_pages' => ceil($productos->count() / $perPage),
+        ]);
+    }
+
+    /**
+     * Obtener datos mensuales comparativos para gráfico y tabla
+     * Retorna totales por mes de Facturas, Boletas, Notas de Venta y Compras
+     */
+    public function getMonthlyComparison(Request $request)
+    {
+        $establecimiento = $request->query('establecimiento', '');
+        $periodo = $request->query('periodo', 'ESTE_AÑO');
+        $fechaDel = $request->query('fecha_del', '');
+        $fechaHasta = $request->query('fecha_hasta', null);
+
+        // Determinar rango de fechas según el período
+        $fechaInicio = null;
+        $fechaFin = null;
+
+        // Usar fecha_del como referencia si está presente, sino usar hoy
+        $fechaReferencia = $fechaDel ? \Carbon\Carbon::parse($fechaDel) : now();
+
+        // Si se proporciona fecha_hasta explícitamente, usarla
+        if ($fechaHasta) {
+            $fechaInicio = $fechaDel;
+            $fechaFin = $fechaHasta;
+        } else {
+            switch ($periodo) {
+                case 'HOY':
+                    $fechaInicio = $fechaFin = $fechaReferencia->toDateString();
+                    break;
+                case 'ESTA_SEMANA':
+                    $fechaInicio = $fechaReferencia->copy()->startOfWeek()->toDateString();
+                    $fechaFin = $fechaReferencia->copy()->endOfWeek()->toDateString();
+                    break;
+                case 'ESTE_MES':
+                    $fechaInicio = $fechaReferencia->copy()->startOfMonth()->toDateString();
+                    $fechaFin = $fechaReferencia->copy()->endOfMonth()->toDateString();
+                    break;
+                case 'ESTE_AÑO':
+                    $fechaInicio = $fechaReferencia->copy()->startOfYear()->toDateString();
+                    $fechaFin = $fechaReferencia->copy()->endOfYear()->toDateString();
+                    break;
+                case 'POR_FECHA':
+                    if ($fechaDel) {
+                        $fechaInicio = $fechaDel;
+                        $fechaFin = $fechaReferencia->copy()->addDays(30)->toDateString();
+                    }
+                    break;
+            }
+        }
+
+        // Query base con filtros
+        $query = Comprobante::query()
+            ->where('estado_sunat', 'aceptado')
+            ->where('anulado', false);
+
+        if ($fechaInicio && $fechaFin) {
+            $query->whereBetween('fecha_emision', [$fechaInicio, $fechaFin]);
+        }
+
+        // Nota: El parámetro establecimiento se recibe pero no se usa actualmente
+        // porque la tabla comprobantes no tiene columna establecimiento.
+        // Todos los comprobantes están filtrados por empresa_id de forma automática
+        // a través de los middleware de autenticación
+
+        // Obtener datos agrupados por mes y tipo de documento
+        $datos = $query->selectRaw("
+                TO_CHAR(fecha_emision, 'YYYY-MM') as mes,
+                tipo_doc,
+                SUM(mto_imp_venta) as total
+            ")
+            ->groupBy('mes', 'tipo_doc')
+            ->orderBy('mes')
+            ->get();
+
+        // Organizar datos por mes
+        $mesesData = [];
+        $meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        foreach ($datos as $dato) {
+            $mesNumero = (int)date('n', strtotime($dato->mes . '-01'));
+            $mesNombre = $meses[$mesNumero - 1];
+            
+            if (!isset($mesesData[$mesNombre])) {
+                $mesesData[$mesNombre] = [
+                    'mes' => $mesNombre,
+                    'facturas' => 0,
+                    'boletas' => 0,
+                    'notasVenta' => 0,
+                    'compras' => 0,
+                ];
+            }
+
+            // Mapear tipo_doc a categoría
+            switch ($dato->tipo_doc) {
+                case '01':
+                    $mesesData[$mesNombre]['facturas'] += (float)$dato->total;
+                    break;
+                case '03':
+                    $mesesData[$mesNombre]['boletas'] += (float)$dato->total;
+                    break;
+                case '07':
+                case '08':
+                    $mesesData[$mesNombre]['notasVenta'] += (float)$dato->total;
+                    break;
+            }
+        }
+
+        // Calcular totales
+        $totales = [
+            'mes' => 'Totales',
+            'facturas' => 0,
+            'boletas' => 0,
+            'notasVenta' => 0,
+            'compras' => 0,
+            'isTotal' => true,
+        ];
+
+        foreach ($mesesData as $mes) {
+            $totales['facturas'] += $mes['facturas'];
+            $totales['boletas'] += $mes['boletas'];
+            $totales['notasVenta'] += $mes['notasVenta'];
+            $totales['compras'] += $mes['compras'];
+        }
+
+        // Formatear para tabla
+        $dataTabla = array_map(function($mes) {
+            return [
+                'mes' => $mes['mes'],
+                'facturas' => number_format($mes['facturas'], 2),
+                'boletas' => number_format($mes['boletas'], 2),
+                'notasVenta' => number_format($mes['notasVenta'], 2),
+                'compras' => number_format($mes['compras'], 2),
+            ];
+        }, array_values($mesesData));
+
+        // Agregar totales a la tabla
+        $dataTabla[] = [
+            'mes' => 'Totales',
+            'facturas' => number_format($totales['facturas'], 2),
+            'boletas' => number_format($totales['boletas'], 2),
+            'notasVenta' => number_format($totales['notasVenta'], 2),
+            'compras' => number_format($totales['compras'], 2),
+            'isTotal' => true,
+        ];
+
+        return response()->json([
+            'chart' => array_values($mesesData), // Para el gráfico (sin formatear)
+            'table' => $dataTabla, // Para la tabla (formateado)
         ]);
     }
 }

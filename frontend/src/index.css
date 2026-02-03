@@ -103,10 +103,12 @@
   /* Nubofact Brand Colors */
   --nubofact-primary: 200 60% 19%;
   --nubofact-secondary: 200 52% 24%;
-  --nubofact-header: 203 46% 25%;
-  --nubofact-header-dark: 203 54% 19%;
+  --nubofact-header: 201 82% 44%; /* Azul vibrante de la captura para light mode */
+  --nubofact-header-dark: 201 82% 40%; /* Azul ligeramente más oscuro para tabs */
   --nubofact-background: 35 31% 80%;
   --nubofact-accent: 142 79% 73%;
+  --nubofact-logo-text: 255 255 255; /* Blanco para texto del logo */
+  --nubofact-logo-dot: 76 187 23; /* Verde para el punto */
 }
 
 .dark {
@@ -155,10 +157,12 @@
   /* Nubofact Brand Colors (dark mode) */
   --nubofact-primary: 200 60% 35%;
   --nubofact-secondary: 200 52% 30%;
-  --nubofact-header: 203 46% 25%;
-  --nubofact-header-dark: 203 54% 19%;
+  --nubofact-header: 203 46% 20%; /* Oscuro pero suficiente contraste */
+  --nubofact-header-dark: 203 54% 15%; /* Aún más oscuro para tabs */
   --nubofact-background: 35 20% 15%;
   --nubofact-accent: 142 79% 73%;
+  --nubofact-logo-text: 255 255 255; /* Blanco para texto del logo */
+  --nubofact-logo-dot: 76 187 23; /* Verde para el punto */
 }
 
 * {

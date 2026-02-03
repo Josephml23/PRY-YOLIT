@@ -45,6 +45,9 @@ export const dashboardApi = {
       periodo: filtros.periodo,
       fecha_del: filtros.fechaDel,
     });
+    if (filtros.fechaHasta) {
+      params.append('fecha_hasta', filtros.fechaHasta);
+    }
     const response = await api.get(`/v1/dashboard/stats?${params}`);
     return response.data;
   },
@@ -55,6 +58,9 @@ export const dashboardApi = {
       periodo: filtros.periodo,
       fecha_del: filtros.fechaDel,
     });
+    if (filtros.fechaHasta) {
+      params.append('fecha_hasta', filtros.fechaHasta);
+    }
     const response = await api.get(`/v1/dashboard/cpe-ranking?${params}`);
     return response.data;
   },
@@ -66,6 +72,9 @@ export const dashboardApi = {
       fecha_del: filtros.fechaDel,
       limit: limit.toString(),
     });
+    if (filtros.fechaHasta) {
+      params.append('fecha_hasta', filtros.fechaHasta);
+    }
     const response = await api.get(`/v1/dashboard/productos-top?${params}`);
     return response.data;
   },
@@ -77,6 +86,9 @@ export const dashboardApi = {
       fecha_del: filtros.fechaDel,
       limit: limit.toString(),
     });
+    if (filtros.fechaHasta) {
+      params.append('fecha_hasta', filtros.fechaHasta);
+    }
     const response = await api.get(`/v1/dashboard/clientes-top?${params}`);
     return response.data;
   },
@@ -87,6 +99,19 @@ export const dashboardApi = {
       per_page: perPage.toString(),
     });
     const response = await api.get(`/v1/dashboard/stock-minimo?${params}`);
+    return response.data;
+  },
+
+  getMonthlyComparison: async (filtros: DashboardFiltros) => {
+    const params = new URLSearchParams({
+      establecimiento: filtros.establecimiento,
+      periodo: filtros.periodo,
+      fecha_del: filtros.fechaDel,
+    });
+    if (filtros.fechaHasta) {
+      params.append('fecha_hasta', filtros.fechaHasta);
+    }
+    const response = await api.get(`/v1/dashboard/monthly-comparison?${params}`);
     return response.data;
   },
 };

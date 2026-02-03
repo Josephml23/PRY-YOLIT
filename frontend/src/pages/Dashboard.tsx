@@ -7,6 +7,9 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { CPERankingPanel } from "@/components/dashboard/CPERankingPanel";
 import { NotasVentaPanel } from "@/components/dashboard/NotasVentaPanel";
 import { TotalComprasPanel } from "@/components/dashboard/TotalComprasPanel";
+import { CPEDesglosePanelCompacto } from "@/components/dashboard/CPEDesglosePanelCompacto";
+import { NotasVentaDesglosePanelCompacto } from "@/components/dashboard/NotasVentaDesglosePanelCompacto";
+import { TotalesGeneralesPanel } from "@/components/dashboard/TotalesGeneralesPanel";
 import { ProductosTopTable } from "@/components/dashboard/ProductosTopTable";
 import { ClientesTopTable } from "@/components/dashboard/ClientesTopTable";
 import { StockMinimoTable } from "@/components/dashboard/StockMinimoTable";
@@ -18,7 +21,9 @@ import type {
   CPERankingItem,
   ProductoTopItem,
   ClienteTopItem,
-  StockMinimoProduct
+  StockMinimoProduct,
+  MonthlyComparisonData,
+  MonthlyTableRow
 } from "@/types";
 import { formatCurrencyKpi } from "@/lib/format";
 
@@ -30,10 +35,14 @@ export default function Dashboard() {
   const [clientesTop, setClientesTop] = useState<ClienteTopItem[]>([]);
   const [stockMinimo, setStockMinimo] = useState<StockMinimoProduct[]>([]);
   const [stockMinimoTotal, setStockMinimoTotal] = useState(0);
+  const [stockMinimoPage, setStockMinimoPage] = useState(1);
+  const [monthlyComparisonData, setMonthlyComparisonData] = useState<MonthlyComparisonData[]>([]);
+  const [monthlyTableData, setMonthlyTableData] = useState<MonthlyTableRow[]>([]);
   const [filtros, setFiltros] = useState<DashboardFiltros>({
     establecimiento: "1",
-    periodo: "ESTE_AÑO",
-    fechaDel: "2025-01-01", // Año con datos reales
+    periodo: "COMPLETO",
+    fechaDel: "2000-01-01", // Desde el inicio
+    fechaHasta: undefined,
   });
 
   const [stats, setStats] = useState<DashboardStats>({
@@ -115,7 +124,7 @@ export default function Dashboard() {
   useEffect(() => {
     const cargarStockMinimo = async () => {
       try {
-        const response = await dashboardApi.getStockMinimo();
+        const response = await dashboardApi.getStockMinimo(stockMinimoPage, 5);
         setStockMinimo(response.data);
         setStockMinimoTotal(response.total_pages);
       } catch (error) {
@@ -126,7 +135,23 @@ export default function Dashboard() {
     };
 
     cargarStockMinimo();
-  }, []);
+  }, [stockMinimoPage]);
+
+  useEffect(() => {
+    const cargarMonthlyComparison = async () => {
+      try {
+        const data = await dashboardApi.getMonthlyComparison(filtros);
+        setMonthlyComparisonData(data.chart);
+        setMonthlyTableData(data.table);
+      } catch (error) {
+        console.error("Error al cargar comparación mensual:", error);
+        setMonthlyComparisonData([]);
+        setMonthlyTableData([]);
+      }
+    };
+
+    cargarMonthlyComparison();
+  }, [filtros]);
 
   // React Best Practice: Memoize callbacks to prevent child re-renders
   const handleFiltrosChange = useCallback(
@@ -134,11 +159,16 @@ export default function Dashboard() {
       establecimiento: string;
       periodo: string;
       fechaDel: string;
+      fechaHasta?: string;
     }) => {
       setFiltros(nuevosFiltros as DashboardFiltros);
     },
     [],
   );
+
+  const handleStockMinimoPageChange = useCallback((page: number) => {
+    setStockMinimoPage(page);
+  }, []);
 
   // Datos mock para componentes de Figma
   const totalComprasData = useMemo(
@@ -163,186 +193,40 @@ export default function Dashboard() {
     [],
   );
 
-  const monthlyComparisonData = useMemo(
-    () => [
-      { month: "Enero", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-      { month: "Febrero", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-      {
-        month: "Marzo",
-        facturas: 11000,
-        boletas: 11000,
-        notasVenta: 0,
-        compras: 0,
-      },
-      { month: "Abril", facturas: 0, boletas: 0, notasVenta: 0, compras: 0 },
-      {
-        month: "Mayo",
-        facturas: 700,
-        boletas: 105556,
-        notasVenta: 57548,
-        compras: 57306,
-      },
-      {
-        month: "Junio",
-        facturas: 4373,
-        boletas: 93788,
-        notasVenta: 127273,
-        compras: 95692,
-      },
-      {
-        month: "Julio",
-        facturas: 2338,
-        boletas: 95787,
-        notasVenta: 102626,
-        compras: 104596,
-      },
-      {
-        month: "Agosto",
-        facturas: 2092,
-        boletas: 197212,
-        notasVenta: 25648,
-        compras: 95397,
-      },
-      {
-        month: "Septiembre",
-        facturas: 10006,
-        boletas: 193039,
-        notasVenta: 24107,
-        compras: 71079,
-      },
-      {
-        month: "Octubre",
-        facturas: 6137,
-        boletas: 194259,
-        notasVenta: 43107,
-        compras: 69260,
-      },
-      {
-        month: "Noviembre",
-        facturas: 7372,
-        boletas: 176532,
-        notasVenta: 120506,
-        compras: 80537,
-      },
-      {
-        month: "Diciembre",
-        facturas: 3549,
-        boletas: 157618,
-        notasVenta: 118917,
-        compras: 69042,
-      },
-    ],
-    [],
-  );
-
-  const monthlyTableData = useMemo(
-    () => [
-      {
-        mes: "Enero",
-        facturas: "S/0.00",
-        boletas: "S/0.00",
-        notasVenta: "S/7,741.50",
-        compras: "S/0.00",
-      },
-      {
-        mes: "Febrero",
-        facturas: "0.00",
-        boletas: "0.00",
-        notasVenta: "0.00",
-        compras: "0.00",
-      },
-      {
-        mes: "Marzo",
-        facturas: "0.00",
-        boletas: "0.00",
-        notasVenta: "0.00",
-        compras: "0.00",
-      },
-      {
-        mes: "Abril",
-        facturas: "0.00",
-        boletas: "0.00",
-        notasVenta: "0.00",
-        compras: "0.00",
-      },
-      {
-        mes: "Mayo",
-        facturas: "760.00",
-        boletas: "105,556.44",
-        notasVenta: "57,548.10",
-        compras: "57,306.75",
-      },
-      {
-        mes: "Junio",
-        facturas: "4,373.00",
-        boletas: "93,788.09",
-        notasVenta: "127,273.00",
-        compras: "95,692.25",
-      },
-      {
-        mes: "Julio",
-        facturas: "2,338.44",
-        boletas: "95,787.74",
-        notasVenta: "102,626.00",
-        compras: "104,596.01",
-      },
-      {
-        mes: "Agosto",
-        facturas: "2,092.00",
-        boletas: "197,212.05",
-        notasVenta: "25,648.00",
-        compras: "95,397.34",
-      },
-      {
-        mes: "Septiembre",
-        facturas: "10,006.00",
-        boletas: "193,039.69",
-        notasVenta: "24,107.00",
-        compras: "71,079.68",
-      },
-      {
-        mes: "Octubre",
-        facturas: "6,137.04",
-        boletas: "194,259.74",
-        notasVenta: "43,107.00",
-        compras: "69,260.05",
-      },
-      {
-        mes: "Noviembre",
-        facturas: "7,372.00",
-        boletas: "176,532.00",
-        notasVenta: "120,506.00",
-        compras: "80,537.30",
-      },
-      {
-        mes: "Diciembre",
-        facturas: "3,549.00",
-        boletas: "157,618.00",
-        notasVenta: "118,917.00",
-        compras: "69,042.62",
-      },
-      {
-        mes: "Totales",
-        facturas: "36,289.30",
-        boletas: "1,181,806.06",
-        notasVenta: "707,104.60",
-        compras: "540,914.65",
-        isTotal: true,
-      },
-    ],
-    [],
-  );
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-[#cbbfac]">
+        <NubofactHeader />
+        <div className="bg-[#cbbfae] py-3">
+          <div className="max-w-350 mx-auto px-16">
+            <div className="bg-primary rounded-[10px] p-4 h-24 animate-pulse"></div>
+          </div>
+        </div>
+        <div className="bg-[#cbbfac] pb-4">
+          <div className="max-w-350 mx-auto px-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-primary rounded-lg h-24 animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="pb-4">
+          <div className="max-w-350 mx-auto px-16">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground text-sm">Cargando datos del dashboard...</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#cbbfac]">
+    <div className="min-h-screen bg-[#cbbfac] transition-opacity duration-200">
       {/* Header Nubofact */}
       <NubofactHeader />
 
@@ -353,44 +237,50 @@ export default function Dashboard() {
             establecimiento={filtros.establecimiento}
             periodo={filtros.periodo}
             fechaDel={filtros.fechaDel}
+            fechaHasta={filtros.fechaHasta}
             onFiltrosChange={handleFiltrosChange}
           />
         </div>
       </div>
 
-      {/* Metrics Cards - fondo beige más claro */}
-      <div className="bg-[#cbbfac] pb-4">
+      {/* Metrics Cards - fondo beige más claro con fade-in */}
+      <div className="bg-[#cbbfac] pb-4 animate-in fade-in duration-300">
         <div className="max-w-350 mx-auto px-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-3">
             <MetricCard
               variant="nubofact"
               icon={FileText}
               title="CPE Emitidos"
               value={stats.cpeEmitidos.toString()}
+              className="lg:col-span-2"
             />
             <MetricCard
               variant="nubofact"
               icon={CreditCard}
               title="Total CPE"
               value={formatCurrencyKpi(stats.cpeTotal)}
+              className="lg:col-span-2"
             />
             <MetricCard
               variant="nubofact"
               icon={BarChart3}
-              title="Boletas de Venta"
+              title="Notas de Venta"
               value={formatCurrencyKpi(stats.boletasTotal)}
+              className="lg:col-span-2"
             />
             <MetricCard
               variant="nubofact"
               icon={Wallet}
               title="Total General"
               value={formatCurrencyKpi(stats.montoTotalGeneral)}
+              className="lg:col-span-2"
             />
             <MetricCard
               variant="nubofact"
               icon={Wallet}
               title="Utilidad Neta"
               value={formatCurrencyKpi(stats.utilidadNeta)}
+              className="lg:col-span-2"
             />
           </div>
         </div>
@@ -399,32 +289,59 @@ export default function Dashboard() {
       {/* Main Dashboard Content */}
       <div className="pb-4">
         <div className="max-w-350 mx-auto px-16 space-y-4">
+          {/* FILA 0: Nuevos paneles de desglose compactos */}
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            <CPEDesglosePanelCompacto 
+              totalPagado={stats.cpePagado}
+              totalPorPagar={stats.cpePorPagar}
+              total={stats.cpeTotal}
+              className="lg:col-span-3"
+            />
+            <NotasVentaDesglosePanelCompacto 
+              totalPagado={stats.boletasPagado}
+              totalPorPagar={stats.boletasPorPagar}
+              total={stats.boletasTotal}
+              className="lg:col-span-3"
+            />
+            <TotalesGeneralesPanel 
+              totalNotaVenta={stats.boletasTotal}
+              totalComprobantes={stats.cpeTotal}
+              totalGeneral={stats.montoTotalGeneral}
+              hourlyData={stats.ventasPorHora}
+              className="lg:col-span-4"
+            />
+          </div>
+
           {/* FILA 1: Paneles alineados con las métricas */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <CPERankingPanel data={cpeRanking} />
-            <NotasVentaPanel ingresos={234} egresos={219.63} flujo={23.32} />
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            <CPERankingPanel data={cpeRanking} className="lg:col-span-3" />
+            <NotasVentaPanel ingresos={234} egresos={219.63} flujo={23.32} className="lg:col-span-3" />
             <TotalComprasPanel
               totalCompras={totalComprasData.totalCompras}
               saldo={totalComprasData.saldo}
               monthlyData={totalComprasData.monthlyData}
+              className="lg:col-span-4"
             />
           </div>
 
-          {/* FILA 2: Tablas (3 columnas) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <ProductosTopTable data={productosTop} />
-            <ClientesTopTable data={clientesTop} />
+          {/* FILA 2: Tablas (3 columnas con StockMinimoTable más ancha) */}
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            <ProductosTopTable data={productosTop} className="lg:col-span-3" />
+            <ClientesTopTable data={clientesTop} className="lg:col-span-3" />
             <StockMinimoTable
               data={stockMinimo}
               totalPages={stockMinimoTotal}
+              currentPage={stockMinimoPage}
+              onPageChange={handleStockMinimoPageChange}
               onPedido={(id) => console.log("Pedido producto:", id)}
+              className="lg:col-span-4"
             />
           </div>
 
           {/* FILA 3: Gráfico grande y Tabla resumen (2 columnas) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MonthlyComparisonChart data={monthlyComparisonData} />
-            <MonthlyTable data={monthlyTableData} />
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
+            <MonthlyComparisonChart data={monthlyComparisonData} className="lg:col-span-5" />
+            <MonthlyTable data={monthlyTableData} className="lg:col-span-5" />
           </div>
         </div>
       </div>

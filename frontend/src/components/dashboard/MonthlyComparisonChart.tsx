@@ -1,14 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/format';
-
-interface MonthlyComparisonData {
-  month: string;
-  facturas: number;
-  boletas: number;
-  notasVenta: number;
-  compras: number;
-}
+import type { MonthlyComparisonData } from '@/types';
 
 interface MonthlyComparisonChartProps {
   data: MonthlyComparisonData[];
@@ -59,7 +52,7 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
           <BarChart width={520} height={400} data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
-              dataKey="month"
+              dataKey="mes"
               angle={-45}
               textAnchor="end"
               height={100}

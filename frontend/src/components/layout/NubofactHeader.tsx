@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
 
 const dashboardTabs = [
   { label: 'Dashboard', path: '/' },
-  { label: 'Dashboard gra', path: '/dashboard-grafico' },
+  { label: 'Dashboard Caja', path: '/dashboard-caja' },
 ];
 
 export function NubofactHeader() {
@@ -40,10 +40,38 @@ export function NubofactHeader() {
 
   return (
     <header className="bg-[hsl(var(--nubofact-header))] text-white">
-      {/* Top Bar - Altura reducida */}
-      <div className="flex items-center justify-between px-4 h-12">
-        {/* Navigation Menu */}
-        <div className="flex items-center gap-4">
+      {/* Top Bar - Altura ajustada para logo más grande */}
+      <div className="flex items-center justify-between px-4 h-16">
+        {/* Logo y Navigation Menu */}
+        <div className="flex items-center gap-8">
+          {/* Logo Nubefact - SVG inline, pegado a la izquierda */}
+          <div>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 170 32" 
+              height="40"
+              aria-label="Nubefact Logo"
+              style={{ display: 'block' }}
+            >
+              <text 
+                x="0" 
+                y="24" 
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+                fontWeight="800"
+                fontSize="32"
+                style={{ fill: 'rgb(var(--nubofact-logo-text))', transition: 'fill 0.3s ease' }}
+              >
+                Nubefact
+              </text>
+              
+              <circle 
+                cx="161" 
+                cy="18" 
+                r="6" 
+                style={{ fill: 'rgb(var(--nubofact-logo-dot))' }}
+              />
+            </svg>
+          </div>
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -91,10 +119,10 @@ export function NubofactHeader() {
             to={tab.path}
             onClick={() => setActiveTab(tab.path)}
             className={cn(
-              'px-6 py-2 text-sm transition-colors h-full flex items-center',
+              'px-6 py-2 text-sm transition-colors h-full flex items-center text-white',
               activeTab === tab.path
-                ? 'bg-gray-200 text-gray-900'
-                : 'text-white hover:bg-white/10'
+                ? 'hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground'
+                : 'hover:bg-white/10'
             )}
           >
             {tab.label}
