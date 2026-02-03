@@ -8,20 +8,64 @@ import {
   Archive, 
   BarChart3,
   ChevronDown,
-  User
+  User,
+  Users,
+  Truck,
+  UserCog,
+  Building2,
+  CreditCard,
+  Landmark,
+  Grid3x3,
+  Tag,
+  ListTree,
+  Ruler,
+  ArrowLeftRight,
+  UserCircle,
+  Grape,
+  TruckIcon,
+  Blocks,
+  TrendingUp,
+  CarIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
+
+interface DropdownItem {
+  label: string;
+  path: string;
+  icon: React.ElementType;
+}
 
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
   hasDropdown?: boolean;
+  dropdownItems?: DropdownItem[];
 }
 
+const mantenimientoItems: DropdownItem[] = [
+  { label: 'Clientes', path: '/mantenimiento/clientes', icon: Users },
+  { label: 'Proveedores', path: '/mantenimiento/proveedores', icon: Truck },
+  { label: 'Vendedores', path: '/mantenimiento/vendedores', icon: UserCircle },
+  { label: 'Personal de la empresa', path: '/mantenimiento/personal', icon: UserCog },
+  { label: 'Cuentas Bancarias', path: '/mantenimiento/cuentas-bancarias', icon: CreditCard },
+  { label: 'Bancos', path: '/mantenimiento/bancos', icon: Landmark },
+  { label: 'Categorías', path: '/mantenimiento/categorias', icon: Grid3x3 },
+  { label: 'Marcas', path: '/mantenimiento/marcas', icon: Tag },
+  { label: 'Atributos', path: '/mantenimiento/atributos', icon: ListTree },
+  { label: 'Unidades de Medida', path: '/mantenimiento/unidades-medida', icon: Ruler },
+  { label: 'Tipo de transacciones - Inventario', path: '/mantenimiento/tipo-transacciones', icon: ArrowLeftRight },
+  { label: 'Conductores', path: '/mantenimiento/conductores', icon: UserCircle },
+  { label: 'Verna Marcuana', path: '/mantenimiento/verna-marcuana', icon: Grape },
+  { label: 'Vehiculogístico', path: '/mantenimiento/vehiculogistico', icon: TruckIcon },
+  { label: 'Cada', path: '/mantenimiento/cada', icon: Blocks },
+  { label: 'Cirente', path: '/mantenimiento/cirente', icon: TrendingUp },
+  { label: 'Conductores', path: '/mantenimiento/conductores-2', icon: CarIcon },
+];
+
 const navItems: NavItem[] = [
-  { label: 'Mantenimiento', icon: Settings, path: '/mantenimiento', hasDropdown: true },
+  { label: 'Mantenimiento', icon: Settings, path: '/mantenimiento', hasDropdown: true, dropdownItems: mantenimientoItems },
   { label: 'Compras', icon: ShoppingCart, path: '/compras', hasDropdown: true },
   { label: 'Inventario', icon: Package, path: '/inventario', hasDropdown: true },
   { label: "CPE's", icon: FileText, path: '/cpes', hasDropdown: true },
@@ -37,6 +81,7 @@ const dashboardTabs = [
 export function NubofactHeader() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('/');
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
     <header className="bg-[hsl(var(--nubofact-header))] text-white">
@@ -75,20 +120,47 @@ export function NubofactHeader() {
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const isOpen = openDropdown === item.path;
+              
               return (
-                <Link
+                <div 
                   key={item.path}
-                  to={item.path}
-                  className={cn(
-                    'flex items-center gap-1 px-3 h-9 rounded text-sm transition-colors',
-                    'hover:bg-white/10',
-                    location.pathname === item.path && 'bg-white/20'
-                  )}
+                  className="relative"
+                  onMouseEnter={() => item.hasDropdown && setOpenDropdown(item.path)}
+                  onMouseLeave={() => item.hasDropdown && setOpenDropdown(null)}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                  {item.hasDropdown && <ChevronDown className="h-3.5 w-3.5" />}
-                </Link>
+                  <Link
+                    to={item.path}
+                    className={cn(
+                      'flex items-center gap-1 px-3 h-9 rounded text-sm transition-colors',
+                      'hover:bg-white/10',
+                      location.pathname === item.path && 'bg-white/20'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                    {item.hasDropdown && <ChevronDown className="h-3.5 w-3.5" />}
+                  </Link>
+                  
+                  {/* Dropdown Menu */}
+                  {item.hasDropdown && item.dropdownItems && isOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+                      {item.dropdownItems.map((dropdownItem) => {
+                        const DropdownIcon = dropdownItem.icon;
+                        return (
+                          <Link
+                            key={dropdownItem.path}
+                            to={dropdownItem.path}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                          >
+                            <DropdownIcon className="h-4 w-4 text-muted-foreground" />
+                            <span>{dropdownItem.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
