@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\NubefactController;
 use App\Http\Controllers\Api\NubefactSyncController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\SerieController;
+use App\Http\Controllers\Api\VendedorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -180,4 +181,11 @@ Route::prefix('v1')->group(function () {
     Route::patch('productos/{id}/restaurar', [ProductoController::class, 'restore']);
     Route::patch('productos/{id}/toggle-destacado', [ProductoController::class, 'toggleDestacado']);
     Route::post('productos/importar', [ProductoController::class, 'importar']);
+
+    // Vendedores
+    Route::get('vendedores', [VendedorController::class, 'index']);
+    Route::post('vendedores', [VendedorController::class, 'store']);
+    Route::get('vendedores/{id}', [VendedorController::class, 'show']);
+    Route::put('vendedores/{id}', [VendedorController::class, 'update']);
+    Route::delete('vendedores/{id}', [VendedorController::class, 'destroy']);
 });
