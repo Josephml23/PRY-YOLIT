@@ -257,6 +257,27 @@ export interface VehiculoFormData {
   activo: boolean;
 }
 
+export interface Conductor {
+  id: number;
+  tipo_documento: string;
+  numero_documento: string;
+  nombre: string;
+  licencia_conducir?: string;
+  telefono?: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface ConductorFormData {
+  tipo_documento: string;
+  numero_documento: string;
+  nombre: string;
+  licencia_conducir?: string;
+  telefono?: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

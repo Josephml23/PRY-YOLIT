@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\AtributoController;
 use App\Http\Controllers\Api\UnidadMedidaController;
 use App\Http\Controllers\Api\TransaccionController;
 use App\Http\Controllers\Api\VehiculoController;
+use App\Http\Controllers\Api\ConductorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -261,4 +262,11 @@ Route::prefix('v1')->group(function () {
     Route::get('vehiculos/{id}', [VehiculoController::class, 'show']);
     Route::put('vehiculos/{id}', [VehiculoController::class, 'update']);
     Route::delete('vehiculos/{id}', [VehiculoController::class, 'destroy']);
+
+    // Conductores
+    Route::get('conductores', [ConductorController::class, 'index']);
+    Route::post('conductores', [ConductorController::class, 'store']);
+    Route::get('conductores/{id}', [ConductorController::class, 'show']);
+    Route::put('conductores/{id}', [ConductorController::class, 'update']);
+    Route::delete('conductores/{id}', [ConductorController::class, 'destroy']);
 });
