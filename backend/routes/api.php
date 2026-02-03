@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\TransaccionController;
 use App\Http\Controllers\Api\VehiculoController;
 use App\Http\Controllers\Api\ConductorController;
 use App\Http\Controllers\Api\CompraController;
+use App\Http\Controllers\Api\DocumentoDigitalizadoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -277,4 +278,13 @@ Route::prefix('v1')->group(function () {
     Route::get('compras/{id}', [CompraController::class, 'show']);
     Route::put('compras/{id}', [CompraController::class, 'update']);
     Route::delete('compras/{id}', [CompraController::class, 'destroy']);
+
+    // Documentos Digitalizados (OCR de facturas)
+    Route::get('documentos-digitalizados', [DocumentoDigitalizadoController::class, 'index']);
+    Route::post('documentos-digitalizados/upload', [DocumentoDigitalizadoController::class, 'upload']);
+    Route::get('documentos-digitalizados/{id}', [DocumentoDigitalizadoController::class, 'show']);
+    Route::put('documentos-digitalizados/{id}', [DocumentoDigitalizadoController::class, 'update']);
+    Route::post('documentos-digitalizados/{id}/validar', [DocumentoDigitalizadoController::class, 'validar']);
+    Route::post('documentos-digitalizados/{id}/convertir-compra', [DocumentoDigitalizadoController::class, 'convertirACompra']);
+    Route::delete('documentos-digitalizados/{id}', [DocumentoDigitalizadoController::class, 'destroy']);
 });

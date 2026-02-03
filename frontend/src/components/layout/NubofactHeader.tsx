@@ -13,6 +13,7 @@ import {
   Truck,
   UserCog,
   CreditCard,
+  Scan,
   Landmark,
   Grid3x3,
   Tag,
@@ -60,6 +61,7 @@ const mantenimientoItems: DropdownItem[] = [
 const comprasItems: DropdownItem[] = [
   { label: 'Lista de Compras', path: '/compras/listas', icon: ClipboardList },
   { label: 'Nuevas Compras', path: '/compras/nuevas', icon: Plus },
+  { label: 'Digitalización de Documentos', path: '/compras/digitalizacion', icon: Scan },
 ];
 
 const navItems: NavItem[] = [

@@ -652,6 +652,25 @@ export const api = {
       apiClient.delete<ApiResponse<unknown>>(`/v1/compras/${id}`),
   },
 
+  documentosDigitalizados: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/documentos-digitalizados', { params }),
+    subir: (formData: FormData) =>
+      apiClient.post<ApiResponse<any>>('/v1/documentos-digitalizados/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }),
+    obtener: (id: number) =>
+      apiClient.get<ApiResponse<any>>(`/v1/documentos-digitalizados/${id}`),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/documentos-digitalizados/${id}`, data),
+    validar: (id: number) =>
+      apiClient.post<ApiResponse<any>>(`/v1/documentos-digitalizados/${id}/validar`),
+    convertirACompra: (id: number) =>
+      apiClient.post<ApiResponse<any>>(`/v1/documentos-digitalizados/${id}/convertir-compra`),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/documentos-digitalizados/${id}`),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>

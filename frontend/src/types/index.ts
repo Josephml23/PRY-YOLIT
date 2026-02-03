@@ -317,6 +317,69 @@ export interface CompraFormData {
   activo: boolean;
 }
 
+// Documentos Digitalizados (OCR de facturas)
+export interface DocumentoDigitalizado {
+  readonly id: number;
+  nombre_archivo: string;
+  ruta_archivo: string;
+  tipo_archivo: string;
+  tamano_archivo: number;
+  tipo_operacion: 'compra' | 'venta';
+  estado_procesamiento: 'pendiente' | 'procesando' | 'completado' | 'error';
+  error_mensaje: string | null;
+  datos_extraidos: any;
+  tipo_comprobante: string | null;
+  serie: string | null;
+  numero: string | null;
+  comprobante_completo: string | null;
+  fecha_emision: string | null;
+  entidad_tipo_doc: string | null;
+  entidad_num_doc: string | null;
+  entidad_razon_social: string | null;
+  entidad_direccion: string | null;
+  moneda: string | null;
+  subtotal: number | null;
+  igv: number | null;
+  total: number | null;
+  items_extraidos: ItemExtraido[] | null;
+  confianza_ocr: number | null;
+  requiere_validacion: boolean;
+  validado: boolean;
+  fecha_validacion: string | null;
+  validado_por: string | null;
+  compra_id: number | null;
+  venta_id: number | null;
+  activo: boolean;
+  readonly created_at?: string;
+  readonly created_by?: string;
+}
+
+export interface ItemExtraido {
+  codigo: string;
+  descripcion: string;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  igv?: number;
+  total?: number;
+}
+
+export interface DocumentoDigitalizadoFormData {
+  tipo_comprobante: string;
+  serie: string;
+  numero: string;
+  fecha_emision: string;
+  entidad_tipo_doc: string;
+  entidad_num_doc: string;
+  entidad_razon_social: string;
+  entidad_direccion: string;
+  moneda: string;
+  subtotal: number;
+  igv: number;
+  total: number;
+  items_extraidos: ItemExtraido[];
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {
