@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\BancoController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\MarcaController;
 use App\Http\Controllers\Api\AtributoController;
+use App\Http\Controllers\Api\UnidadMedidaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -237,4 +238,11 @@ Route::prefix('v1')->group(function () {
     Route::get('atributos/{id}', [AtributoController::class, 'show']);
     Route::put('atributos/{id}', [AtributoController::class, 'update']);
     Route::delete('atributos/{id}', [AtributoController::class, 'destroy']);
+
+    // Unidades de Medida
+    Route::get('unidades-medida', [UnidadMedidaController::class, 'index']);
+    Route::post('unidades-medida', [UnidadMedidaController::class, 'store']);
+    Route::get('unidades-medida/{id}', [UnidadMedidaController::class, 'show']);
+    Route::put('unidades-medida/{id}', [UnidadMedidaController::class, 'update']);
+    Route::delete('unidades-medida/{id}', [UnidadMedidaController::class, 'destroy']);
 });

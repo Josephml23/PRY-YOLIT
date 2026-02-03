@@ -583,6 +583,20 @@ export const api = {
       apiClient.delete<ApiResponse<unknown>>(`/v1/atributos/${id}`),
   },
 
+  // Unidades de Medida
+  unidadesMedida: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/unidades-medida', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<any>>(`/v1/unidades-medida/${id}`),
+    crear: (data: any) =>
+      apiClient.post<ApiResponse<any>>('/v1/unidades-medida', data),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/unidades-medida/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/unidades-medida/${id}`),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>

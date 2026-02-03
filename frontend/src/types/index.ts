@@ -208,6 +208,23 @@ export interface AtributoFormData {
   activo: boolean;
 }
 
+export interface UnidadMedida {
+  id: number;
+  codigo: string;
+  descripcion: string;
+  simbolo: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface UnidadMedidaFormData {
+  codigo: string;
+  descripcion: string;
+  simbolo: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {
