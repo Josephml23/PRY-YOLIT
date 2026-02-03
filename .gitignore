@@ -46,3 +46,6 @@ Thumbs.db
 # Examples - CSV files should not be committed
 /examples/*.csv
 !/examples/.gitkeep
+
+# Nubofact - temporary ignore
+/Nubofact
