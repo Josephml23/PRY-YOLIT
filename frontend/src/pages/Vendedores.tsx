@@ -38,7 +38,7 @@ export default function Vendedores() {
     try {
       const response = await api.vendedores.listar();
 
-      const vendedoresMapped: Vendedor[] = response.data.map((vendedor: any) => ({
+      const vendedoresMapped: Vendedor[] = response.data.map((vendedor: Vendedor) => ({
         id: vendedor.id,
         nombre: vendedor.nombre || '',
         email: vendedor.email || '',
