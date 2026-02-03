@@ -34,7 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function UnidadesMedida() {
@@ -294,9 +294,11 @@ export default function UnidadesMedida() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => handleEdit(unidad)}>
+                          <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(unidad.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>

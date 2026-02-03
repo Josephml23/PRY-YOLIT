@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -270,12 +270,14 @@ export default function Conductores() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(conductor)}>
+                            <Pencil className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(conductor)}
                             className="text-red-600"
                           >
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>

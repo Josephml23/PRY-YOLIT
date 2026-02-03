@@ -21,6 +21,8 @@ import {
   ArrowLeftRight,
   UserCircle,
   TruckIcon,
+  ClipboardList,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -55,9 +57,14 @@ const mantenimientoItems: DropdownItem[] = [
   { label: 'Vehículos de Transporte', path: '/mantenimiento/vehiculos', icon: TruckIcon },
 ];
 
+const comprasItems: DropdownItem[] = [
+  { label: 'Listas de Compras', path: '/compras/listas', icon: ClipboardList },
+  { label: 'Nuevas Compras', path: '/compras/nuevas', icon: Plus },
+];
+
 const navItems: NavItem[] = [
   { label: 'Mantenimiento', icon: Settings, path: '/mantenimiento', hasDropdown: true, dropdownItems: mantenimientoItems },
-  { label: 'Compras', icon: ShoppingCart, path: '/compras', hasDropdown: true },
+  { label: 'Compras', icon: ShoppingCart, path: '/compras', hasDropdown: true, dropdownItems: comprasItems },
   { label: 'Inventario', icon: Package, path: '/inventario', hasDropdown: true },
   { label: "CPE's", icon: FileText, path: '/cpes', hasDropdown: true },
   { label: 'Archivo De Caja', icon: Archive, path: '/archivo-caja', hasDropdown: true },
@@ -81,7 +88,7 @@ export function NubofactHeader() {
         {/* Logo y Navigation Menu */}
         <div className="flex items-center gap-8">
           {/* Logo Nubefact - SVG inline, pegado a la izquierda */}
-          <div>
+          <Link to="/" className="cursor-pointer" onClick={() => setActiveTab('/')}>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
               viewBox="0 0 170 32" 
@@ -107,7 +114,7 @@ export function NubofactHeader() {
                 style={{ fill: 'rgb(var(--nubofact-logo-dot))' }}
               />
             </svg>
-          </div>
+          </Link>
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
