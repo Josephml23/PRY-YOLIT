@@ -56,14 +56,8 @@ export function DashboardFilters({
       case 'COMPLETO':
         return { fechaDel: '2000-01-01', fechaHasta: undefined };
       case 'POR_FECHA': {
-        // Si no hay fechas definidas, usar periodo de un año por defecto
-        if (!fechaDel && !fechaHasta) {
-          return { fechaDel: '2025-01-01', fechaHasta: '2026-01-01' };
-        }
-        const nuevaFechaHasta = !fechaHasta && fechaDel
-          ? new Date(new Date(fechaDel).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          : fechaHasta;
-        return { fechaDel, fechaHasta: nuevaFechaHasta };
+        // Cargar periodo de un año por defecto (2025-01-01 a 2026-01-01)
+        return { fechaDel: '2025-01-01', fechaHasta: '2026-01-01' };
       }
       default:
         return { fechaDel, fechaHasta };
