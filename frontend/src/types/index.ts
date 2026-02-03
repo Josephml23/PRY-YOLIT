@@ -180,6 +180,19 @@ export interface CategoriaFormData {
   activo: boolean;
 }
 
+export interface Marca {
+  id: number;
+  nombre: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface MarcaFormData {
+  nombre: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

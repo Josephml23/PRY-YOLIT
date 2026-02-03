@@ -1,35 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, ChevronDown, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
-import { toast } from 'sonner';
-import { api } from '@/lib/api';
-import type { Categoria, CategoriaFormData } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import type { Marca, MarcaFormData } from '@/types';
 
-const initialFormData: CategoriaFormData = {
+const initialFormData: MarcaFormData = {
   nombre: '',
-  identificador: '',
   activo: true,
 };
 
-export default function Categorias() {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+export default function Marcas() {
+  const [marcas, setMarcas] = useState<Marca[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoFiltro, setTipoFiltro] = useState<'nombre'>('nombre');
   const [valorFiltro, setValorFiltro] = useState('');
@@ -37,68 +36,62 @@ export default function Categorias() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editingCategoria, setEditingCategoria] = useState<Categoria | null>(null);
-  const [formData, setFormData] = useState<CategoriaFormData>(initialFormData);
-  const [categoriaToDelete, setCategoriaToDelete] = useState<Categoria | null>(null);
+  const [editingMarca, setEditingMarca] = useState<Marca | null>(null);
+  const [formData, setFormData] = useState<MarcaFormData>(initialFormData);
+  const [marcaToDelete, setMarcaToDelete] = useState<Marca | null>(null);
 
   useEffect(() => {
-    const fetchCategorias = async () => {
+    const fetchMarcas = async () => {
       try {
-        const response = await api.categorias.listar();
-        setCategorias(response.data);
-      } catch {
-        toast.error('Error al cargar las categorías', {
-          duration: 4000,
-          closeButton: true,
-          style: {
-            background: 'var(--destructive)',
-            color: 'var(--destructive-foreground)',
-          },
-        });
+        setLoading(true);
+        const response = await api.marcas.listar();
+        setMarcas(response.data);
+      } catch (error) {
+        console.error('Error al cargar marcas:', error);
+        toast.error('Error al cargar las marcas');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategorias();
+    fetchMarcas();
   }, []);
 
-  const categoriasFiltradas = categorias.filter((categoria) => {
-    return categoria.nombre.toLowerCase().includes(valorFiltro.toLowerCase());
+  const marcasFiltradas = marcas.filter((marca) => {
+    return marca.nombre.toLowerCase().includes(valorFiltro.toLowerCase());
   });
 
-  const totalItems = categoriasFiltradas.length;
+  const totalItems = marcasFiltradas.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const categoriasPaginadas = categoriasFiltradas.slice(startIndex, endIndex);
+  const marcasPaginadas = marcasFiltradas.slice(startIndex, endIndex);
 
-  const handleEdit = (categoria: Categoria) => {
-    setEditingCategoria(categoria);
+  const handleEdit = (marca: Marca) => {
+    setEditingMarca(marca);
     setFormData({
-      nombre: categoria.nombre,
-      identificador: categoria.identificador || '',
-      activo: categoria.activo,
+      nombre: marca.nombre,
+      activo: marca.activo,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (categoria: Categoria) => {
-    setCategoriaToDelete(categoria);
+  const handleDelete = (marca: Marca) => {
+    setMarcaToDelete(marca);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
-    if (!categoriaToDelete) return;
+    if (!marcaToDelete) return;
 
     try {
-      await api.categorias.eliminar(categoriaToDelete.id);
-      setCategorias(categorias.filter((c) => c.id !== categoriaToDelete.id));
-      toast.success('Categoría eliminada exitosamente');
+      await api.marcas.eliminar(marcaToDelete.id);
+      setMarcas(marcas.filter((m) => m.id !== marcaToDelete.id));
+      toast.success('Marca eliminada exitosamente');
       setShowDeleteModal(false);
-      setCategoriaToDelete(null);
+      setMarcaToDelete(null);
     } catch {
-      toast.error('Error al eliminar la categoría');
+      toast.error('Error al eliminar la marca');
     }
   };
 
@@ -106,27 +99,28 @@ export default function Categorias() {
     e.preventDefault();
 
     try {
-      if (editingCategoria) {
-        const response = await api.categorias.actualizar(editingCategoria.id, formData);
-        setCategorias(categorias.map((c) => (c.id === editingCategoria.id ? response.data.data : c)));
-        toast.success('Categoría actualizada exitosamente');
+      if (editingMarca) {
+        const response = await api.marcas.actualizar(editingMarca.id, formData);
+        setMarcas(marcas.map((m) => (m.id === editingMarca.id ? response.data.data : m)));
+        toast.success('Marca actualizada exitosamente');
       } else {
-        const response = await api.categorias.crear(formData);
-        setCategorias([response.data.data, ...categorias]);
-        toast.success('Categoría creada exitosamente');
+        const response = await api.marcas.crear(formData);
+        setMarcas([response.data.data, ...marcas]);
+        toast.success('Marca creada exitosamente');
       }
+
       setShowModal(false);
       setFormData(initialFormData);
-      setEditingCategoria(null);
+      setEditingMarca(null);
     } catch {
-      toast.error(editingCategoria ? 'Error al actualizar la categoría' : 'Error al crear la categoría');
+      toast.error(editingMarca ? 'Error al actualizar la marca' : 'Error al crear la marca');
     }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setFormData(initialFormData);
-    setEditingCategoria(null);
+    setEditingMarca(null);
   };
 
   if (loading) {
@@ -144,7 +138,7 @@ export default function Categorias() {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Módulo de Categorías</h1>
+          <h1 className="text-xl font-semibold">Módulo de Marcas</h1>
           <Button
             onClick={() => setShowModal(true)}
             className="bg-green-600 hover:bg-green-700 text-white"
@@ -160,7 +154,7 @@ export default function Categorias() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1 text-foreground">
-                Categoría
+                Filtrar por
               </label>
               <select
                 id="tipo-filtro"
@@ -173,11 +167,11 @@ export default function Categorias() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-foreground">
-                Ubicar
+                Buscar
               </label>
               <Input
                 id="valor-filtro"
-                placeholder="Ubicar"
+                placeholder="Buscar"
                 value={valorFiltro}
                 onChange={(e) => setValorFiltro(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -188,8 +182,8 @@ export default function Categorias() {
                 className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto"
                 size="sm"
               >
-                <Download className="h-4 w-4 mr-1" />
-                Exportar
+                <FileDown className="h-4 w-4 mr-1" />
+                Excel
               </Button>
             </div>
           </div>
@@ -202,42 +196,33 @@ export default function Categorias() {
               <thead className="bg-primary text-primary-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Nombre</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Identificador</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Creado por</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Marca</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Creado Por Usuario</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Fecha creación</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Estado</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {categoriasPaginadas.map((categoria, index) => (
-                  <tr key={categoria.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                {marcasPaginadas.map((marca, index) => (
+                  <tr key={marca.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm text-foreground">
                       {startIndex + index + 1}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-foreground">
-                      {categoria.nombre}
+                      {marca.nombre}
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground">
-                      {categoria.identificador || '-'}
+                      {marca.created_by || '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground">
-                      {categoria.created_by || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground">
-                      {categoria.created_at ? new Date(categoria.created_at).toLocaleDateString('es-PE') : '-'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          categoria.activo
-                            ? 'bg-green-600 text-white dark:bg-green-600'
-                            : 'bg-red-600 text-white dark:bg-red-600'
-                        }`}
-                      >
-                        {categoria.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      {marca.created_at ? new Date(marca.created_at).toLocaleDateString('es-PE', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      }) : '-'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
@@ -252,12 +237,12 @@ export default function Categorias() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(categoria)}>
+                            <DropdownMenuItem onClick={() => handleEdit(marca)}>
                               <Pencil className="h-4 w-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => handleDelete(categoria)}
+                              onClick={() => handleDelete(marca)}
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -348,11 +333,11 @@ export default function Categorias() {
       <Dialog open={showModal} onOpenChange={handleCloseModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCategoria ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+            <DialogTitle>{editingMarca ? 'Editar Marca' : 'Nueva Marca'}</DialogTitle>
             <DialogDescription>
-              {editingCategoria 
-                ? 'Modifica los datos de la categoría existente.' 
-                : 'Completa los datos para crear una nueva categoría.'}
+              {editingMarca 
+                ? 'Modifica los datos de la marca existente.' 
+                : 'Completa los datos para crear una nueva marca.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -364,16 +349,7 @@ export default function Categorias() {
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                   required
-                  placeholder="Ingrese el nombre"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="identificador">Identificador</Label>
-                <Input
-                  id="identificador"
-                  value={formData.identificador}
-                  onChange={(e) => setFormData({ ...formData, identificador: e.target.value })}
-                  placeholder="Ingrese el identificador (opcional)"
+                  placeholder="Ingrese el nombre de la marca"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -392,7 +368,7 @@ export default function Categorias() {
                 Cancelar
               </Button>
               <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                {editingCategoria ? 'Actualizar' : 'Crear'}
+                {editingMarca ? 'Actualizar' : 'Crear'}
               </Button>
             </DialogFooter>
           </form>
@@ -405,7 +381,7 @@ export default function Categorias() {
           <DialogHeader>
             <DialogTitle>Confirmar eliminación</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas eliminar la categoría "{categoriaToDelete?.nombre}"? Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar la marca "{marcaToDelete?.nombre}"? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

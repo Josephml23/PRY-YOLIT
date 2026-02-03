@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\PersonalController;
 use App\Http\Controllers\Api\CuentaBancariaController;
 use App\Http\Controllers\Api\BancoController;
 use App\Http\Controllers\Api\CategoriaController;
+use App\Http\Controllers\Api\MarcaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -221,4 +222,11 @@ Route::prefix('v1')->group(function () {
     Route::get('categorias/{id}', [CategoriaController::class, 'show']);
     Route::put('categorias/{id}', [CategoriaController::class, 'update']);
     Route::delete('categorias/{id}', [CategoriaController::class, 'destroy']);
+
+    // Marcas
+    Route::get('marcas', [MarcaController::class, 'index']);
+    Route::post('marcas', [MarcaController::class, 'store']);
+    Route::get('marcas/{id}', [MarcaController::class, 'show']);
+    Route::put('marcas/{id}', [MarcaController::class, 'update']);
+    Route::delete('marcas/{id}', [MarcaController::class, 'destroy']);
 });
