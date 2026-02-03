@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
-import { UnidadMedida, UnidadMedidaFormData } from '@/types';
+import type { UnidadMedida, UnidadMedidaFormData } from '@/types';
+import { NubofactHeader } from '@/components/layout/NubofactHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,11 +62,7 @@ export default function UnidadesMedida() {
     activo: true,
   });
 
-  useEffect(() => {
-    fetchUnidades();
-  }, [currentPage, itemsPerPage]);
-
-  const fetchUnidades = async () => {
+  const fetchUnidades = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, unknown> = {
@@ -79,9 +76,18 @@ export default function UnidadesMedida() {
 
       const response = await api.unidadesMedida.listar(params);
       
-      if (response.data.success) {
-        setUnidades(response.data.data.data || []);
-        setTotalPages(response.data.data.last_page || 1);
+      // La API retorna la estructura Laravel paginada
+      const apiResponse = response.data as unknown as {
+        success: boolean;
+        data: {
+          data: UnidadMedida[];
+          last_page: number;
+        };
+      };
+      
+      if (apiResponse.success) {
+        setUnidades(apiResponse.data.data || []);
+        setTotalPages(apiResponse.data.last_page || 1);
       }
     } catch (error) {
       toast.error('Error al cargar las unidades de medida');
@@ -89,7 +95,11 @@ export default function UnidadesMedida() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, valorFiltro, tipoFiltro]);
+
+  useEffect(() => {
+    fetchUnidades();
+  }, [fetchUnidades]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -162,20 +172,31 @@ export default function UnidadesMedida() {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Listado de Unidad de Medida</h1>
-        <Button
-          onClick={handleNew}
-          className="bg-green-600 hover:bg-green-700 text-white"
-          size="sm"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Nuevo
-        </Button>
+  if (loading && unidades.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">Cargando...</div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <NubofactHeader />
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="bg-primary text-primary-foreground rounded-t-lg px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Listado de Unidad de Medida</h1>
+          <Button
+            onClick={handleNew}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Nuevo
+          </Button>
+        </div>
 
       {/* Filtros */}
       <div className="bg-muted/50 px-4 py-4 border-x border-border space-y-3">
@@ -476,6 +497,7 @@ export default function UnidadesMedida() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
