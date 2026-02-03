@@ -85,10 +85,11 @@ export default function Proveedores() {
         return proveedor.denominacion.toLowerCase().includes(valor);
       case 'ruc':
         return (proveedor.num_doc || '').toLowerCase().includes(valor);
-      case 'fecha':
+      case 'fecha': {
         if (!proveedor.created_at) return false;
         const fechaProveedor = new Date(proveedor.created_at).toISOString().split('T')[0];
         return fechaProveedor === valorFiltro;
+      }
       case 'zona':
         return (proveedor.direccion || '').toLowerCase().includes(valor);
       default:

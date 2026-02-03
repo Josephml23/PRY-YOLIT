@@ -85,10 +85,11 @@ export default function Clientes() {
         return cliente.denominacion.toLowerCase().includes(valor);
       case 'ruc':
         return (cliente.num_doc || '').toLowerCase().includes(valor);
-      case 'fecha':
+      case 'fecha': {
         if (!cliente.created_at) return false;
         const fechaCliente = new Date(cliente.created_at).toISOString().split('T')[0];
         return fechaCliente === valorFiltro;
+      }
       case 'zona':
         return (cliente.direccion || '').toLowerCase().includes(valor);
       default:
