@@ -165,6 +165,21 @@ export interface BancoFormData {
   activo: boolean;
 }
 
+export interface Categoria {
+  id: number;
+  nombre: string;
+  identificador?: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface CategoriaFormData {
+  nombre: string;
+  identificador?: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

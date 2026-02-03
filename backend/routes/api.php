@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\VendedorController;
 use App\Http\Controllers\Api\PersonalController;
 use App\Http\Controllers\Api\CuentaBancariaController;
 use App\Http\Controllers\Api\BancoController;
+use App\Http\Controllers\Api\CategoriaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -213,4 +214,11 @@ Route::prefix('v1')->group(function () {
     Route::put('bancos/{id}', [BancoController::class, 'update']);
     Route::delete('bancos/{id}', [BancoController::class, 'destroy']);
     Route::post('bancos/{id}/upload-image', [BancoController::class, 'uploadImage']);
+
+    // Categorías
+    Route::get('categorias', [CategoriaController::class, 'index']);
+    Route::post('categorias', [CategoriaController::class, 'store']);
+    Route::get('categorias/{id}', [CategoriaController::class, 'show']);
+    Route::put('categorias/{id}', [CategoriaController::class, 'update']);
+    Route::delete('categorias/{id}', [CategoriaController::class, 'destroy']);
 });

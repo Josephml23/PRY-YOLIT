@@ -541,6 +541,20 @@ export const api = {
       }),
   },
 
+  // Categorías
+  categorias: {
+    listar: (params?: Record<string, unknown>) =>
+      apiClient.get<any[]>('/v1/categorias', { params }),
+    obtener: (id: number) => 
+      apiClient.get<ApiResponse<any>>(`/v1/categorias/${id}`),
+    crear: (data: any) =>
+      apiClient.post<ApiResponse<any>>('/v1/categorias', data),
+    actualizar: (id: number, data: any) =>
+      apiClient.put<ApiResponse<any>>(`/v1/categorias/${id}`, data),
+    eliminar: (id: number) =>
+      apiClient.delete<ApiResponse<unknown>>(`/v1/categorias/${id}`),
+  },
+
   // Series de facturación
   series: {
     listar: (params?: Record<string, unknown>) =>
