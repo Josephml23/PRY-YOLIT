@@ -26,11 +26,11 @@ export default function Proveedores() {
   const [valorFiltro, setValorFiltro] = useState('');
   const [filtroACuenta, setFiltroACuenta] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProveedor, setSelectedProveedor] = useState<Proveedor | null>(null);
   const [formData, setFormData] = useState<ProveedorFormData>(initialFormData);
-  const itemsPerPage = 10;
 
   const fetchProveedores = useCallback(async () => {
     try {
@@ -393,60 +393,72 @@ export default function Proveedores() {
           </div>
 
           {/* Paginación */}
-          {proveedoresFiltrados.length > 0 && (
-            <div className="px-4 py-3 border-t border-border bg-muted/30">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="text-sm text-muted-foreground">
-                  Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, proveedoresFiltrados.length)} de {proveedoresFiltrados.length} proveedores
-                </div>
-                {totalPages > 1 && (
-                  <div className="flex gap-1 flex-wrap">
+          <div className="px-4 py-3 border-t border-border bg-muted/30">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mostrar</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <span className="text-sm text-muted-foreground">
+                  registros | Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, proveedoresFiltrados.length)} de {proveedoresFiltrados.length}
+                </span>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let page;
+                  if (totalPages <= 5) {
+                    page = i + 1;
+                  } else if (currentPage <= 3) {
+                    page = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    page = totalPages - 4 + i;
+                  } else {
+                    page = currentPage - 2 + i;
+                  }
+                  return (
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 text-sm border border-border rounded transition-colors ${
+                        currentPage === page
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background hover:bg-muted'
+                      }`}
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Anterior
+                      {page}
                     </button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let page;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
-                      }
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`px-3 py-1 text-sm border border-border rounded transition-colors ${
-                            currentPage === page
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-background hover:bg-muted'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                    >
-                      Siguiente
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
