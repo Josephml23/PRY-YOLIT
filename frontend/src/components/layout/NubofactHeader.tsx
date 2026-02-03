@@ -12,7 +12,6 @@ import {
   Users,
   Truck,
   UserCog,
-  Building2,
   CreditCard,
   Landmark,
   Grid3x3,
@@ -21,11 +20,7 @@ import {
   Ruler,
   ArrowLeftRight,
   UserCircle,
-  Grape,
   TruckIcon,
-  Blocks,
-  TrendingUp,
-  CarIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -57,11 +52,7 @@ const mantenimientoItems: DropdownItem[] = [
   { label: 'Unidades de Medida', path: '/mantenimiento/unidades-medida', icon: Ruler },
   { label: 'Tipo de transacciones - Inventario', path: '/mantenimiento/tipo-transacciones', icon: ArrowLeftRight },
   { label: 'Conductores', path: '/mantenimiento/conductores', icon: UserCircle },
-  { label: 'Verna Marcuana', path: '/mantenimiento/verna-marcuana', icon: Grape },
-  { label: 'Vehiculogístico', path: '/mantenimiento/vehiculogistico', icon: TruckIcon },
-  { label: 'Cada', path: '/mantenimiento/cada', icon: Blocks },
-  { label: 'Cirente', path: '/mantenimiento/cirente', icon: TrendingUp },
-  { label: 'Conductores', path: '/mantenimiento/conductores-2', icon: CarIcon },
+  { label: 'Vehículos de Transporte', path: '/mantenimiento/vehiculos-transporte', icon: TruckIcon },
 ];
 
 const navItems: NavItem[] = [
