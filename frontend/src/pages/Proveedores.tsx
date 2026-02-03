@@ -423,7 +423,7 @@ export default function Proveedores() {
                   <ChevronLeft className="h-4 w-4" />
                   Anterior
                 </button>
-                {totalPages > 0 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                {totalPages >= 1 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let page;
                   if (totalPages <= 5) {
                     page = i + 1;
