@@ -159,14 +159,14 @@ export function NubofactHeader() {
                   
                   {/* Dropdown Menu */}
                   {item.hasDropdown && item.dropdownItems && isOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-md shadow-lg z-50 py-1">
+                    <div className="absolute top-full left-0 w-64 bg-card border border-border rounded-md shadow-lg z-50 pt-1">
                       {item.dropdownItems.map((dropdownItem) => {
                         const DropdownIcon = dropdownItem.icon;
                         return (
                           <Link
                             key={dropdownItem.path}
                             to={dropdownItem.path}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors first:rounded-t-md last:rounded-b-md"
                             onClick={() => setOpenDropdown(null)}
                           >
                             <DropdownIcon className="h-4 w-4 text-muted-foreground" />
