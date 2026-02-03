@@ -17,7 +17,6 @@ const initialFormData: ClienteFormData = {
   direccion: '',
   email: '',
   telefono: '',
-  a_cuenta: false,
 };
 
 export default function Clientes() {
@@ -25,7 +24,7 @@ export default function Clientes() {
   const [loading, setLoading] = useState(true);
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroBuscar, setFiltroBuscar] = useState('');
-  const [filtroCuenta, setFiltroCuenta] = useState('');
+  const [filtroACuenta, setFiltroACuenta] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -101,7 +100,6 @@ export default function Clientes() {
       direccion: cliente.direccion || '',
       email: cliente.email || '',
       telefono: cliente.telefono || '',
-      a_cuenta: cliente.a_cuenta || false,
     });
     setIsEditModalOpen(true);
   };
@@ -264,16 +262,21 @@ export default function Clientes() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 text-foreground">
-                A cuenta
-              </label>
-              <input
-                type="text"
-                value={filtroCuenta}
-                onChange={(e) => setFiltroCuenta(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Cuenta..."
-              />
+              <div className="flex items-center space-x-2 h-full pt-6">
+                <input
+                  type="checkbox"
+                  id="filtro-a-cuenta"
+                  checked={filtroACuenta}
+                  onChange={(e) => {
+                    setFiltroACuenta(e.target.checked);
+                    setCurrentPage(1);
+                  }}
+                  className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                />
+                <label htmlFor="filtro-a-cuenta" className="text-sm font-medium text-foreground cursor-pointer">
+                  A cuenta
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -488,19 +491,6 @@ export default function Clientes() {
                   onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                 />
               </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="a_cuenta"
-                checked={formData.a_cuenta || false}
-                onChange={(e) => setFormData({ ...formData, a_cuenta: e.target.checked })}
-                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              />
-              <Label htmlFor="a_cuenta" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                A cuenta
-              </Label>
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

@@ -48,7 +48,6 @@ export interface ClienteFormData {
   direccion: string;
   email: string;
   telefono: string;
-  a_cuenta?: boolean;
 }
 
 // --- Props de componentes compartidos ---
