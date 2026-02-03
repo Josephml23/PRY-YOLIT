@@ -108,6 +108,67 @@ export interface DashboardFiltros {
   fechaDel: string;
 }
 
+export interface CPERankingItem {
+  /** Nombre del tipo de comprobante (Facturas, Boletas, etc.) */
+  name: string;
+  /** Cantidad de comprobantes de este tipo */
+  value: number;
+  /** Porcentaje del total */
+  percentage: number;
+}
+
+export interface ProductoTopItem {
+  /** ID del producto en el ranking */
+  id: number;
+  /** Nombre del producto */
+  producto: string;
+  /** Unidad de medida */
+  unidad: string;
+  /** Precio unitario de venta con IGV */
+  precio_unitario: number;
+  /** Cantidad total vendida */
+  cantidad: number;
+  /** Monto total de ventas */
+  total: number;
+}
+
+export interface ClienteTopItem {
+  /** ID del cliente en el ranking */
+  id: number;
+  /** Nombre del cliente */
+  cliente: string;
+  /** Cantidad de transacciones */
+  transacciones: number;
+  /** Monto total de compras */
+  total: number;
+}
+
+export interface StockMinimoProduct {
+  /** ID del producto */
+  id: number;
+  /** Nombre del producto */
+  producto: string;
+  /** Stock actual */
+  stock: string | number;
+  /** Estado del stock */
+  estado: 'AGOTADO' | 'BAJO' | 'CRITICO';
+  /** Almacén donde se encuentra */
+  almacen: string;
+}
+
+export interface StockMinimoResponse {
+  /** Array de productos */
+  data: StockMinimoProduct[];
+  /** Total de productos con stock mínimo */
+  total: number;
+  /** Página actual */
+  current_page: number;
+  /** Items por página */
+  per_page: number;
+  /** Total de páginas */
+  total_pages: number;
+}
+
 export interface DashboardStats {
   /** Cantidad total de CPE emitidos (todos los tipos) */
   cpeEmitidos: number;
@@ -119,14 +180,14 @@ export interface DashboardStats {
   cpePorPagar: number;
   /** Monto total de CPE */
   cpeTotal: number;
-  /** Monto total de Boletas de Venta (Notas de Venta) */
-  totalNotasVenta: number;
+  /** Monto total de Boletas de Venta (tipo_doc 03) */
+  totalBoletas: number;
   /** Monto pagado de Boletas */
-  notasVentaPagado: number;
+  boletasPagado: number;
   /** Monto por pagar de Boletas */
-  notasVentaPorPagar: number;
+  boletasPorPagar: number;
   /** Monto total de Boletas */
-  notasVentaTotal: number;
+  boletasTotal: number;
   /** Monto total general (CPE + Boletas) */
   montoTotalGeneral: number;
   /** Utilidad neta calculada (Ingresos - Egresos) */

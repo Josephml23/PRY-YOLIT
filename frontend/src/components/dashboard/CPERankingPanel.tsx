@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface CPERankingItem {
   name: string;
   value: number | string;
-  percentage?: number; // Para la barra de progreso (0-100)
+  percentage?: number;
 }
 
 interface CPERankingPanelProps {
@@ -11,21 +11,20 @@ interface CPERankingPanelProps {
   className?: string;
 }
 
-/**
- * CPERankingPanel Component
- * Panel de ranking de CPE con barras de progreso (diseño Nubofact)
- */
-// Vercel Best Practice: Memoize expensive calculations
 export function CPERankingPanel({ data, className }: CPERankingPanelProps) {
-  // Calcular el máximo para las barras de progreso si no viene porcentaje
   const maxValue = Math.max(...data.map(item => typeof item.value === 'number' ? item.value : 0));
 
   return (
-    <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
-        <CardTitle className="text-sm font-semibold">CPE</CardTitle>
+    // 'p-0' elimina el margen interno de la tarjeta para que el header toque los bordes
+    // 'border-0' es opcional si quieres quitar el borde gris fino
+    <Card className={`overflow-hidden shadow-md p-0 ${className}`}>
+      
+      {/* 'py-2' reduce la altura de la barra azul para que esté más ajustada al texto */}
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-2 space-y-0">
+        <CardTitle className="text-sm font-semibold">CPE Emitidos</CardTitle>
       </CardHeader>
-      <CardContent className="bg-muted p-4 min-h-70">
+
+      <CardContent className="bg-muted px-4 py-3">
         <div className="space-y-2">
           {data.map((item, index) => {
             const barWidth = item.percentage 

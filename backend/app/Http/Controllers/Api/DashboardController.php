@@ -8,6 +8,7 @@ use App\Models\Oportunidad;
 use App\Models\Empresa;
 use App\Models\Alerta;
 use App\Models\Entidad;
+use App\Models\Producto;
 use App\Services\SlaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -286,9 +287,9 @@ class DashboardController extends Controller
             COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') THEN mto_imp_venta ELSE 0 END), 0) as total_cpe,
             COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') AND pagado = true THEN mto_imp_venta ELSE 0 END), 0) as cpe_pagado,
             COALESCE(SUM(CASE WHEN tipo_doc IN ('01', '07', '08') AND (pagado = false OR pagado IS NULL) THEN mto_imp_venta ELSE 0 END), 0) as cpe_por_pagar,
-            COALESCE(SUM(CASE WHEN tipo_doc = '03' THEN mto_imp_venta ELSE 0 END), 0) as total_notas_venta,
-            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND pagado = true THEN mto_imp_venta ELSE 0 END), 0) as notas_venta_pagado,
-            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND (pagado = false OR pagado IS NULL) THEN mto_imp_venta ELSE 0 END), 0) as notas_venta_por_pagar,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' THEN mto_imp_venta ELSE 0 END), 0) as total_boletas,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND pagado = true THEN mto_imp_venta ELSE 0 END), 0) as boletas_pagado,
+            COALESCE(SUM(CASE WHEN tipo_doc = '03' AND (pagado = false OR pagado IS NULL) THEN mto_imp_venta ELSE 0 END), 0) as boletas_por_pagar,
             COALESCE(SUM(mto_imp_venta), 0) as ingresos
         ")
             ->whereIn('tipo_doc', ['01', '03', '07', '08'])
@@ -305,9 +306,9 @@ class DashboardController extends Controller
         $totalCPE = $stats->total_cpe;
         $cpePagado = $stats->cpe_pagado;
         $cpePorPagar = $stats->cpe_por_pagar;
-        $totalNotasVenta = $stats->total_notas_venta;
-        $notasVentaPagado = $stats->notas_venta_pagado;
-        $notasVentaPorPagar = $stats->notas_venta_por_pagar;
+        $totalBoletas = $stats->total_boletas;
+        $boletasPagado = $stats->boletas_pagado;
+        $boletasPorPagar = $stats->boletas_por_pagar;
         $ingresos = $stats->ingresos;
         $egresos = 0; // TODO: implementar cuando exista módulo de compras
         $utilidadNeta = $ingresos - $egresos;
@@ -321,10 +322,10 @@ class DashboardController extends Controller
             'cpePagado' => round($cpePagado, 2),
             'cpePorPagar' => round($cpePorPagar, 2),
             'cpeTotal' => round($totalCPE, 2),
-            'totalNotasVenta' => round($totalNotasVenta, 2),
-            'notasVentaPagado' => round($notasVentaPagado, 2),
-            'notasVentaPorPagar' => round($notasVentaPorPagar, 2),
-            'notasVentaTotal' => round($totalNotasVenta, 2),
+            'totalBoletas' => round($totalBoletas, 2),
+            'boletasPagado' => round($boletasPagado, 2),
+            'boletasPorPagar' => round($boletasPorPagar, 2),
+            'boletasTotal' => round($totalBoletas, 2),
             'montoTotalGeneral' => round($ingresos, 2),
             'utilidadNeta' => round($utilidadNeta, 2),
             'ventasPorHora' => $ventasPorHora,
@@ -394,4 +395,212 @@ class DashboardController extends Controller
 
         return $ventasPorHora;
     }
+
+    /**
+     * Dashboard Section 2: Ranking de CPE por establecimiento
+     * GET /api/dashboard/cpe-ranking?establecimiento=1&periodo=ESTE_AÑO&fecha_del=2026-01-01
+     */
+    public function getCPERanking(Request $request): JsonResponse
+    {
+        $establecimiento = $request->get('establecimiento', '1');
+        $periodo = $request->get('periodo', 'ESTE_MES');
+        $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+
+        // Calcular fecha_hasta según período
+        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+
+        // Obtener ranking de CPE por tipo de comprobante
+        $rankingData = Comprobante::selectRaw("
+            tipo_doc,
+            COUNT(*) as value
+        ")
+            ->whereIn('tipo_doc', ['01', '03', '07', '08'])
+            ->whereDate('fecha_emision', '>=', $fechaDel)
+            ->whereDate('fecha_emision', '<=', $fechaHasta)
+            ->where('estado_sunat', 'aceptado')
+            ->where(function($q) {
+                $q->whereNull('anulado')
+                  ->orWhere('anulado', false);
+            })
+            ->groupBy('tipo_doc')
+            ->pluck('value', 'tipo_doc');
+
+        // Calcular total para porcentajes
+        $total = $rankingData->sum();
+
+        // Definir todas las categorías de CPE con valores por defecto
+        $allCategories = [
+            '01' => 'Facturas',
+            '03' => 'Boletas',
+            '07' => 'Notas de Crédito',
+            '08' => 'Notas de Débito',
+        ];
+
+        // Construir ranking con todas las categorías
+        $ranking = collect($allCategories)->map(function($name, $tipo_doc) use ($rankingData, $total) {
+            $value = $rankingData->get($tipo_doc, 0);
+            $percentage = $total > 0 ? round(($value / $total) * 100, 0) : 0;
+
+            return [
+                'name' => $name,
+                'value' => (int)$value,
+                'percentage' => (int)$percentage
+            ];
+        })->values();
+
+        return response()->json($ranking);
+    }
+
+    /**
+     * Obtiene el ranking de productos top por ventas
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getProductosTop(Request $request): JsonResponse
+    {
+        $establecimiento = $request->get('establecimiento', '1');
+        $periodo = $request->get('periodo', 'ESTE_MES');
+        $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $limit = $request->get('limit', 5);
+        
+        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+
+        $productosTop = DB::table('comprobante_items as ci')
+            ->join('comprobantes as c', 'ci.comprobante_id', '=', 'c.id')
+            ->leftJoin('productos as p', 'ci.codigo_producto', '=', 'p.codigo')
+            ->select([
+                'ci.codigo_producto',
+                'ci.descripcion as producto',
+                'ci.unidad',
+                DB::raw('COALESCE(p.precio_venta_unitario, ci.mto_precio_unitario) as precio_unitario'),
+                DB::raw('SUM(ci.cantidad) as cantidad'),
+                DB::raw('SUM(ci.mto_valor_venta + COALESCE(ci.igv, 0)) as total')
+            ])
+            ->whereDate('c.fecha_emision', '>=', $fechaDel)
+            ->whereDate('c.fecha_emision', '<=', $fechaHasta)
+            ->where('c.estado_sunat', 'aceptado')
+            ->where(function($q) {
+                $q->whereNull('c.anulado')->orWhere('c.anulado', false);
+            })
+            ->groupBy('ci.codigo_producto', 'ci.descripcion', 'ci.unidad', 'p.precio_venta_unitario', 'ci.mto_precio_unitario')
+            ->orderByRaw('SUM(ci.mto_valor_venta + COALESCE(ci.igv, 0)) DESC')
+            ->limit($limit)
+            ->get()
+            ->values()
+            ->map(function($item, $index) {
+                return [
+                    'id' => $index + 1,
+                    'producto' => $item->producto,
+                    'unidad' => $item->unidad ?? 'NIU',
+                    'precio_unitario' => (float)$item->precio_unitario,
+                    'cantidad' => (float)$item->cantidad,
+                    'total' => (float)$item->total
+                ];
+            });
+
+        return response()->json($productosTop);
+    }
+
+    /**
+     * Obtiene el ranking de clientes top por ventas
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientesTop(Request $request): JsonResponse
+    {
+        $establecimiento = $request->get('establecimiento', '1');
+        $periodo = $request->get('periodo', 'ESTE_MES');
+        $fechaDel = $request->get('fecha_del', now()->format('Y-m-d'));
+        $limit = $request->get('limit', 5);
+        
+        $fechaHasta = $this->calcularFechaHasta($periodo, $fechaDel);
+
+        $clientesTop = Comprobante::select([
+                'cliente_razon_social as cliente',
+                DB::raw('COUNT(*) as transacciones'),
+                DB::raw('SUM(mto_imp_venta) as total')
+            ])
+            ->whereDate('fecha_emision', '>=', $fechaDel)
+            ->whereDate('fecha_emision', '<=', $fechaHasta)
+            ->where('estado_sunat', 'aceptado')
+            ->where(function($q) {
+                $q->whereNull('anulado')->orWhere('anulado', false);
+            })
+            ->whereNotNull('cliente_razon_social')
+            ->where('cliente_razon_social', '!=', '')
+            ->groupBy('cliente_razon_social')
+            ->orderByRaw('SUM(mto_imp_venta) DESC')
+            ->limit($limit)
+            ->get()
+            ->values()
+            ->map(function($item, $index) {
+                return [
+                    'id' => $index + 1,
+                    'cliente' => $item->cliente,
+                    'transacciones' => (int)$item->transacciones,
+                    'total' => (float)$item->total
+                ];
+            });
+
+        return response()->json($clientesTop);
+    }
+
+    /**
+     * Obtiene productos con stock mínimo
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getStockMinimo(Request $request): JsonResponse
+    {
+        $limit = $request->get('limit', 10);
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 5);
+
+        $productos = Producto::select([
+                'id',
+                'descripcion as producto',
+                'stock_actual as stock',
+                DB::raw("CASE 
+                    WHEN stock_actual = 0 THEN 'AGOTADO'
+                    WHEN stock_actual <= stock_minimo * 0.3 THEN 'CRITICO'
+                    WHEN stock_actual <= stock_minimo THEN 'BAJO'
+                    ELSE 'NORMAL'
+                END as estado"),
+                DB::raw("'Oficina Principal' as almacen")
+            ])
+            ->where(function($q) {
+                $q->where('stock_actual', '<=', DB::raw('stock_minimo'))
+                  ->orWhere('stock_actual', '=', 0);
+            })
+            ->where('activo', true)
+            ->orderByRaw("CASE 
+                WHEN stock_actual = 0 THEN 1
+                WHEN stock_actual <= stock_minimo * 0.3 THEN 2
+                WHEN stock_actual <= stock_minimo THEN 3
+                ELSE 4
+            END")
+            ->orderBy('stock_actual', 'asc')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'producto' => $item->producto,
+                    'stock' => number_format((float)$item->stock, 2),
+                    'estado' => $item->estado,
+                    'almacen' => $item->almacen
+                ];
+            });
+
+        return response()->json([
+            'data' => $productos->forPage($page, $perPage)->values(),
+            'total' => $productos->count(),
+            'current_page' => (int)$page,
+            'per_page' => (int)$perPage,
+            'total_pages' => ceil($productos->count() / $perPage)
+        ]);
+    }
 }
+

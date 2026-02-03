@@ -1,59 +1,50 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Vercel Best Practice: Extract default values as constants
-const DEFAULT_CHART_DATA: number[] = [20, 30, 50, 70, 40];
-
 interface NotasVentaPanelProps {
   ingresos: number;
   egresos: number;
   flujo: number;
-  chartData?: number[]; // Array de valores para el gráfico de barras
   className?: string;
 }
 
 /**
  * NotasVentaPanel Component
- * Panel de Notas de Venta con métricas y gráfico vertical (diseño Nubofact)
+ * Panel de Utilidades/Ganancias con métricas (diseño Nubofact)
  */
 export function NotasVentaPanel({ 
   ingresos, 
   egresos, 
   flujo, 
-  chartData = DEFAULT_CHART_DATA,
   className 
 }: NotasVentaPanelProps) {
   const [consultarGrafos, setConsultarGrafos] = useState(false);
   const [filtrarProducto, setFiltrarProducto] = useState(false);
 
-  // React Best Practice: Memoize computed values
-  const maxValue = Math.max(...chartData);
-  const normalizedData = chartData.map(val => (val / maxValue) * 100);
-
   return (
-    <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
-        <CardTitle className="text-sm font-semibold">Notas de Venta</CardTitle>
+    <Card className={`overflow-hidden shadow-md p-0 ${className}`}>
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-2 space-y-0">
+        <CardTitle className="text-sm font-semibold">Utilidades/Ganancias</CardTitle>
       </CardHeader>
-      <CardContent className="bg-muted p-4 min-h-70">
+      <CardContent className="bg-muted px-4 py-3">
         {/* Métricas */}
         <div className="flex justify-around mb-4">
           <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">Ingresos</div>
-            <div className="text-white text-lg font-semibold">{ingresos}</div>
+            <div className="text-xxs text-muted-foreground mb-1">Ingresos</div>
+            <div className="text-foreground text-lg font-semibold">{ingresos}</div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">Egresos</div>
-            <div className="text-white text-lg font-semibold">{egresos.toFixed(2)}</div>
+            <div className="text-xxs text-muted-foreground mb-1">Egresos</div>
+            <div className="text-foreground text-lg font-semibold">{egresos.toFixed(2)}</div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">M Flujo</div>
-            <div className="text-white text-lg font-semibold">{flujo.toFixed(2)}</div>
+            <div className="text-xxs text-muted-foreground mb-1">Utilidad</div>
+            <div className="text-foreground text-lg font-semibold">{flujo.toFixed(2)}</div>
           </div>
         </div>
 
         {/* Filtros */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -63,7 +54,7 @@ export function NotasVentaPanel({
               onChange={(e) => setConsultarGrafos(e.target.checked)}
             />
             <label htmlFor="consultar" className="text-xs text-foreground cursor-pointer">
-              Consultar gráfos:
+              Consultar gastos
             </label>
           </div>
           <div className="flex items-center gap-2">
@@ -78,21 +69,6 @@ export function NotasVentaPanel({
               Filtrar por producto
             </label>
           </div>
-        </div>
-
-        {/* Gráfico de barras vertical */}
-        <div className="h-32 flex items-end justify-center gap-1 bg-secondary/30 rounded p-2">
-          {normalizedData.map((height, index) => (
-            <div
-              key={index}
-              className="w-6 rounded-t-lg transition-all duration-300"
-              style={{ 
-                height: `${height}%`,
-                backgroundColor: '#5ec9c7'
-              }}
-              title={`${chartData[index]}`}
-            />
-          ))}
         </div>
       </CardContent>
     </Card>

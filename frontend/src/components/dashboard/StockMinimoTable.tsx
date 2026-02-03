@@ -70,11 +70,11 @@ export function StockMinimoTable({
   };
 
   return (
-    <Card className={`overflow-hidden shadow-md ${className}`}>
-      <CardHeader className="bg-primary text-primary-foreground px-4 py-3">
+    <Card className={`overflow-hidden shadow-md p-0 ${className}`}>
+      <CardHeader className="bg-primary text-primary-foreground px-4 py-2 space-y-0">
         <CardTitle className="text-sm font-semibold">Productos con Stock Mínimo</CardTitle>
       </CardHeader>
-      <CardContent className="bg-muted p-4 min-h-70">
+      <CardContent className="bg-muted px-4 py-3">
         {/* Tabla */}
         <div className="bg-card border border-border rounded overflow-hidden mb-3">
           <table className="w-full text-xs">

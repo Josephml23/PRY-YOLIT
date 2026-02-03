@@ -1,5 +1,12 @@
 import axios from 'axios';
-import type { DashboardFiltros, DashboardStats } from '@/types';
+import type { 
+  DashboardFiltros, 
+  DashboardStats, 
+  CPERankingItem,
+  ProductoTopItem,
+  ClienteTopItem,
+  StockMinimoResponse
+} from '@/types';
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000/api',
@@ -39,6 +46,47 @@ export const dashboardApi = {
       fecha_del: filtros.fechaDel,
     });
     const response = await api.get(`/v1/dashboard/stats?${params}`);
+    return response.data;
+  },
+
+  getCPERanking: async (filtros: DashboardFiltros): Promise<CPERankingItem[]> => {
+    const params = new URLSearchParams({
+      establecimiento: filtros.establecimiento,
+      periodo: filtros.periodo,
+      fecha_del: filtros.fechaDel,
+    });
+    const response = await api.get(`/v1/dashboard/cpe-ranking?${params}`);
+    return response.data;
+  },
+
+  getProductosTop: async (filtros: DashboardFiltros, limit = 5): Promise<ProductoTopItem[]> => {
+    const params = new URLSearchParams({
+      establecimiento: filtros.establecimiento,
+      periodo: filtros.periodo,
+      fecha_del: filtros.fechaDel,
+      limit: limit.toString(),
+    });
+    const response = await api.get(`/v1/dashboard/productos-top?${params}`);
+    return response.data;
+  },
+
+  getClientesTop: async (filtros: DashboardFiltros, limit = 5): Promise<ClienteTopItem[]> => {
+    const params = new URLSearchParams({
+      establecimiento: filtros.establecimiento,
+      periodo: filtros.periodo,
+      fecha_del: filtros.fechaDel,
+      limit: limit.toString(),
+    });
+    const response = await api.get(`/v1/dashboard/clientes-top?${params}`);
+    return response.data;
+  },
+
+  getStockMinimo: async (page = 1, perPage = 5): Promise<StockMinimoResponse> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: perPage.toString(),
+    });
+    const response = await api.get(`/v1/dashboard/stock-minimo?${params}`);
     return response.data;
   },
 };

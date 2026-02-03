@@ -12,11 +12,24 @@ import { ClientesTopTable } from "@/components/dashboard/ClientesTopTable";
 import { StockMinimoTable } from "@/components/dashboard/StockMinimoTable";
 import { MonthlyComparisonChart } from "@/components/dashboard/MonthlyComparisonChart";
 import { MonthlyTable } from "@/components/dashboard/MonthlyTable";
-import type { DashboardFiltros, DashboardStats } from "@/types";
+import type { 
+  DashboardFiltros, 
+  DashboardStats, 
+  CPERankingItem,
+  ProductoTopItem,
+  ClienteTopItem,
+  StockMinimoProduct
+} from "@/types";
 import { formatCurrencyKpi } from "@/lib/format";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
+  // const [loadingCPE, setLoadingCPE] = useState(true); // TODO: Usar para loading spinner
+  const [cpeRanking, setCpeRanking] = useState<CPERankingItem[]>([]);
+  const [productosTop, setProductosTop] = useState<ProductoTopItem[]>([]);
+  const [clientesTop, setClientesTop] = useState<ClienteTopItem[]>([]);
+  const [stockMinimo, setStockMinimo] = useState<StockMinimoProduct[]>([]);
+  const [stockMinimoTotal, setStockMinimoTotal] = useState(0);
   const [filtros, setFiltros] = useState<DashboardFiltros>({
     establecimiento: "1",
     periodo: "ESTE_AÑO",
@@ -29,10 +42,10 @@ export default function Dashboard() {
     cpePagado: 0,
     cpePorPagar: 0,
     cpeTotal: 0,
-    totalNotasVenta: 0,
-    notasVentaPagado: 0,
-    notasVentaPorPagar: 0,
-    notasVentaTotal: 0,
+    totalBoletas: 0,
+    boletasPagado: 0,
+    boletasPorPagar: 0,
+    boletasTotal: 0,
     montoTotalGeneral: 0,
     utilidadNeta: 0,
     ventasPorHora: [],
@@ -54,6 +67,67 @@ export default function Dashboard() {
     cargarStats();
   }, [filtros]);
 
+  useEffect(() => {
+    const cargarCPERanking = async () => {
+      try {
+        // setLoadingCPE(true); // TODO: Activar cuando se añada loading spinner
+        const data = await dashboardApi.getCPERanking(filtros);
+        setCpeRanking(data);
+      } catch (error) {
+        console.error("Error al cargar ranking de CPE:", error);
+        setCpeRanking([]);
+      } finally {
+        // setLoadingCPE(false); // TODO: Activar cuando se añada loading spinner
+      }
+    };
+
+    cargarCPERanking();
+  }, [filtros]);
+
+  useEffect(() => {
+    const cargarProductosTop = async () => {
+      try {
+        const data = await dashboardApi.getProductosTop(filtros);
+        setProductosTop(data);
+      } catch (error) {
+        console.error("Error al cargar productos top:", error);
+        setProductosTop([]);
+      }
+    };
+
+    cargarProductosTop();
+  }, [filtros]);
+
+  useEffect(() => {
+    const cargarClientesTop = async () => {
+      try {
+        const data = await dashboardApi.getClientesTop(filtros);
+        setClientesTop(data);
+      } catch (error) {
+        console.error("Error al cargar clientes top:", error);
+        setClientesTop([]);
+      }
+    };
+
+    cargarClientesTop();
+  }, [filtros]);
+
+  useEffect(() => {
+    const cargarStockMinimo = async () => {
+      try {
+        const response = await dashboardApi.getStockMinimo();
+        setStockMinimo(response.data);
+        setStockMinimoTotal(response.total_pages);
+      } catch (error) {
+        console.error("Error al cargar stock mínimo:", error);
+        setStockMinimo([]);
+        setStockMinimoTotal(0);
+      }
+    };
+
+    cargarStockMinimo();
+  }, []);
+
   // React Best Practice: Memoize callbacks to prevent child re-renders
   const handleFiltrosChange = useCallback(
     (nuevosFiltros: {
@@ -67,17 +141,6 @@ export default function Dashboard() {
   );
 
   // Datos mock para componentes de Figma
-  const cpeRankingData = useMemo(
-    () => [
-      { name: "Machala", value: 9, percentage: 90 },
-      { name: "Balanza", value: 9, percentage: 90 },
-      { name: "Pesca venta", value: "", percentage: 0 },
-      { name: "Pesca Grullas", value: 9, percentage: 90 },
-      { name: "Pesca Orillas", value: 9, percentage: 90 },
-    ],
-    [],
-  );
-
   const totalComprasData = useMemo(
     () => ({
       totalCompras: 7543374.65,
@@ -97,47 +160,6 @@ export default function Dashboard() {
         { month: "Dic", value: 6500 },
       ],
     }),
-    [],
-  );
-
-  const stockMinimoData = useMemo(
-    () => [
-      {
-        id: 1,
-        producto: "POLIPROPLENO LIENSTER SHS-PL-DC",
-        stock: "0.00",
-        estado: "AGOTADO" as const,
-        almacen: "Oficina Principal",
-      },
-      {
-        id: 2,
-        producto: "EXTENSIN SELLA BESLIME SMPSIX-SAMIL",
-        stock: "0.00",
-        estado: "AGOTADO" as const,
-        almacen: "Oficina Principal",
-      },
-      {
-        id: 3,
-        producto: "AGUIA MOVILIZE EL II USIAMOS",
-        stock: "0.00",
-        estado: "AGOTADO" as const,
-        almacen: "Oficina Principal",
-      },
-      {
-        id: 4,
-        producto: "LIPISCAL SOLUCIÓN ANTIBISPARATER SODERACIN DIML",
-        stock: "0.00",
-        estado: "AGOTADO" as const,
-        almacen: "Oficina Principal",
-      },
-      {
-        id: 5,
-        producto: "GEL-JABONY TOPIALOSE II.",
-        stock: "0.00",
-        estado: "AGOTADO" as const,
-        almacen: "Oficina Principal",
-      },
-    ],
     [],
   );
 
@@ -339,7 +361,7 @@ export default function Dashboard() {
       {/* Metrics Cards - fondo beige más claro */}
       <div className="bg-[#cbbfac] pb-4">
         <div className="max-w-350 mx-auto px-16">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <MetricCard
               variant="nubofact"
               icon={FileText}
@@ -355,8 +377,8 @@ export default function Dashboard() {
             <MetricCard
               variant="nubofact"
               icon={BarChart3}
-              title="Total N. Venta"
-              value={formatCurrencyKpi(stats.notasVentaTotal)}
+              title="Boletas de Venta"
+              value={formatCurrencyKpi(stats.boletasTotal)}
             />
             <MetricCard
               variant="nubofact"
@@ -379,7 +401,7 @@ export default function Dashboard() {
         <div className="max-w-350 mx-auto px-16 space-y-4">
           {/* FILA 1: Paneles alineados con las métricas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <CPERankingPanel data={cpeRankingData} />
+            <CPERankingPanel data={cpeRanking} />
             <NotasVentaPanel ingresos={234} egresos={219.63} flujo={23.32} />
             <TotalComprasPanel
               totalCompras={totalComprasData.totalCompras}
@@ -390,11 +412,11 @@ export default function Dashboard() {
 
           {/* FILA 2: Tablas (3 columnas) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <ProductosTopTable data={[]} />
-            <ClientesTopTable data={[]} />
+            <ProductosTopTable data={productosTop} />
+            <ClientesTopTable data={clientesTop} />
             <StockMinimoTable
-              data={stockMinimoData}
-              totalPages={52}
+              data={stockMinimo}
+              totalPages={stockMinimoTotal}
               onPedido={(id) => console.log("Pedido producto:", id)}
             />
           </div>

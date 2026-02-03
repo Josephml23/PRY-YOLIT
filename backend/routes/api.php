@@ -144,6 +144,10 @@ Route::prefix('v1')->group(function () {
     Route::get('dashboard/tv', [DashboardController::class, 'tv']);
     Route::get('dashboard/ventas-mes', [DashboardController::class, 'ventasPorMes']);
     Route::get('dashboard/stats', [DashboardController::class, 'getStats']);
+    Route::get('dashboard/cpe-ranking', [DashboardController::class, 'getCPERanking']);
+    Route::get('dashboard/productos-top', [DashboardController::class, 'getProductosTop']);
+    Route::get('dashboard/clientes-top', [DashboardController::class, 'getClientesTop']);
+    Route::get('dashboard/stock-minimo', [DashboardController::class, 'getStockMinimo']);
 
     // Entidades (clientes y proveedores)
     Route::get('entidades', [EntidadController::class, 'index']);
