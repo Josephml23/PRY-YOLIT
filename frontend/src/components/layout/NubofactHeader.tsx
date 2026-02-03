@@ -129,22 +129,37 @@ export function NubofactHeader() {
                   onMouseEnter={() => item.hasDropdown && setOpenDropdown(item.path)}
                   onMouseLeave={() => item.hasDropdown && setOpenDropdown(null)}
                 >
-                  <Link
-                    to={item.path}
-                    className={cn(
-                      'flex items-center gap-1 px-3 h-9 rounded text-sm transition-colors',
-                      'hover:bg-white/10',
-                      location.pathname === item.path && 'bg-white/20'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                    {item.hasDropdown && <ChevronDown className="h-3.5 w-3.5" />}
-                  </Link>
+                  {item.hasDropdown ? (
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex items-center gap-1 px-3 h-9 rounded text-sm transition-colors',
+                        'hover:bg-white/10',
+                        isOpen && 'bg-white/20'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      className={cn(
+                        'flex items-center gap-1 px-3 h-9 rounded text-sm transition-colors',
+                        'hover:bg-white/10',
+                        location.pathname === item.path && 'bg-white/20'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      {item.hasDropdown && <ChevronDown className="h-3.5 w-3.5" />}
+                    </Link>
+                  )}
                   
                   {/* Dropdown Menu */}
                   {item.hasDropdown && item.dropdownItems && isOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-md shadow-lg z-50 py-1">
                       {item.dropdownItems.map((dropdownItem) => {
                         const DropdownIcon = dropdownItem.icon;
                         return (
@@ -152,6 +167,7 @@ export function NubofactHeader() {
                             key={dropdownItem.path}
                             to={dropdownItem.path}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                            onClick={() => setOpenDropdown(null)}
                           >
                             <DropdownIcon className="h-4 w-4 text-muted-foreground" />
                             <span>{dropdownItem.label}</span>
