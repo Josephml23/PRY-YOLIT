@@ -2,7 +2,8 @@ interface MonthlyTableRow {
   mes: string;
   facturas: string | number;
   boletas: string | number;
-  notasVenta: string | number;
+  notasCredito: string | number;
+  notasDebito: string | number;
   compras: string | number;
   isTotal?: boolean;
 }
@@ -26,7 +27,8 @@ export function MonthlyTable({ data, className }: MonthlyTableProps) {
               <th className="px-3 py-2 text-left">Mes</th>
               <th className="px-3 py-2 text-right">Facturas</th>
               <th className="px-3 py-2 text-right">Boletas</th>
-              <th className="px-3 py-2 text-right">Notas de Venta</th>
+              <th className="px-3 py-2 text-right">N. Crédito</th>
+              <th className="px-3 py-2 text-right">N. Débito</th>
               <th className="px-3 py-2 text-right">Compras</th>
             </tr>
           </thead>
@@ -41,7 +43,8 @@ export function MonthlyTable({ data, className }: MonthlyTableProps) {
                 <td className="px-3 py-2">{row.mes}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{row.facturas}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{row.boletas}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{row.notasVenta}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{row.notasCredito}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{row.notasDebito}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{row.compras}</td>
               </tr>
             ))}

@@ -230,8 +230,10 @@ export interface MonthlyComparisonData {
   facturas: number;
   /** Total de boletas */
   boletas: number;
-  /** Total de notas de venta */
-  notasVenta: number;
+  /** Total de notas de crédito */
+  notasCredito: number;
+  /** Total de notas de débito */
+  notasDebito: number;
   /** Total de compras */
   compras: number;
 }
@@ -243,8 +245,10 @@ export interface MonthlyTableRow {
   facturas: string;
   /** Total de boletas formateado */
   boletas: string;
-  /** Total de notas de venta formateado */
-  notasVenta: string;
+  /** Total de notas de crédito formateado */
+  notasCredito: string;
+  /** Total de notas de débito formateado */
+  notasDebito: string;
   /** Total de compras formateado */
   compras: string;
   /** Si es la fila de totales */

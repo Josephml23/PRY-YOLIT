@@ -10,21 +10,23 @@ interface MonthlyComparisonChartProps {
 
 /**
  * MonthlyComparisonChart Component
- * Gráfico de barras agrupadas comparando Facturas, Boletas, Notas de Venta y Compras por mes
+ * Gráfico de barras agrupadas comparando Facturas, Boletas, Notas de Crédito, Notas de Débito y Compras por mes
  * (diseño Nubofact)
  */
 // Vercel Best Practice: Extract color config outside component
 const CHART_CONFIG = {
   facturas: { label: 'Facturas', color: '#ef4444' },
   boletas: { label: 'Boletas', color: '#fb923c' },
-  notasVenta: { label: 'Notas de Venta', color: '#22c55e' },
+  notasCredito: { label: 'Notas de Crédito', color: '#22c55e' },
+  notasDebito: { label: 'Notas de Débito', color: '#eab308' },
   compras: { label: 'Compras', color: '#60a5fa' },
 } as const;
 
 const LEGEND_ITEMS = [
   { label: 'FACTURAS', color: 'bg-red-500' },
   { label: 'BOLETAS', color: 'bg-orange-400' },
-  { label: 'NOTAS DE VENTA', color: 'bg-green-500' },
+  { label: 'NOTAS DE CRÉDITO', color: 'bg-green-500' },
+  { label: 'NOTAS DE DÉBITO', color: 'bg-yellow-500' },
   { label: 'COMPRAS', color: 'bg-blue-400' },
 ] as const;
 
@@ -72,7 +74,8 @@ export function MonthlyComparisonChart({ data, className }: MonthlyComparisonCha
             />
             <Bar dataKey="facturas" fill="#ef4444" />
             <Bar dataKey="boletas" fill="#fb923c" />
-            <Bar dataKey="notasVenta" fill="#22c55e" />
+            <Bar dataKey="notasCredito" fill="#22c55e" />
+            <Bar dataKey="notasDebito" fill="#eab308" />
             <Bar dataKey="compras" fill="#60a5fa" />
           </BarChart>
         </ChartContainer>

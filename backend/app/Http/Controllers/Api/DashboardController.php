@@ -706,7 +706,8 @@ class DashboardController extends Controller
                     'mes' => $mesNombre,
                     'facturas' => 0,
                     'boletas' => 0,
-                    'notasVenta' => 0,
+                    'notasCredito' => 0,
+                    'notasDebito' => 0,
                     'compras' => 0,
                 ];
             }
@@ -720,8 +721,10 @@ class DashboardController extends Controller
                     $mesesData[$mesNombre]['boletas'] += (float)$dato->total;
                     break;
                 case '07':
+                    $mesesData[$mesNombre]['notasCredito'] += (float)$dato->total;
+                    break;
                 case '08':
-                    $mesesData[$mesNombre]['notasVenta'] += (float)$dato->total;
+                    $mesesData[$mesNombre]['notasDebito'] += (float)$dato->total;
                     break;
             }
         }
@@ -731,7 +734,8 @@ class DashboardController extends Controller
             'mes' => 'Totales',
             'facturas' => 0,
             'boletas' => 0,
-            'notasVenta' => 0,
+            'notasCredito' => 0,
+            'notasDebito' => 0,
             'compras' => 0,
             'isTotal' => true,
         ];
@@ -739,7 +743,8 @@ class DashboardController extends Controller
         foreach ($mesesData as $mes) {
             $totales['facturas'] += $mes['facturas'];
             $totales['boletas'] += $mes['boletas'];
-            $totales['notasVenta'] += $mes['notasVenta'];
+            $totales['notasCredito'] += $mes['notasCredito'];
+            $totales['notasDebito'] += $mes['notasDebito'];
             $totales['compras'] += $mes['compras'];
         }
 
@@ -749,7 +754,8 @@ class DashboardController extends Controller
                 'mes' => $mes['mes'],
                 'facturas' => number_format($mes['facturas'], 2),
                 'boletas' => number_format($mes['boletas'], 2),
-                'notasVenta' => number_format($mes['notasVenta'], 2),
+                'notasCredito' => number_format($mes['notasCredito'], 2),
+                'notasDebito' => number_format($mes['notasDebito'], 2),
                 'compras' => number_format($mes['compras'], 2),
             ];
         }, array_values($mesesData));
@@ -759,7 +765,8 @@ class DashboardController extends Controller
             'mes' => 'Totales',
             'facturas' => number_format($totales['facturas'], 2),
             'boletas' => number_format($totales['boletas'], 2),
-            'notasVenta' => number_format($totales['notasVenta'], 2),
+            'notasCredito' => number_format($totales['notasCredito'], 2),
+            'notasDebito' => number_format($totales['notasDebito'], 2),
             'compras' => number_format($totales['compras'], 2),
             'isTotal' => true,
         ];
