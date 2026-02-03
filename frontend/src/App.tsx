@@ -58,6 +58,7 @@ function App() {
             <Route path="/mantenimiento/marcas" element={<Marcas />} />
             <Route path="/mantenimiento/atributos" element={<Atributos />} />
             <Route path="/mantenimiento/unidades-medida" element={<UnidadesMedida />} />
+            <Route path="/mantenimiento/tipo-transacciones" element={<Transacciones />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />
@@ -74,6 +75,7 @@ function App() {
               <Route path="mantenimiento/marcas" element={<Marcas />} />
               <Route path="mantenimiento/atributos" element={<Atributos />} />
               <Route path="mantenimiento/unidades-medida" element={<UnidadesMedida />} />
+              <Route path="mantenimiento/tipo-transacciones" element={<Transacciones />} />
               <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
               <Route path="facturacion" element={<Facturacion />} />

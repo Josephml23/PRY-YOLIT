@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NubofactHeader } from '@/components/layout/NubofactHeader';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -22,6 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const initialFormData: TransaccionFormData = {
   descripcion: '',
@@ -154,7 +160,7 @@ export default function Transacciones() {
 
         {/* Filtros */}
         <div className="bg-muted/50 px-4 py-4 border-x border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Filtrar por:</Label>
               <Select value={tipoFiltro} onValueChange={(value: 'descripcion') => setTipoFiltro(value)}>
@@ -176,15 +182,6 @@ export default function Transacciones() {
                 placeholder="Ingrese descripción..."
                 className="bg-background"
               />
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                onClick={() => setCurrentPage(1)}
-                className="bg-green-600 hover:bg-green-700 text-white w-full"
-              >
-                Buscar
-              </Button>
             </div>
           </div>
         </div>
@@ -222,15 +219,22 @@ export default function Transacciones() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEdit(transaccion)}
-                          className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors flex items-center gap-1"
-                        >
-                          Acciones
-                          <ChevronRight className="h-3 w-3" />
-                        </button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors flex items-center gap-1">
+                            Acciones
+                            <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleEdit(transaccion)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(transaccion)}>
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))

@@ -96,10 +96,6 @@ export default function UnidadesMedida() {
   const endIndex = startIndex + itemsPerPage;
   const unidadesPaginadas = unidadesFiltradas.slice(startIndex, endIndex);
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-  };
-
   const handleNew = () => {
     setEditingUnidad(null);
     setFormData({
@@ -207,7 +203,7 @@ export default function UnidadesMedida() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label>Filtrar por</Label>
             <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
@@ -231,15 +227,6 @@ export default function UnidadesMedida() {
               placeholder="Ingrese valor..."
               className="bg-background"
             />
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              onClick={handleSearch}
-              className="bg-green-600 hover:bg-green-700 text-white w-full"
-            >
-              Buscar
-            </Button>
           </div>
         </div>
       </div>
