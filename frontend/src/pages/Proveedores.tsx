@@ -22,8 +22,8 @@ const initialFormData: ProveedorFormData = {
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtroNombre, setFiltroNombre] = useState('');
-  const [filtroBuscar, setFiltroBuscar] = useState('');
+  const [tipoFiltro, setTipoFiltro] = useState<'nombre' | 'ruc' | 'fecha' | 'zona'>('nombre');
+  const [valorFiltro, setValorFiltro] = useState('');
   const [filtroACuenta, setFiltroACuenta] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -76,13 +76,24 @@ export default function Proveedores() {
 
   // Filtrar proveedores
   const proveedoresFiltrados = proveedores.filter((proveedor) => {
-    const matchNombre = proveedor.denominacion.toLowerCase().includes(filtroNombre.toLowerCase());
-    const matchBuscar = 
-      (proveedor.num_doc || '').toLowerCase().includes(filtroBuscar.toLowerCase()) ||
-      proveedor.denominacion.toLowerCase().includes(filtroBuscar.toLowerCase()) ||
-      (proveedor.created_by || '').toLowerCase().includes(filtroBuscar.toLowerCase());
+    if (!valorFiltro) return true;
+
+    const valor = valorFiltro.toLowerCase();
     
-    return matchNombre && matchBuscar;
+    switch (tipoFiltro) {
+      case 'nombre':
+        return proveedor.denominacion.toLowerCase().includes(valor);
+      case 'ruc':
+        return (proveedor.num_doc || '').toLowerCase().includes(valor);
+      case 'fecha':
+        if (!proveedor.created_at) return false;
+        const fechaProveedor = new Date(proveedor.created_at).toISOString().split('T')[0];
+        return fechaProveedor === valorFiltro;
+      case 'zona':
+        return (proveedor.direccion || '').toLowerCase().includes(valor);
+      default:
+        return true;
+    }
   });
 
   // Paginación
@@ -233,33 +244,53 @@ export default function Proveedores() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1 text-foreground">
-                Nombre
+                Filtrar por
               </label>
-              <input
-                type="text"
-                value={filtroNombre}
+              <select
+                value={tipoFiltro}
                 onChange={(e) => {
-                  setFiltroNombre(e.target.value);
+                  setTipoFiltro(e.target.value as 'nombre' | 'ruc' | 'fecha' | 'zona');
+                  setValorFiltro('');
                   setCurrentPage(1);
                 }}
                 className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Filtrar por nombre..."
-              />
+              >
+                <option value="nombre">Nombre</option>
+                <option value="ruc">RUC</option>
+                <option value="fecha">Fecha</option>
+                <option value="zona">Zona</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-foreground">
                 Buscar
               </label>
-              <input
-                type="text"
-                value={filtroBuscar}
-                onChange={(e) => {
-                  setFiltroBuscar(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Código o nombre..."
-              />
+              {tipoFiltro === 'fecha' ? (
+                <input
+                  type="date"
+                  value={valorFiltro}
+                  onChange={(e) => {
+                    setValorFiltro(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={valorFiltro}
+                  onChange={(e) => {
+                    setValorFiltro(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder={
+                    tipoFiltro === 'nombre' ? 'Filtrar por nombre...' :
+                    tipoFiltro === 'ruc' ? 'Filtrar por RUC...' :
+                    'Filtrar por zona...'
+                  }
+                />
+              )}
             </div>
             <div>
               <div className="flex items-center space-x-2 h-full pt-6">
@@ -299,7 +330,7 @@ export default function Proveedores() {
                 {proveedoresPaginados.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                      {filtroNombre || filtroBuscar 
+                      {valorFiltro
                         ? 'No se encontraron proveedores con los filtros aplicados' 
                         : 'No hay proveedores registrados'}
                     </td>
