@@ -240,6 +240,23 @@ export interface TransaccionFormData {
   activo: boolean;
 }
 
+export interface Vehiculo {
+  id: number;
+  placa: string;
+  modelo: string;
+  marca: string;
+  activo: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface VehiculoFormData {
+  placa: string;
+  modelo: string;
+  marca: string;
+  activo: boolean;
+}
+
 // --- Props de componentes compartidos ---
 
 export interface PageHeaderProps {

@@ -23,6 +23,7 @@ const Marcas = lazy(() => import('@/pages/Marcas'));
 const Atributos = lazy(() => import('@/pages/Atributos'));
 const UnidadesMedida = lazy(() => import('@/pages/UnidadesMedida'));
 const Transacciones = lazy(() => import('@/pages/Transacciones'));
+const Vehiculos = lazy(() => import('@/pages/Vehiculos'));
 const Facturacion = lazy(() => import('@/pages/Facturacion'));
 const FacturacionNubefact = lazy(() => import('@/pages/FacturacionNubefact'));
 const Oportunidades = lazy(() => import('@/pages/Oportunidades'));
@@ -59,6 +60,7 @@ function App() {
             <Route path="/mantenimiento/atributos" element={<Atributos />} />
             <Route path="/mantenimiento/unidades-medida" element={<UnidadesMedida />} />
             <Route path="/mantenimiento/tipo-transacciones" element={<Transacciones />} />
+            <Route path="/mantenimiento/vehiculos" element={<Vehiculos />} />
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="dashboard-tv" element={<DashboardTv />} />
@@ -76,6 +78,7 @@ function App() {
               <Route path="mantenimiento/atributos" element={<Atributos />} />
               <Route path="mantenimiento/unidades-medida" element={<UnidadesMedida />} />
               <Route path="mantenimiento/tipo-transacciones" element={<Transacciones />} />
+              <Route path="mantenimiento/vehiculos" element={<Vehiculos />} />
               <Route path="oportunidades" element={<Oportunidades />} />
               <Route path="oportunidades/:id" element={<DetalleOportunidad />} />
               <Route path="facturacion" element={<Facturacion />} />
