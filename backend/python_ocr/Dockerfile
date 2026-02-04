@@ -1,12 +1,16 @@
 FROM python:3.12-slim
 
-# Instalar Tesseract y Poppler
+# Instalar Tesseract, Poppler y librerías de OpenCV
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-spa \
     poppler-utils \
-    libgl1-mesa-glx \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Directorio de trabajo
@@ -24,5 +28,5 @@ COPY ocr_service.py .
 # Exponer puerto para API (opcional)
 EXPOSE 8000
 
-# Comando por defecto
-CMD ["python", "ocr_service.py"]
+# Mantener contenedor corriendo (esperando comandos de Laravel)
+CMD ["tail", "-f", "/dev/null"]

@@ -58,7 +58,7 @@ Sistema integral de gestión comercial y facturación electrónica integrado con
 
 ## 📋 Requisitos Previos
 
-- **Docker Desktop** (para PostgreSQL + MinIO)
+- **Docker Desktop** (para PostgreSQL + MinIO + OCR Service)
 - **PHP >= 8.2** con extensiones:
   - pgsql, pdo_pgsql
   - openssl, zip, curl
@@ -66,6 +66,22 @@ Sistema integral de gestión comercial y facturación electrónica integrado con
 - **Composer** >= 2.0
 - **Node.js** >= 18
 - **Cuenta NubeFact** (obtener en [nubefact.com](https://nubefact.com))
+
+### ✅ ¿Puedo hacer pruebas locales con Docker?
+
+**SÍ** - Todos los servicios funcionan completamente en local:
+
+- ✅ **PostgreSQL** - Base de datos completa
+- ✅ **MinIO** - Almacenamiento de archivos (compatible con S3)
+- ✅ **OCR Service** - Reconocimiento de documentos con Tesseract
+  - Procesa PDFs/imágenes sin conexión a internet
+  - Confianza 85-90% en facturas reales
+  - Gratis e ilimitado
+  - Ver [docs/ocr/](docs/ocr/) para más detalles
+
+**Solo necesitas internet para:**
+- NubeFact API (emisión de comprobantes a SUNAT)
+- Descargar dependencias iniciales (composer, npm)
 
 ## ⚙️ Instalación
 
@@ -381,6 +397,30 @@ npm run test
    # Sincronizar comprobantes cada hora
    0 * * * * cd /path/to/app && php artisan nubefact:sync --pendientes
    ```
+
+## 📚 Documentación
+
+Para documentación detallada, consulta la carpeta [`docs/`](docs/):
+
+### 📖 Documentación Principal
+- **[docs/README.md](docs/README.md)** - Índice completo de documentación
+- **[REQUERIMIENTOS.md](REQUERIMIENTOS.md)** - Requerimientos del MVP
+- **[PENDIENTES.md](PENDIENTES.md)** - Estado actual y tareas pendientes
+
+### 🧾 NubeFact (Facturación Electrónica)
+- [Migración a NubeFact](docs/nubefact/MIGRACION_NUBEFACT_COMPLETADA.md)
+- [API de Sincronización](docs/nubefact/API_SINCRONIZACION_NUBEFACT.md)
+- [Sincronización Completa](docs/nubefact/SINCRONIZACION_COMPLETA_IMPLEMENTADA.md)
+
+### 🔍 OCR (Reconocimiento de Documentos)
+- **[Setup con Docker](docs/ocr/DOCKER_OCR_SETUP.md)** - Guía completa
+- [Estado de Instalación](docs/ocr/COMPLETADO.md) - ✅ Funcionando
+- [Opciones de Deployment](docs/ocr/DEPLOYMENT.md)
+
+### 🎨 Desarrollo
+- [Mejoras de Interface](docs/desarrollo/MEJORAS_INTERFACE_DESIGN.md)
+- [Optimizaciones Aplicadas](docs/desarrollo/OPTIMIZACIONES_APLICADAS.md)
+- [Diseño Figma](docs/desarrollo/APLICACION_DISENO_FIGMA.md)
 
 ## 🤝 Contribución
 

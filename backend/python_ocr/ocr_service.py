@@ -281,11 +281,13 @@ class FacturaOCR:
         match = re.search(patron, self.texto_completo, re.IGNORECASE)
         
         if match:
-            monto_str = match.group(1).replace(',', '')
-            try:
-                return float(monto_str)
-            except ValueError:
-                pass
+            monto_str = match.group(1)
+            if monto_str:
+                monto_str = monto_str.replace(',', '')
+                try:
+                    return float(monto_str)
+                except ValueError:
+                    pass
         
         return None
     
@@ -305,18 +307,25 @@ class FacturaOCR:
                 linea.strip()
             )
             if match:
-                cantidad = float(match.group(1))
-                descripcion = match.group(2).strip()
-                precio_unitario = float(match.group(3).replace(',', ''))
-                subtotal = float(match.group(4).replace(',', ''))
-                
-                items.append({
-                    "codigo": "",  # No suele estar en OCR básico
-                    "descripcion": descripcion,
-                    "cantidad": cantidad,
-                    "precio_unitario": precio_unitario,
-                    "subtotal": subtotal
-                })
+                try:
+                    cantidad = float(match.group(1))
+                    descripcion = match.group(2).strip() if match.group(2) else ""
+                    precio_str = match.group(3)
+                    subtotal_str = match.group(4)
+                    
+                    if precio_str and subtotal_str:
+                        precio_unitario = float(precio_str.replace(',', ''))
+                        subtotal = float(subtotal_str.replace(',', ''))
+                        
+                        items.append({
+                            "codigo": "",  # No suele estar en OCR básico
+                            "descripcion": descripcion,
+                            "cantidad": cantidad,
+                            "precio_unitario": precio_unitario,
+                            "subtotal": subtotal
+                        })
+                except (ValueError, AttributeError):
+                    continue  # Saltar líneas con errores
         
         return items if items else None
 
