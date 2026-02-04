@@ -62,6 +62,25 @@ services:
       exit 0;
       "
 
+  # Python OCR Service
+  ocr_service:
+    build:
+      context: ./backend/python_ocr
+      dockerfile: Dockerfile
+    container_name: facturacion_ocr
+    restart: unless-stopped
+    volumes:
+      - ./backend/storage/app/public:/app/storage:ro  # Solo lectura de archivos
+    networks:
+      - facturacion_network
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pytesseract; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   facturacion_network:
     driver: bridge

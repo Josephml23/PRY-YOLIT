@@ -24,7 +24,10 @@ except ImportError as e:
     sys.exit(1)
 
 # Configurar ruta de Tesseract (ajustar según instalación)
-# Windows: pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Windows
+import platform
+if platform.system() == 'Windows':
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 # Linux/Mac: generalmente está en PATH
 
 

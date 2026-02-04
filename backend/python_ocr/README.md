@@ -142,20 +142,29 @@ GOOGLE_APPLICATION_CREDENTIALS=/ruta/a/credenciales.json
 
 ## 🎯 ¿Cuál elegir?
 
-### Para desarrollo y testing:
-**→ Tesseract + Python**
-- Es gratis, funciona offline y tiene buena precisión
+### Para desarrollo local:
+**→ Tesseract + Python** (si ya lo instalaste) o **Docker** (más fácil)
+- Es gratis, funciona offline
 - Ideal para validar el flujo completo del sistema
 
-### Para producción pequeña/mediana (< 25k documentos/mes):
-**→ OCR.space API**
-- Fácil de configurar, no requiere instalación
-- Buena opción si no quieres mantener infraestructura
+### Para servidor/producción:
+**→ Docker** 🐳 (RECOMENDADO)
+- Mismo entorno en dev y prod
+- No instalas nada manualmente en servidor
+- Totalmente gratis
+- Solo necesitas `docker-compose up -d`
 
-### Para producción con alta precisión:
-**→ Google Vision API**
-- Si necesitas 95%+ de precisión
-- Si procesas muchos documentos y puedes pagar
+**→ Google Vision API** ☁️ (alternativa cloud)
+- 95%+ precisión (la mejor)
+- Funciona en cualquier servidor (Heroku, Vercel, etc.)
+- Pagas $1.50/1000 imágenes
+
+**→ OCR.space API** (alternativa gratis)
+- Gratis hasta 25k/mes
+- Setup en 2 minutos
+- No requiere Docker ni instalación
+
+**Ver guía completa:** [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 

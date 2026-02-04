@@ -399,14 +399,20 @@ class DocumentoDigitalizadoController extends Controller
     }
 
     /**
-     * Opción 1: Procesar con Python + Tesseract (LOCAL - GRATIS)
+     * Opción 1: Procesar con Python + Tesseract (LOCAL o DOCKER)
      */
     private function procesarConPython($rutaArchivo)
     {
-        // Ruta al script Python
+        // Detectar si estamos en Docker
+        $useDocker = env('OCR_USE_DOCKER', false);
+        
+        if ($useDocker) {
+            return $this->procesarConDockerOCR($rutaArchivo);
+        }
+        
+        // Ejecución local (desarrollo)
         $scriptPath = base_path('python_ocr/ocr_service.py');
         
-        // Verificar que existe el script
         if (!file_exists($scriptPath)) {
             return [
                 'success' => false,
@@ -414,9 +420,6 @@ class DocumentoDigitalizadoController extends Controller
             ];
         }
 
-        // Ejecutar script Python
-        // Windows: usar 'python' o 'python3'
-        // Linux/Mac: usar 'python3'
         $pythonCmd = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'python' : 'python3';
         $command = sprintf('%s "%s" "%s"', $pythonCmd, $scriptPath, $rutaArchivo);
         
@@ -424,7 +427,6 @@ class DocumentoDigitalizadoController extends Controller
         $returnCode = 0;
         exec($command . ' 2>&1', $output, $returnCode);
         
-        // Unir todas las líneas de salida
         $jsonOutput = implode("\n", $output);
         
         // Decodificar JSON
@@ -434,6 +436,38 @@ class DocumentoDigitalizadoController extends Controller
             return [
                 'success' => false,
                 'error' => 'Error decodificando respuesta Python: ' . json_last_error_msg() . "\nOutput: " . $jsonOutput
+            ];
+        }
+        
+        return $resultado;
+    }
+
+    /**
+     * Opción 1B: Procesar con Docker OCR (PRODUCCIÓN)
+     */
+    private function procesarConDockerOCR($rutaArchivo)
+    {
+        // Ruta relativa dentro del contenedor
+        $rutaRelativa = str_replace(storage_path('app/public'), '/app/storage', $rutaArchivo);
+        
+        // Ejecutar en contenedor Docker
+        $command = sprintf(
+            'docker exec facturacion_ocr python ocr_service.py "%s"',
+            $rutaRelativa
+        );
+        
+        $output = [];
+        $returnCode = 0;
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        $jsonOutput = implode("\n", $output);
+        
+        $resultado = json_decode($jsonOutput, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE || !$resultado) {
+            return [
+                'success' => false,
+                'error' => 'Error ejecutando OCR en Docker: ' . json_last_error_msg()
             ];
         }
         
