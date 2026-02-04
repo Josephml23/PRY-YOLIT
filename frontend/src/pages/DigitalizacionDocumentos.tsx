@@ -432,10 +432,10 @@ export default function DigitalizacionDocumentos() {
           <DialogHeader>
             <DialogTitle>Subir Documento</DialogTitle>
             <DialogDescription>
-              Selecciona un PDF o imagen de factura. El sistema procesará el documento y extraerá los datos automáticamente.
+              Selecciona un PDF o imagen de factura. El sistema procesará el documento y extraerá los datos automáticamente usando OCR.
               <br />
-              <span className="text-amber-600 dark:text-amber-500 text-xs mt-1 block">
-                ⚠️ Nota: El OCR está en modo prueba y generará datos de ejemplo. La integración con OCR real está pendiente.
+              <span className="text-blue-600 dark:text-blue-400 text-xs mt-1 block">
+                💡 Tip: Para activar OCR real (Tesseract Python), sigue las instrucciones en backend/python_ocr/INSTALACION.md
               </span>
             </DialogDescription>
           </DialogHeader>

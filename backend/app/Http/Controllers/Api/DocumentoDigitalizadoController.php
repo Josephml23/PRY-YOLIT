@@ -8,6 +8,7 @@ use App\Models\Compra;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DocumentoDigitalizadoController extends Controller
@@ -336,53 +337,196 @@ class DocumentoDigitalizadoController extends Controller
     }
 
     /**
-     * Mock de procesamiento de documento (simula OCR)
-     * En producción, aquí se integraría con un servicio de OCR real
+     * Procesar documento con Python OCR (Tesseract)
+     * Alternativa 1: Usando servicio Python local
      */
     private function procesarDocumentoMock($documento)
     {
         try {
-            // Simular procesamiento con datos de ejemplo
-            $datosExtraidos = [
-                'raw_text' => 'Texto extraído del documento (OCR)',
-                'confidence' => 85.5,
-                'processed_at' => now()->toISOString(),
-            ];
+            // Ruta completa al archivo
+            $rutaArchivo = storage_path('app/public/' . $documento->ruta_archivo);
+            
+            // Verificar que existe
+            if (!file_exists($rutaArchivo)) {
+                throw new \Exception("Archivo no encontrado: {$rutaArchivo}");
+            }
 
-            // Datos mock de una factura típica
-            $documento->update([
-                'estado_procesamiento' => 'completado',
-                'datos_extraidos' => $datosExtraidos,
-                'tipo_comprobante' => 'FACTURA ELECTRONICA',
-                'serie' => 'F001',
-                'numero' => str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-                'comprobante_completo' => 'F001-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-                'fecha_emision' => now()->subDays(rand(1, 30)),
-                'entidad_tipo_doc' => 'RUC',
-                'entidad_num_doc' => '20' . str_pad(rand(100000000, 999999999), 9, '0', STR_PAD_LEFT),
-                'entidad_razon_social' => 'EMPRESA EJEMPLO S.A.C.',
-                'moneda' => 'PEN',
-                'subtotal' => 1000.00,
-                'igv' => 180.00,
-                'total' => 1180.00,
-                'items_extraidos' => [
-                    [
-                        'codigo' => '001',
-                        'descripcion' => 'PRODUCTO 1',
-                        'cantidad' => 2,
-                        'precio_unitario' => 500.00,
-                        'subtotal' => 1000.00,
-                    ]
-                ],
-                'confianza_ocr' => 85.5,
-                'requiere_validacion' => true,
-            ]);
+            // Opción 1: Llamar script Python local
+            $resultado = $this->procesarConPython($rutaArchivo);
+            
+            // Opción 2 (comentada): Usar API OCR.space (ver método más abajo)
+            // $resultado = $this->procesarConOCRSpace($rutaArchivo);
+
+            if ($resultado['success']) {
+                $datos = $resultado['datos'];
+                
+                $documento->update([
+                    'estado_procesamiento' => 'completado',
+                    'datos_extraidos' => [
+                        'raw_text' => $resultado['texto_completo'] ?? '',
+                        'confidence' => $resultado['confianza_ocr'] ?? 0,
+                        'processed_at' => now()->toISOString(),
+                    ],
+                    'tipo_comprobante' => $datos['tipo_comprobante'] ?? null,
+                    'serie' => $datos['serie'] ?? null,
+                    'numero' => $datos['numero'] ?? null,
+                    'comprobante_completo' => $datos['comprobante_completo'] ?? null,
+                    'fecha_emision' => $datos['fecha_emision'] ?? null,
+                    'entidad_tipo_doc' => $datos['entidad_tipo_doc'] ?? null,
+                    'entidad_num_doc' => $datos['entidad_num_doc'] ?? null,
+                    'entidad_razon_social' => $datos['entidad_razon_social'] ?? null,
+                    'entidad_direccion' => $datos['entidad_direccion'] ?? null,
+                    'moneda' => $datos['moneda'] ?? 'PEN',
+                    'subtotal' => $datos['subtotal'] ?? null,
+                    'igv' => $datos['igv'] ?? null,
+                    'total' => $datos['total'] ?? null,
+                    'items_extraidos' => $datos['items_extraidos'] ?? null,
+                    'confianza_ocr' => $resultado['confianza_ocr'] ?? 0,
+                    'requiere_validacion' => ($resultado['confianza_ocr'] ?? 0) < 90,
+                ]);
+            } else {
+                throw new \Exception($resultado['error'] ?? 'Error desconocido en OCR');
+            }
 
         } catch (\Exception $e) {
             $documento->update([
                 'estado_procesamiento' => 'error',
                 'error_mensaje' => $e->getMessage(),
             ]);
+            
+            Log::error('Error procesando documento OCR: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Opción 1: Procesar con Python + Tesseract (LOCAL - GRATIS)
+     */
+    private function procesarConPython($rutaArchivo)
+    {
+        // Ruta al script Python
+        $scriptPath = base_path('python_ocr/ocr_service.py');
+        
+        // Verificar que existe el script
+        if (!file_exists($scriptPath)) {
+            return [
+                'success' => false,
+                'error' => 'Script Python no encontrado. Ejecuta: pip install pytesseract pillow pdf2image opencv-python'
+            ];
+        }
+
+        // Ejecutar script Python
+        // Windows: usar 'python' o 'python3'
+        // Linux/Mac: usar 'python3'
+        $pythonCmd = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'python' : 'python3';
+        $command = sprintf('%s "%s" "%s"', $pythonCmd, $scriptPath, $rutaArchivo);
+        
+        $output = [];
+        $returnCode = 0;
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        // Unir todas las líneas de salida
+        $jsonOutput = implode("\n", $output);
+        
+        // Decodificar JSON
+        $resultado = json_decode($jsonOutput, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE || !$resultado) {
+            return [
+                'success' => false,
+                'error' => 'Error decodificando respuesta Python: ' . json_last_error_msg() . "\nOutput: " . $jsonOutput
+            ];
+        }
+        
+        return $resultado;
+    }
+
+    /**
+     * Opción 2: Procesar con OCR.space API (REMOTO - GRATIS hasta 25k requests/mes)
+     * Registrarse en: https://ocr.space/ocrapi
+     */
+    private function procesarConOCRSpace($rutaArchivo)
+    {
+        $apiKey = env('OCR_SPACE_API_KEY', 'K87899142388957'); // API key pública de prueba
+        
+        try {
+            $client = new \GuzzleHttp\Client();
+            
+            $response = $client->post('https://api.ocr.space/parse/image', [
+                'multipart' => [
+                    [
+                        'name' => 'apikey',
+                        'contents' => $apiKey
+                    ],
+                    [
+                        'name' => 'language',
+                        'contents' => 'spa' // Español
+                    ],
+                    [
+                        'name' => 'isOverlayRequired',
+                        'contents' => 'false'
+                    ],
+                    [
+                        'name' => 'file',
+                        'contents' => fopen($rutaArchivo, 'r'),
+                        'filename' => basename($rutaArchivo)
+                    ]
+                ]
+            ]);
+            
+            $result = json_decode($response->getBody(), true);
+            
+            if ($result['IsErroredOnProcessing'] ?? true) {
+                return [
+                    'success' => false,
+                    'error' => $result['ErrorMessage'][0] ?? 'Error en OCR.space'
+                ];
+            }
+            
+            $textoCompleto = $result['ParsedResults'][0]['ParsedText'] ?? '';
+            
+            // Extraer datos básicos del texto
+            return [
+                'success' => true,
+                'datos' => $this->extraerDatosDeTexto($textoCompleto),
+                'confianza_ocr' => 75.0, // OCR.space no devuelve confianza
+                'texto_completo' => $textoCompleto
+            ];
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'Error con OCR.space: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Extraer datos estructurados de texto plano (fallback simple)
+     */
+    private function extraerDatosDeTexto($texto)
+    {
+        // Implementación básica de extracción
+        // El script Python hace esto mejor
+        $datos = [];
+        
+        // Buscar RUC
+        if (preg_match('/RUC\s*:?\s*(\d{11})/i', $texto, $matches)) {
+            $datos['entidad_num_doc'] = $matches[1];
+            $datos['entidad_tipo_doc'] = 'RUC';
+        }
+        
+        // Buscar serie-número
+        if (preg_match('/([A-Z]\d{3})-(\d{4,8})/', $texto, $matches)) {
+            $datos['serie'] = $matches[1];
+            $datos['numero'] = $matches[2];
+            $datos['comprobante_completo'] = $matches[0];
+        }
+        
+        // Buscar total
+        if (preg_match('/TOTAL\s*:?\s*S?\/?\.?\s*([\d,]+\.?\d*)/i', $texto, $matches)) {
+            $datos['total'] = (float) str_replace(',', '', $matches[1]);
+        }
+        
+        return $datos;
     }
 }
