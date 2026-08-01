@@ -11,13 +11,23 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Orquestador principal del flujo Voice IA sin simulaciones.
- * Conecta STT -> Intención (IA) -> Confirmación -> ComprobanteEmissionService.
+ * Conecta STT -> Intención (IA) -> Aclaración (si hace falta) -> Confirmación -> ComprobanteEmissionService.
+ *
+ * v2: antes, si el cliente no existía o el producto era ambiguo, el sistema
+ * igual armaba un ítem genérico y pedía confirmar sin avisar del problema.
+ * Ahora, cuando VoiceIntentService marca 'necesita_confirmacion_usuario', la
+ * conversación entra en estado 'necesita_aclaracion' y se le hace al usuario
+ * una pregunta concreta (elegir producto entre opciones parecidas, decidir
+ * qué precio usar, o confirmar/corregir el cliente) antes de dejarlo emitir.
  */
 class VoiceIAOrchestratorService
 {
     protected SpeechToTextService $sttService;
+
     protected VoiceIntentService $intentService;
+
     protected TextToSpeechService $ttsService;
+
     protected ComprobanteEmissionService $emissionService;
 
     public function __construct(
@@ -34,25 +44,23 @@ class VoiceIAOrchestratorService
 
     /**
      * Transcribir un archivo de audio directamente sin analizar intenciones ni guardar en BD.
-     *
-     * @param UploadedFile $audioFile
-     * @return string
      */
     public function transcribirAudio(UploadedFile $audioFile): string
     {
         $transcripcionData = $this->sttService->transcribir($audioFile);
-        
+
         return trim($transcripcionData['texto'] ?? '');
     }
 
     /**
-     * Procesar audio o texto de comando por voz y preparar la vista previa de confirmación o ejecutarla.
+     * Procesar audio o texto de comando por voz. Según el estado de la
+     * conversación pendiente (si hay una), decide si es un comando nuevo,
+     * una confirmación, una cancelación, o la respuesta a una aclaración.
      */
     public function procesarComando(UploadedFile|string $input, ?int $conversacionIdPendiente = null, ?int $usuarioId = null): array
     {
         $startTime = microtime(true);
 
-        // 1. Transcripción real si es archivo de audio
         if ($input instanceof UploadedFile) {
             $transcripcionData = $this->sttService->transcribir($input);
             $textoComando = trim($transcripcionData['texto'] ?? '');
@@ -62,10 +70,9 @@ class VoiceIAOrchestratorService
             $tiempoSTT = 0;
         }
 
-        // ❌ VALIDACIÓN REAL: Si no hay texto detectado en la voz, NO SIMULAR. Notificar al usuario.
         if (empty($textoComando) || $textoComando === '(Audio procesado pero no se detectó texto claro)') {
-            $mensajeErrorVoz = "No logré escuchar lo que dijiste. Por favor, mantén presionado el botón y habla claramente.";
-            
+            $mensajeErrorVoz = 'No logré escuchar lo que dijiste. Por favor, mantén presionado el botón y habla claramente.';
+
             return [
                 'conversacion_id' => $conversacionIdPendiente,
                 'estado' => 'audio_no_entendido',
@@ -79,22 +86,62 @@ class VoiceIAOrchestratorService
 
         $textoLower = mb_strtolower($textoComando, 'UTF-8');
 
-        // 2. Detectar si el usuario está confirmando una conversación previa abierta
-        $esComandoConfirmacion = in_array($textoLower, ['si', 'sí', 'confirmar', 'emitir', 'sí emitir', 'si emitir', 'sí confirmar', 'si confirmar', 'aceptar', 'proceder']) ||
-            (str_contains($textoLower, 'confirmar') || str_contains($textoLower, 'emitir')) && $conversacionIdPendiente;
+        // Si hay una conversación pendiente, decidir qué representa este mensaje
+        if ($conversacionIdPendiente) {
+            $conversacionPendiente = VoiceConversacion::find($conversacionIdPendiente);
 
-        if ($conversacionIdPendiente && $esComandoConfirmacion) {
-            return $this->confirmarEmision($conversacionIdPendiente, null, $usuarioId);
+            if ($conversacionPendiente && in_array($conversacionPendiente->estado, ['necesita_aclaracion', 'esperando_confirmacion'], true)) {
+                $esCancelacion = in_array($textoLower, ['cancelar', 'no', 'anular'], true);
+
+                if ($esCancelacion) {
+                    $this->cancelarConversacion($conversacionIdPendiente);
+                    $msg = 'Listo, cancelé la operación.';
+
+                    return [
+                        'conversacion_id' => $conversacionIdPendiente,
+                        'estado' => 'cancelada',
+                        'transcripcion' => $textoComando,
+                        'asistente_respuesta' => $msg,
+                        'tts' => $this->ttsService->sintetizarVoz($msg),
+                        'intencion' => null,
+                        'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
+                    ];
+                }
+
+                // La conversación está esperando que el usuario aclare algo
+                // (cliente, producto ambiguo o precio) — esta respuesta es esa aclaración.
+                if ($conversacionPendiente->estado === 'necesita_aclaracion') {
+                    return $this->resolverAclaracion($conversacionIdPendiente, $textoComando, $startTime);
+                }
+
+                // Está esperando confirmación final para emitir
+                $esComandoConfirmacion = in_array($textoLower, ['si', 'sí', 'confirmar', 'emitir', 'sí emitir', 'si emitir', 'sí confirmar', 'si confirmar', 'aceptar', 'proceder'], true)
+                    || str_contains($textoLower, 'confirmar') || str_contains($textoLower, 'emitir');
+
+                if ($esComandoConfirmacion) {
+                    return $this->confirmarEmision($conversacionIdPendiente, null, $usuarioId);
+                }
+            }
         }
 
-        // 3. Extraer la intención real con el servicio de IA (Gemini / OpenAI)
+        // Comando nuevo: extraer la intención completa
         $intencion = $this->intentService->analizarIntencion($textoComando);
         $tiempoProcesamiento = round((microtime(true) - $startTime) * 1000);
 
-        // Si la IA no logró extraer un cliente o monto válido del texto dictado
-        if (empty($intencion['cliente_denominacion']) || empty($intencion['total'])) {
-            $mensajeIncompleto = "Escuché: \"{$textoComando}\", pero no pude identificar un cliente o un monto claro para generar el comprobante.";
-            
+        return $this->procesarIntencionNueva($intencion, $textoComando, $tiempoSTT, $tiempoProcesamiento, $input, $usuarioId);
+    }
+
+    /**
+     * A partir de una intención recién extraída, decide si se puede pasar
+     * directo a "esperando confirmación" o si hace falta aclarar algo primero.
+     */
+    protected function procesarIntencionNueva(array $intencion, string $textoComando, $tiempoSTT, $tiempoProcesamiento, $inputOriginal, ?int $usuarioId): array
+    {
+        // Si ni siquiera se pudo extraer un cliente candidato ni ningún producto,
+        // no tiene sentido abrir una conversación: se le pide repetir el comando.
+        if (empty($intencion['items']) && empty($intencion['texto_original'])) {
+            $mensajeIncompleto = "Escuché: \"{$textoComando}\", pero no pude identificar nada claro. ¿Puedes repetirlo con el nombre del cliente y el producto?";
+
             return [
                 'conversacion_id' => null,
                 'estado' => 'intencion_incompleta',
@@ -106,35 +153,32 @@ class VoiceIAOrchestratorService
             ];
         }
 
-        // 4. Crear registro real de la sesión conversacional en BD
+        $necesitaAclaracion = $intencion['necesita_confirmacion_usuario'] ?? false;
+
         $conversacion = VoiceConversacion::create([
             'usuario_id' => $usuarioId ?? auth()->id() ?? 1,
             'entidad_id' => $intencion['cliente']['id'] ?? null,
-            'estado' => 'esperando_confirmacion',
+            'estado' => $necesitaAclaracion ? 'necesita_aclaracion' : 'esperando_confirmacion',
             'tipo_comprobante_sugerido' => $intencion['tipo_comprobante_sunat'] ?? '01',
             'payload_intencion' => $intencion,
             'tiempo_transcripcion_ms' => $tiempoSTT,
             'tiempo_procesamiento_ms' => $tiempoProcesamiento,
         ]);
 
-        // Guardar mensaje del usuario en la BD
         VoiceMensaje::create([
             'conversacion_id' => $conversacion->id,
             'rol' => 'user',
-            'tipo' => $input instanceof UploadedFile ? 'audio' : 'text',
+            'tipo' => $inputOriginal instanceof UploadedFile ? 'audio' : 'text',
             'texto' => $textoComando,
             'payload_intencion' => $intencion,
         ]);
 
-        // 5. Construir respuesta contextual según lo extraído REALMENTE por la IA
-        $clienteNombre = $intencion['cliente_denominacion'];
-        $tipoNombre = $intencion['tipo_comprobante_nombre'] ?? 'Factura';
-        $totalFormatted = number_format((float) $intencion['total'], 2);
+        $respuestaAsistente = $necesitaAclaracion
+            ? $this->construirMensajeAclaracion($intencion)
+            : $this->construirResumenConfirmacion($intencion);
 
-        $respuestaAsistente = "Entendido. He preparado la {$tipoNombre} para {$clienteNombre} por S/ {$totalFormatted}. Di 'confirmar' o presiona el botón para emitir.";
         $ttsData = $this->ttsService->sintetizarVoz($respuestaAsistente);
 
-        // Guardar respuesta del asistente
         VoiceMensaje::create([
             'conversacion_id' => $conversacion->id,
             'rol' => 'assistant',
@@ -144,12 +188,132 @@ class VoiceIAOrchestratorService
 
         return [
             'conversacion_id' => $conversacion->id,
-            'estado' => 'esperando_confirmacion',
+            'estado' => $conversacion->estado,
             'transcripcion' => $textoComando,
             'asistente_respuesta' => $respuestaAsistente,
             'tts' => $ttsData,
             'intencion' => $intencion,
             'tiempo_procesamiento_ms' => $tiempoProcesamiento,
+        ];
+    }
+
+    /**
+     * Interpreta la respuesta del usuario a una pregunta de aclaración
+     * (qué producto es, qué precio usar, o quién es el cliente) y
+     * recalcula si ya se puede pasar a "esperando confirmación".
+     */
+    public function resolverAclaracion(int $conversacionId, string $respuestaTexto, ?float $startTime = null): array
+    {
+        $startTime = $startTime ?? microtime(true);
+        $conversacion = VoiceConversacion::findOrFail($conversacionId);
+        $intencion = $conversacion->payload_intencion;
+        $respuestaLower = mb_strtolower(trim($respuestaTexto), 'UTF-8');
+
+        VoiceMensaje::create([
+            'conversacion_id' => $conversacion->id,
+            'rol' => 'user',
+            'tipo' => 'text',
+            'texto' => $respuestaTexto,
+        ]);
+
+        $motivosPrevios = $intencion['motivos_confirmacion'] ?? [];
+
+        // 1. Resolver cliente si hacía falta: se intenta buscar de nuevo con lo que acaba de decir
+        if (in_array('cliente_no_encontrado', $motivosPrevios, true) && empty($intencion['cliente'])) {
+            $clienteNuevo = $this->intentService->buscarClientePorTexto($respuestaTexto);
+            if ($clienteNuevo) {
+                $intencion['cliente'] = $clienteNuevo;
+                $intencion['cliente_encontrado'] = true;
+                $intencion['cliente_tipo_de_documento'] = $clienteNuevo['tipo_doc'];
+                $intencion['cliente_numero_de_documento'] = $clienteNuevo['num_doc'];
+                $intencion['cliente_denominacion'] = $clienteNuevo['razon_social'];
+                $intencion['cliente_direccion'] = $clienteNuevo['direccion'];
+                $intencion['cliente_email'] = $clienteNuevo['email'];
+            }
+        }
+
+        // 2. Resolver ítems pendientes (elegir opción de producto o elegir precio)
+        $items = $intencion['items'] ?? [];
+
+        foreach ($items as &$item) {
+            $estado = $item['estado'] ?? 'exacto';
+
+            if ($estado === 'requiere_confirmacion' && ! empty($item['opciones'])) {
+                $elegido = $this->interpretarSeleccionOpcion($respuestaLower, $item['opciones']);
+
+                if ($elegido) {
+                    $item['id'] = $elegido['id'];
+                    $item['producto_id'] = $elegido['id'];
+                    $item['descripcion'] = $elegido['descripcion'];
+                    $item['codigo'] = $elegido['codigo'] ?? $item['codigo'];
+                    $item['precio_inventario'] = $elegido['precio_inventario'];
+                    $item['en_inventario'] = true;
+
+                    $precioInv = (float) ($elegido['precio_inventario'] ?? 0);
+                    $precioDict = (float) ($item['precio_dictado'] ?? 0);
+                    $requierePrecio = $precioDict > 0 && $precioInv > 0 && round($precioDict, 2) !== round($precioInv, 2);
+
+                    $item['precio_unitario'] = $requierePrecio ? $precioInv : ($precioInv > 0 ? $precioInv : $precioDict);
+                    $item['estado'] = $requierePrecio ? 'requiere_confirmacion_precio' : 'exacto';
+                    unset($item['opciones']);
+                }
+            } elseif ($estado === 'requiere_confirmacion_precio') {
+                if (str_contains($respuestaLower, 'inventario')) {
+                    $item['precio_unitario'] = (float) $item['precio_inventario'];
+                    $item['estado'] = 'exacto';
+                } elseif (str_contains($respuestaLower, 'audio') || str_contains($respuestaLower, 'dije') || str_contains($respuestaLower, 'mio') || str_contains($respuestaLower, 'mío') || str_contains($respuestaLower, 'dictado')) {
+                    $item['precio_unitario'] = (float) $item['precio_dictado'];
+                    $item['estado'] = 'exacto';
+                }
+            } elseif ($estado === 'no_encontrado') {
+                $confirmaIgual = in_array($respuestaLower, ['si', 'sí', 'confirmar', 'confirmo', 'proceder', 'aceptar'], true)
+                    || str_contains($respuestaLower, 'igual') || str_contains($respuestaLower, 'de todas formas');
+
+                if ($confirmaIgual) {
+                    $item['estado'] = 'exacto';
+                }
+            }
+        }
+        unset($item);
+
+        $intencion['items'] = $items;
+        $intencion = $this->intentService->recalcularTotales($intencion);
+
+        $clienteEncontrado = $intencion['cliente'] !== null;
+        [$necesitaConfirmacion, $motivosRestantes] = $this->intentService->evaluarNecesidadDeConfirmacion($clienteEncontrado, $intencion['items']);
+        $intencion['cliente_encontrado'] = $clienteEncontrado;
+        $intencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion;
+        $intencion['motivos_confirmacion'] = $motivosRestantes;
+
+        $nuevoEstado = $necesitaConfirmacion ? 'necesita_aclaracion' : 'esperando_confirmacion';
+
+        $conversacion->update([
+            'entidad_id' => $intencion['cliente']['id'] ?? $conversacion->entidad_id,
+            'estado' => $nuevoEstado,
+            'payload_intencion' => $intencion,
+        ]);
+
+        $respuestaAsistente = $necesitaConfirmacion
+            ? $this->construirMensajeAclaracion($intencion)
+            : $this->construirResumenConfirmacion($intencion);
+
+        $ttsData = $this->ttsService->sintetizarVoz($respuestaAsistente);
+
+        VoiceMensaje::create([
+            'conversacion_id' => $conversacion->id,
+            'rol' => 'assistant',
+            'tipo' => 'text',
+            'texto' => $respuestaAsistente,
+        ]);
+
+        return [
+            'conversacion_id' => $conversacion->id,
+            'estado' => $nuevoEstado,
+            'transcripcion' => $respuestaTexto,
+            'asistente_respuesta' => $respuestaAsistente,
+            'tts' => $ttsData,
+            'intencion' => $intencion,
+            'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
         ];
     }
 
@@ -168,10 +332,8 @@ class VoiceIAOrchestratorService
         $conversacion->update(['estado' => 'procesando']);
 
         try {
-            // Emisión real ante NubeFact / SUNAT
             $resultado = $this->emissionService->emitir($payload, null, $usuarioId ?? auth()->id());
 
-            // Actualizar la conversación
             $conversacion->update([
                 'comprobante_id' => $resultado['comprobante_id'] ?? null,
                 'estado' => 'completada',
@@ -216,6 +378,87 @@ class VoiceIAOrchestratorService
     {
         $conversacion = VoiceConversacion::findOrFail($conversacionId);
         $conversacion->update(['estado' => 'cancelada']);
+
         return true;
+    }
+
+    /**
+     * Interpreta a cuál de las opciones parecidas se refiere el usuario:
+     * por ordinal ("el segundo", "la primera", "2") o, si no dijo un
+     * ordinal, por similitud de texto contra la descripción de cada opción.
+     */
+    protected function interpretarSeleccionOpcion(string $respuesta, array $opciones): ?array
+    {
+        $mapaOrdinal = [
+            'primero' => 0, 'primera' => 0, 'uno' => 0, '1' => 0,
+            'segundo' => 1, 'segunda' => 1, 'dos' => 1, '2' => 1,
+            'tercero' => 2, 'tercera' => 2, 'tres' => 2, '3' => 2,
+        ];
+
+        foreach ($mapaOrdinal as $palabra => $idx) {
+            if (preg_match('/\b'.preg_quote($palabra, '/').'\b/u', $respuesta) && isset($opciones[$idx])) {
+                return $opciones[$idx];
+            }
+        }
+
+        $mejor = null;
+        $mejorPct = 0;
+
+        foreach ($opciones as $op) {
+            similar_text($respuesta, mb_strtolower((string) $op['descripcion'], 'UTF-8'), $pct);
+            if ($pct > $mejorPct) {
+                $mejorPct = $pct;
+                $mejor = $op;
+            }
+        }
+
+        return $mejorPct >= 40 ? $mejor : null;
+    }
+
+    /**
+     * Arma la pregunta de aclaración según lo que falte: cliente, producto
+     * ambiguo (con sus opciones), producto no encontrado, o precio en conflicto.
+     */
+    protected function construirMensajeAclaracion(array $intencion): string
+    {
+        $partes = [];
+        $motivos = $intencion['motivos_confirmacion'] ?? [];
+
+        if (in_array('cliente_no_encontrado', $motivos, true)) {
+            $partes[] = 'no encontré a ese cliente registrado, ¿me confirmas su nombre completo o su RUC/DNI?';
+        }
+
+        foreach ($intencion['items'] as $item) {
+            $estado = $item['estado'] ?? 'exacto';
+
+            if ($estado === 'requiere_confirmacion' && ! empty($item['opciones'])) {
+                $nombres = collect($item['opciones'])->pluck('descripcion')->implode(', ');
+                $partes[] = "encontré varios productos parecidos a \"{$item['descripcion']}\": {$nombres}. ¿Cuál de esos es?";
+            } elseif ($estado === 'no_encontrado') {
+                $partes[] = "no encontré \"{$item['descripcion']}\" en el inventario. ¿Confirmas que lo facturamos igual con el precio que mencionaste, o prefieres cancelarlo?";
+            } elseif ($estado === 'requiere_confirmacion_precio') {
+                $inv = number_format((float) $item['precio_inventario'], 2);
+                $dict = number_format((float) $item['precio_dictado'], 2);
+                $partes[] = "para \"{$item['descripcion']}\" el precio en inventario es S/ {$inv}, pero mencionaste S/ {$dict}. ¿Uso el del inventario o el que dijiste?";
+            }
+        }
+
+        if (empty($partes)) {
+            return 'Necesito que confirmes algunos datos antes de continuar.';
+        }
+
+        return 'Antes de continuar: '.implode(' Además, ', $partes);
+    }
+
+    /**
+     * Mensaje de resumen cuando ya no hace falta aclarar nada y se puede confirmar.
+     */
+    protected function construirResumenConfirmacion(array $intencion): string
+    {
+        $clienteNombre = $intencion['cliente_denominacion'] ?? 'el cliente';
+        $tipoNombre = $intencion['tipo_comprobante_nombre'] ?? 'Factura';
+        $totalFormatted = number_format((float) ($intencion['total'] ?? 0), 2);
+
+        return "Entendido. He preparado la {$tipoNombre} para {$clienteNombre} por S/ {$totalFormatted}. Di 'confirmar' o presiona el botón para emitir.";
     }
 }
