@@ -145,6 +145,48 @@ class DatosPruebaCompletos extends Seeder
                 'es_proveedor' => false,
                 'activo' => true,
             ],
+            // Empresa RUC 1
+            [
+                'empresa_id' => $empresa->id,
+                'tipo_doc' => '6',
+                'num_doc' => '20123456789',
+                'denominacion' => 'ACME PERU S.A.C.',
+                'razon_comercial' => 'ACME',
+                'direccion' => 'AV. LAS BEGONIAS 456, SAN ISIDRO, LIMA',
+                'telefono' => '01-4445555',
+                'email' => 'ventas@acmeperu.com',
+                'es_cliente' => true,
+                'es_proveedor' => false,
+                'activo' => true,
+            ],
+            // Empresa RUC 2
+            [
+                'empresa_id' => $empresa->id,
+                'tipo_doc' => '6',
+                'num_doc' => '20555555551',
+                'denominacion' => 'TECNOLOGIA GLOBAL S.A.',
+                'razon_comercial' => 'TECNOLOGIA GLOBAL',
+                'direccion' => 'AV. PRIMAVERA 1024, SANTIAGO DE SURCO, LIMA',
+                'telefono' => '01-2223333',
+                'email' => 'info@tecglobal.pe',
+                'es_cliente' => true,
+                'es_proveedor' => false,
+                'activo' => true,
+            ],
+            // Empresa RUC 3
+            [
+                'empresa_id' => $empresa->id,
+                'tipo_doc' => '6',
+                'num_doc' => '20333333332',
+                'denominacion' => 'DISTRIBUIDORA ALIANZA E.I.R.L.',
+                'razon_comercial' => 'DISTRIBUIDORA ALIANZA',
+                'direccion' => 'JR. DE LA UNION 500, LIMA',
+                'telefono' => '01-7778888',
+                'email' => 'pedidos@distalianza.com',
+                'es_cliente' => true,
+                'es_proveedor' => false,
+                'activo' => true,
+            ],
             // Proveedor con RUC
             [
                 'empresa_id' => $empresa->id,
@@ -175,14 +217,16 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('entidades');
         foreach ($clientes as $cliente) {
+            $data = array_filter($cliente, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             Entidad::updateOrCreate(
                 [
                     'empresa_id' => $cliente['empresa_id'],
                     'tipo_doc' => $cliente['tipo_doc'],
                     'num_doc' => $cliente['num_doc'],
                 ],
-                $cliente
+                $data
             );
         }
     }
@@ -297,13 +341,15 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('productos');
         foreach ($productos as $producto) {
+            $data = array_filter($producto, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             Producto::updateOrCreate(
                 [
                     'empresa_id' => $producto['empresa_id'],
                     'codigo' => $producto['codigo']
                 ],
-                $producto
+                $data
             );
         }
     }
@@ -369,14 +415,16 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('series');
         foreach ($series as $serie) {
+            $data = array_filter($serie, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             Serie::updateOrCreate(
                 [
                     'empresa_id' => $serie['empresa_id'],
                     'tipo_comprobante' => $serie['tipo_comprobante'],
                     'serie' => $serie['serie'],
                 ],
-                $serie
+                $data
             );
         }
     }
@@ -407,10 +455,12 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('vehiculos');
         foreach ($vehiculos as $vehiculo) {
+            $data = array_filter($vehiculo, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             Vehiculo::updateOrCreate(
                 ['placa' => $vehiculo['placa']],
-                $vehiculo
+                $data
             );
         }
     }
@@ -447,13 +497,15 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('conductores');
         foreach ($conductores as $conductor) {
+            $data = array_filter($conductor, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             Conductor::updateOrCreate(
                 [
                     'tipo_documento' => $conductor['tipo_documento'],
                     'numero_documento' => $conductor['numero_documento'],
                 ],
-                $conductor
+                $data
             );
         }
     }
@@ -475,10 +527,12 @@ class DatosPruebaCompletos extends Seeder
             ],
         ];
 
+        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('cuentas_bancarias');
         foreach ($cuentas as $cuenta) {
+            $data = array_filter($cuenta, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
             CuentaBancaria::updateOrCreate(
                 ['numero' => $cuenta['numero']],
-                $cuenta
+                $data
             );
         }
     }

@@ -16,8 +16,10 @@ class EntidadController extends Controller
         $query = Entidad::query();
 
         // Por defecto solo mostrar entidades activas (a menos que se especifique lo contrario)
-        if (! $request->has('incluir_inactivos') || ! $request->boolean('incluir_inactivos')) {
-            $query->where('activo', true);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('entidades', 'activo')) {
+            if (! $request->has('incluir_inactivos') || ! $request->boolean('incluir_inactivos')) {
+                $query->where('activo', true);
+            }
         }
 
         // Filtro por empresa_id
