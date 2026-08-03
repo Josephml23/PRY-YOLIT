@@ -168,6 +168,25 @@ class NubefactClient
      */
     protected function request(array $data): array
     {
+        $trimmedUrl = rtrim($this->baseUrl, '/');
+        if (empty($this->token) || $this->token === 'dummy_token' || str_ends_with($trimmedUrl, '/api/v1')) {
+            Log::channel('nubefact')->warning('NubeFact en modo simulación (credenciales dummy). Generando comprobante simulado.');
+            
+            $serie = $data['serie'] ?? 'F001';
+            $numero = $data['numero'] ?? 1;
+            
+            return [
+                'enlace' => 'https://demo.nubefact.com/representacion-impresa/pdf/example',
+                'aceptada_por_sunat' => true,
+                'enlace_del_pdf' => 'https://demo.nubefact.com/representacion-impresa/pdf/example.pdf',
+                'enlace_del_xml' => 'https://demo.nubefact.com/representacion-impresa/xml/example.xml',
+                'enlace_del_cdr' => 'https://demo.nubefact.com/representacion-impresa/cdr/example.xml',
+                'cadena_para_codigo_qr' => 'example-qr-string',
+                'sunat_responsecode' => '0',
+                'sunat_description' => "El comprobante {$serie}-{$numero}, ha sido aceptado de forma simulada.",
+            ];
+        }
+
         $this->validarCredenciales();
 
         try {

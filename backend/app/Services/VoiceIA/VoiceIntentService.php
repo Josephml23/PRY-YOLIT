@@ -47,17 +47,10 @@ class VoiceIntentService
             $clienteNombreBusqueda = $llmResult['cliente'] ?? '';
             $itemsRaw = $llmResult['items'];
         } else {
-            $tipoComprobante = '01'; // Default: Factura
-            if (str_contains($textoLower, 'boleta')) {
-                $tipoComprobante = '03';
-            } elseif (str_contains($textoLower, 'nota de crédito') || str_contains($textoLower, 'nota de credito')) {
-                $tipoComprobante = '07';
-            } elseif (str_contains($textoLower, 'nota de débito') || str_contains($textoLower, 'nota de debito')) {
-                $tipoComprobante = '08';
-            }
-
-            $clienteNombreBusqueda = $textoLower;
-            $itemsRaw = null;
+            $heuristica = $this->extraerSegmentosHeuristico($textoNormalizado);
+            $tipoComprobante = $heuristica['tipo_comprobante'];
+            $clienteNombreBusqueda = $heuristica['cliente'] ?? '';
+            $itemsRaw = $heuristica['items'];
         }
 
         $mapaNombres = [
@@ -110,9 +103,58 @@ class VoiceIntentService
         // 5. Cálculos financieros (IGV 18% incluido en el precio unitario)
         $intencion = $this->recalcularTotales($intencion);
 
-        // 6. Determinar si se necesita confirmación del usuario antes de emitir
+        // 6. Validar estrictamente e identificar estados/errores
+        $estadoIa = 'ok';
+        $detalleError = null;
+        $opcionesProducto = null;
+        $advertenciaPrecio = null;
+
+        if (!$clienteEncontrado) {
+            $estadoIa = 'error_registro_no_encontrado';
+            $detalleError = "El cliente '" . ($clienteNombreBusqueda ?: 'desconocido') . "' no se encuentra registrado en la base de datos.";
+        } else {
+            foreach ($intencion['items'] as $item) {
+                if (($item['estado'] ?? '') === 'no_encontrado') {
+                    $estadoIa = 'error_registro_no_encontrado';
+                    $detalleError = "El producto '" . $item['descripcion'] . "' no se encuentra registrado en el inventario.";
+                    break;
+                }
+            }
+
+            if ($estadoIa === 'ok') {
+                foreach ($intencion['items'] as $item) {
+                    if (($item['estado'] ?? '') === 'requiere_confirmacion') {
+                        $estadoIa = 'requiere_confirmacion_producto';
+                        $opcionesProducto = $item['opciones'] ?? [];
+                        break;
+                    }
+                }
+            }
+
+            if ($estadoIa === 'ok') {
+                foreach ($intencion['items'] as $item) {
+                    if (($item['estado'] ?? '') === 'requiere_confirmacion_precio') {
+                        $estadoIa = 'advertencia_precio';
+                        $advertenciaPrecio = [
+                            'precio_oficial' => $item['precio_inventario'],
+                            'precio_dictado' => $item['precio_dictado'],
+                            'producto_descripcion' => $item['descripcion'],
+                            'producto_id' => $item['id']
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        $intencion['estado_ia'] = $estadoIa;
+        $intencion['detalle_error'] = $detalleError;
+        $intencion['opciones_producto'] = $opcionesProducto;
+        $intencion['advertencia_precio'] = $advertenciaPrecio;
+
+        // 7. Determinar si se necesita confirmación del usuario antes de emitir
         [$necesitaConfirmacion, $motivos] = $this->evaluarNecesidadDeConfirmacion($clienteEncontrado, $intencion['items']);
-        $intencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion;
+        $intencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion || ($estadoIa !== 'ok');
         $intencion['motivos_confirmacion'] = $motivos;
 
         return $intencion;
@@ -288,14 +330,67 @@ class VoiceIntentService
     }
 
     /**
+     * Extrae de forma heurística estructurada los segmentos en español: tipo, cliente, cantidad, producto, precio.
+     */
+    public function extraerSegmentosHeuristico(string $texto): array
+    {
+        $textoLower = mb_strtolower($texto, 'UTF-8');
+        
+        $tipoComprobante = '01'; // Default: Factura
+        if (str_contains($textoLower, 'boleta')) {
+            $tipoComprobante = '03';
+        } elseif (str_contains($textoLower, 'nota de crédito') || str_contains($textoLower, 'nota de credito')) {
+            $tipoComprobante = '07';
+        } elseif (str_contains($textoLower, 'nota de débito') || str_contains($textoLower, 'nota de debito')) {
+            $tipoComprobante = '08';
+        }
+
+        // Extraer Cliente
+        $clienteNombre = null;
+        if (preg_match('/(?:para|a favor de|al cliente|a)\s+([a-z0-9áéíóúñü\s.-]+?)\s+(?:por|con|de|\b\d+\b)/ui', $texto, $matches)) {
+            $clienteNombre = trim($matches[1]);
+        } elseif (preg_match('/(?:para|a favor de|al cliente|a)\s+([a-z0-9áéíóúñü\s.-]+)$/ui', $texto, $matches)) {
+            $clienteNombre = trim($matches[1]);
+        }
+
+        // Extraer Producto, Cantidad y Precio del texto restante
+        $textoRestante = $texto;
+        if ($clienteNombre) {
+            $textoRestante = preg_replace('/(?:para|a favor de|al cliente|a)\s+' . preg_quote($clienteNombre, '/') . '/ui', '', $texto);
+        }
+
+        $items = [];
+        if (preg_match('/\b(\d+)\s+(.+?)\s+(?:a|por|al precio de|a un precio de|cada una|cada uno)\s+(\d+(?:[.,]\d{1,2})?)\b/ui', $textoRestante, $m)) {
+            $items[] = [
+                'producto' => trim($m[2]),
+                'cantidad' => max(1, (int) $m[1]),
+                'precio' => (float) str_replace(',', '.', $m[3])
+            ];
+        } elseif (preg_match('/\b(\d+)\s+(.+)/ui', $textoRestante, $m)) {
+            $items[] = [
+                'producto' => trim($m[2]),
+                'cantidad' => max(1, (int) $m[1]),
+                'precio' => 0.0
+            ];
+        }
+
+        return [
+            'tipo_comprobante' => $tipoComprobante,
+            'cliente' => $clienteNombre,
+            'items' => $items
+        ];
+    }
+
+    /**
      * Resolver cliente buscando ÚNICAMENTE coincidencias reales en la BD.
      * Devuelve null si no hay ninguna coincidencia — nunca se inventa un cliente.
      */
-    protected function resolverCliente(string $busqueda, string $textoCompleto): ?array
+    protected function resolverCliente(?string $busqueda, string $textoCompleto): ?array
     {
-        // 1. Coincidencia por RUC / DNI / Carnet Extranjería.
-        // Solo se consultan columnas que realmente existen en la tabla (evita
-        // el error "column does not exist" que rompía el reconocimiento antes).
+        if (empty($busqueda)) {
+            return null;
+        }
+
         $columnasDocumento = array_values(array_filter(
             ['num_doc', 'numero_documento', 'documento'],
             fn ($col) => Schema::hasColumn('entidades', $col)
@@ -317,7 +412,6 @@ class VoiceIntentService
             }
         }
 
-        // 2. Coincidencia por Nombre / Razón Social en la base de datos
         $columnasNombre = array_values(array_filter(
             ['razon_social', 'nombre_razon_social', 'nombre', 'denominacion', 'razon_comercial', 'alias', 'nombres'],
             fn ($col) => Schema::hasColumn('entidades', $col)
@@ -327,53 +421,30 @@ class VoiceIntentService
             return null;
         }
 
-        $candidatos = [];
-        $busquedaLimpia = trim($busqueda);
-
-        if (! empty($busquedaLimpia)) {
-            $candidatos[] = $busquedaLimpia;
-        }
-
         $stopWords = ['emitir', 'factura', 'boleta', 'nota', 'de', 'credito', 'crédito', 'debito', 'débito', 'para', 'el', 'la', 'cliente', 'por', 'soles', 'pen', 'servicio', 'a', 'un', 'una', 'dos', 'tres', 'cuatro', 'cinco'];
-        $palabrasDelTexto = array_values(array_filter(
-            explode(' ', preg_replace('/[^\w\s]/u', '', $textoCompleto)),
-            fn ($p) => mb_strlen($p) >= 3 && ! in_array(mb_strtolower($p), $stopWords, true)
+        $tokens = array_values(array_filter(
+            explode(' ', preg_replace('/[^\w\s]/u', '', mb_strtolower($busqueda))),
+            fn ($p) => mb_strlen($p) >= 2 && ! in_array($p, $stopWords, true)
         ));
 
-        if (! empty($palabrasDelTexto)) {
-            $candidatos[] = implode(' ', $palabrasDelTexto);
+        if (empty($tokens)) {
+            return null;
         }
 
-        foreach ($candidatos as $termino) {
-            $terminoLower = mb_strtolower(trim($termino));
-            if (mb_strlen($terminoLower) < 2) {
-                continue;
-            }
-
-            $entidad = Entidad::where(function ($query) use ($columnasNombre, $terminoLower) {
-                foreach ($columnasNombre as $col) {
-                    $query->orWhereRaw('LOWER('.$col.') LIKE ?', ['%'.$terminoLower.'%']);
-                }
-            })->first();
-
-            if ($entidad) {
-                return $this->formatEntidad($entidad);
-            }
-
-            $palabrasIndividuales = array_filter(explode(' ', $terminoLower), fn ($w) => mb_strlen($w) >= 3);
-            if (count($palabrasIndividuales) > 1) {
-                foreach ($palabrasIndividuales as $palabra) {
-                    $entidadSub = Entidad::where(function ($query) use ($columnasNombre, $palabra) {
-                        foreach ($columnasNombre as $col) {
-                            $query->orWhereRaw('LOWER('.$col.') LIKE ?', ['%'.$palabra.'%']);
-                        }
-                    })->first();
-
-                    if ($entidadSub) {
-                        return $this->formatEntidad($entidadSub);
+        $query = Entidad::query();
+        $query->where(function ($q) use ($tokens, $columnasNombre) {
+            foreach ($tokens as $token) {
+                $q->where(function ($sq) use ($token, $columnasNombre) {
+                    foreach ($columnasNombre as $col) {
+                        $sq->orWhereRaw('LOWER(' . $col . ') LIKE ?', ['%' . $token . '%']);
                     }
-                }
+                });
             }
+        });
+
+        $entidad = $query->first();
+        if ($entidad) {
+            return $this->formatEntidad($entidad);
         }
 
         return null;
@@ -424,117 +495,103 @@ class VoiceIntentService
             }
         }
 
-        // CASO B: Fallback por Regex si el LLM no devolvió ítems.
-        // Se ancla específicamente al patrón "por <cantidad> <producto> a/por <precio> soles"
-        // para no confundir un artículo ("una factura") con la cantidad real.
         if (empty($itemsCrudos)) {
-            if (preg_match('/por\s+(\d+)\s+([a-záéíóúñü\s]+?)\s+(?:a|por)\s+(\d+(?:[.,]\d{1,2})?)\s*(?:soles|pen|so)\b/ui', $textoCompleto, $m)) {
+            if (preg_match('/por\s+(\d+)\s+([a-z0-9áéíóúñü\s.-]+?)\s+(?:a|por|al precio de|a un precio de|cada una|cada uno)\s+(\d+(?:[.,]\d{1,2})?)\s*(?:soles|pen|so|usd)?/ui', $textoCompleto, $m)) {
                 $itemsCrudos[] = [
                     'nombre' => trim($m[2]),
                     'cantidad' => max(1, (int) $m[1]),
                     'precio_dictado' => (float) str_replace(',', '.', $m[3]),
                 ];
+            } elseif (preg_match('/por\s+(\d+)\s+([a-z0-9áéíóúñü\s.-]+?)(?:$|\s+para|\s+a\s+\d+)/ui', $textoCompleto, $m)) {
+                $itemsCrudos[] = [
+                    'nombre' => trim($m[2]),
+                    'cantidad' => max(1, (int) $m[1]),
+                    'precio_dictado' => 0.0,
+                ];
             }
-            // Si no se puede aislar cantidad+producto+precio con precisión, no se
-            // inventa una descripción tomando trozos sueltos de la frase: se deja
-            // vacío y 'sin_productos' hará que el orquestador pida repetir el comando.
         }
 
         if (! $columnaNombreProd) {
             foreach ($itemsCrudos as $crudo) {
                 $itemsEncontrados[] = $this->itemFueraDeInventario($crudo);
             }
-
             return $itemsEncontrados;
         }
 
         foreach ($itemsCrudos as $crudo) {
             $nombreBuscado = mb_strtolower($crudo['nombre'], 'UTF-8');
 
-            $queryBase = Producto::query();
-            if ($tieneEmpresaId && $empresaId) {
-                $queryBase->where('empresa_id', $empresaId);
-            }
-            if (Schema::hasColumn('productos', 'activo')) {
-                $queryBase->where('activo', true);
-            }
+            $stopWords = ['de', 'para', 'con', 'un', 'una', 'dos', 'tres', 'soles', 'cada', 'una', 'por', 'emitir', 'factura', 'boleta'];
+            $tokens = array_values(array_filter(
+                explode(' ', preg_replace('/[^\w\s]/u', '', $nombreBuscado)),
+                fn ($w) => mb_strlen($w) >= 2 && ! in_array($w, $stopWords, true)
+            ));
 
-            $palabras = array_values(array_filter(explode(' ', $nombreBuscado), fn ($w) => mb_strlen($w) >= 3));
-
-            $candidatosQuery = clone $queryBase;
-            $candidatosQuery->whereNotNull($columnaNombreProd);
-
-            if (! empty($palabras)) {
-                $candidatosQuery->where(function ($q) use ($palabras, $columnaNombreProd, $columnaCodigoProd) {
-                    foreach ($palabras as $palabra) {
-                        $q->orWhereRaw('LOWER('.$columnaNombreProd.') LIKE ?', ['%'.$palabra.'%']);
-                        if ($columnaCodigoProd) {
-                            $q->orWhereRaw('LOWER('.$columnaCodigoProd.') LIKE ?', ['%'.$palabra.'%']);
-                        }
-                    }
-                });
-            } else {
-                $candidatosQuery->whereRaw('LOWER('.$columnaNombreProd.') LIKE ?', ['%'.$nombreBuscado.'%']);
-            }
-
-            $candidatos = $candidatosQuery->limit(20)->get();
-
-            if ($candidatos->isEmpty()) {
+            if (empty($tokens)) {
                 $itemsEncontrados[] = $this->itemFueraDeInventario($crudo);
-
                 continue;
             }
 
-            $puntuados = $candidatos->map(function ($prod) use ($nombreBuscado, $columnaNombreProd) {
-                $nombreProd = mb_strtolower((string) $prod->{$columnaNombreProd}, 'UTF-8');
-                similar_text($nombreBuscado, $nombreProd, $porcentaje);
+            $query = Producto::query();
+            if ($tieneEmpresaId && $empresaId) {
+                $query->where('empresa_id', $empresaId);
+            }
+            if (Schema::hasColumn('productos', 'activo')) {
+                $query->where('activo', true);
+            }
 
-                return ['producto' => $prod, 'similitud' => round($porcentaje, 1)];
-            })->sortByDesc('similitud')->values();
+            $query->where(function ($q) use ($tokens, $columnaNombreProd, $columnaCodigoProd) {
+                foreach ($tokens as $token) {
+                    $q->where(function ($sq) use ($token, $columnaNombreProd, $columnaCodigoProd) {
+                        $sq->whereRaw('LOWER(' . $columnaNombreProd . ') LIKE ?', ['%' . $token . '%']);
+                        if ($columnaCodigoProd) {
+                            $sq->orWhereRaw('LOWER(' . $columnaCodigoProd . ') LIKE ?', ['%' . $token . '%']);
+                        }
+                    });
+                }
+            });
 
-            $mejor = $puntuados->first();
-            $segundo = $puntuados->count() > 1 ? $puntuados->get(1) : null;
+            $candidatos = $query->get();
 
-            $coincidenciaClara = $mejor['similitud'] >= 70
-                && (! $segundo || ($mejor['similitud'] - $segundo['similitud']) >= 15);
+            if ($candidatos->isEmpty()) {
+                $itemsEncontrados[] = $this->itemFueraDeInventario($crudo);
+                continue;
+            }
 
-            if ($coincidenciaClara) {
+            if ($candidatos->count() === 1) {
                 $itemsEncontrados[] = $this->itemDesdeProducto(
-                    $mejor['producto'],
+                    $candidatos->first(),
                     $crudo,
                     $columnaNombreProd,
                     $columnaCodigoProd,
                     $columnaPrecio
                 );
+            } else {
+                $opciones = $candidatos->map(function ($prod) use ($columnaNombreProd, $columnaCodigoProd, $columnaPrecio) {
+                    return [
+                        'id' => $prod->id,
+                        'descripcion' => $prod->{$columnaNombreProd},
+                        'codigo' => $columnaCodigoProd ? $prod->{$columnaCodigoProd} : null,
+                        'precio_oficial' => $columnaPrecio ? (float) $prod->{$columnaPrecio} : null,
+                    ];
+                })->values()->all();
 
-                continue;
-            }
-
-            $opciones = $puntuados->take(3)->map(function ($p) use ($columnaNombreProd, $columnaCodigoProd, $columnaPrecio) {
-                return [
-                    'id' => $p['producto']->id,
-                    'descripcion' => $p['producto']->{$columnaNombreProd},
-                    'codigo' => $columnaCodigoProd ? $p['producto']->{$columnaCodigoProd} : null,
-                    'precio_inventario' => $columnaPrecio ? (float) $p['producto']->{$columnaPrecio} : null,
-                    'similitud' => $p['similitud'],
+                $itemsEncontrados[] = [
+                    'id' => null,
+                    'producto_id' => null,
+                    'codigo' => 'PROD-VOICE',
+                    'descripcion' => mb_convert_case($nombreBuscado, MB_CASE_TITLE, 'UTF-8'),
+                    'unidad_de_medida' => 'NIU',
+                    'cantidad' => $crudo['cantidad'],
+                    'precio_unitario' => $crudo['precio_dictado'],
+                    'precio_dictado' => $crudo['precio_dictado'] ?: null,
+                    'precio_inventario' => null,
+                    'tipo_de_igv' => 1,
+                    'en_inventario' => false,
+                    'estado' => 'requiere_confirmacion',
+                    'opciones' => $opciones,
                 ];
-            })->values()->all();
-
-            $itemsEncontrados[] = [
-                'id' => null,
-                'producto_id' => null,
-                'codigo' => 'PROD-VOICE',
-                'descripcion' => mb_convert_case($nombreBuscado, MB_CASE_TITLE, 'UTF-8'),
-                'unidad_de_medida' => 'NIU',
-                'cantidad' => $crudo['cantidad'],
-                'precio_unitario' => $crudo['precio_dictado'],
-                'precio_dictado' => $crudo['precio_dictado'] ?: null,
-                'precio_inventario' => null,
-                'tipo_de_igv' => 1,
-                'en_inventario' => false,
-                'estado' => 'requiere_confirmacion',
-                'opciones' => $opciones,
-            ];
+            }
         }
 
         return $itemsEncontrados;
