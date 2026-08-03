@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Mic, MicOff, Send, Volume2, Sparkles, CheckCircle2, XCircle, FileText, Loader2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Send, Volume2, Sparkles, CheckCircle2, XCircle, FileText, Loader2, VolumeX, Printer, Download, X } from 'lucide-react';
 import api from '@/services/api';
 
 interface Item {
@@ -49,6 +49,370 @@ interface ChatLog {
   text: string;
 }
 
+const numeroALetras = (num: number): string => {
+  const Unidades = (n: number) => {
+    switch (n) {
+      case 1: return 'UN';
+      case 2: return 'DOS';
+      case 3: return 'TRES';
+      case 4: return 'CUATRO';
+      case 5: return 'CINCO';
+      case 6: return 'SEIS';
+      case 7: return 'SIETE';
+      case 8: return 'OCHO';
+      case 9: return 'NUEVE';
+    }
+    return '';
+  };
+
+  const Decenas = (n: number) => {
+    let decena = Math.floor(n / 10);
+    let unidad = n % 10;
+    switch (decena) {
+      case 1:
+        switch (unidad) {
+          case 0: return 'DIEZ';
+          case 1: return 'ONCE';
+          case 2: return 'DOCE';
+          case 3: return 'TRECE';
+          case 4: return 'CATORCE';
+          case 5: return 'QUINCE';
+          default: return 'DIECI' + Unidades(unidad);
+        }
+      case 2:
+        if (unidad === 0) return 'VEINTE';
+        return 'VEINTI' + Unidades(unidad);
+      case 3: return 'TREINTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 4: return 'CUARENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 5: return 'CINCUENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 6: return 'SESENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 7: return 'SETENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 8: return 'OCHENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 9: return 'NOVENTA' + (unidad > 0 ? ' Y ' + Unidades(unidad) : '');
+      case 0: return Unidades(unidad);
+    }
+    return '';
+  };
+
+  const Centenas = (n: number) => {
+    let centena = Math.floor(n / 100);
+    let dezenas = n % 100;
+    switch (centena) {
+      case 1:
+        if (dezenas > 0) return 'CIENTO ' + Decenas(dezenas);
+        return 'CIEN';
+      case 2: return 'DOSCIENTOS ' + Decenas(dezenas);
+      case 3: return 'TRESCIENTOS ' + Decenas(dezenas);
+      case 4: return 'CUATROCIENTOS ' + Decenas(dezenas);
+      case 5: return 'QUINIENTOS ' + Decenas(dezenas);
+      case 6: return 'SEISCIENTOS ' + Decenas(dezenas);
+      case 7: return 'SETECIENTOS ' + Decenas(dezenas);
+      case 8: return 'OCHOCIENTOS ' + Decenas(dezenas);
+      case 9: return 'NOVECIENTOS ' + Decenas(dezenas);
+      case 0: return Decenas(dezenas);
+    }
+    return '';
+  };
+
+  const Seccion = (num: number, divisor: number, strSingular: string, strPlural: string) => {
+    let cientos = Math.floor(num / divisor);
+    let resto = num % divisor;
+    let letras = '';
+
+    if (cientos > 0) {
+      if (cientos > 1) {
+        letras = Centenas(cientos) + ' ' + strPlural;
+      } else {
+        letras = strSingular;
+      }
+    }
+    if (resto > 0) {
+      letras += (letras !== '' ? ' ' : '') + Centenas(resto);
+    }
+    return letras;
+  };
+
+  const Miles = (num: number) => {
+    let divisor = 1000;
+    let cientos = Math.floor(num / divisor);
+    let resto = num % divisor;
+    let strMiles = Seccion(cientos, 1, 'UN MIL', 'MIL');
+    let strCentenas = Centenas(resto);
+
+    if (strMiles === '') return strCentenas;
+    return strMiles + ' ' + strCentenas;
+  };
+
+  const Millones = (num: number) => {
+    let divisor = 1000000;
+    let cientos = Math.floor(num / divisor);
+    let resto = num % divisor;
+    let strMillones = Seccion(cientos, 1, 'UN MILLON', 'MILLONES');
+    let strMiles = Miles(resto);
+
+    if (strMillones === '') return strMiles;
+    return strMillones + ' ' + strMiles;
+  };
+
+  let entero = Math.floor(num);
+  let centavos = Math.round((num - entero) * 100);
+  let letrasEntero = entero === 0 ? 'CERO' : Millones(entero);
+  let strCentavos = (centavos < 10 ? '0' : '') + centavos;
+  
+  return `${letrasEntero} Y ${strCentavos}/100`;
+};
+
+interface InvoicePrintModalProps {
+  invoice: any;
+  onClose: () => void;
+}
+
+function InvoicePrintModal({ invoice, onClose }: InvoicePrintModalProps) {
+  if (!invoice) return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const getTipoDocNombre = (tipo: string) => {
+    return tipo === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA DE VENTA ELECTRÓNICA';
+  };
+
+  const formatDocumento = (tipo: string) => {
+    return tipo === '6' ? 'R.U.C.' : 'D.N.I.';
+  };
+
+  const getMonedaNombre = (cod: string) => {
+    return cod === 'PEN' ? 'NUEVOS SOLES' : 'DÓLARES AMERICANOS';
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs overflow-y-auto p-4 print:p-0 print:bg-white print:static print:overflow-visible">
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-area, .print-area * {
+            visibility: visible;
+          }
+          .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 21cm;
+            min-height: 29.7cm;
+            padding: 1.5cm;
+            margin: 0;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] print:h-auto print:max-w-none print:shadow-none print:rounded-none no-print:animate-in no-print:zoom-in-95 duration-200">
+        <div className="no-print flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50 rounded-t-xl">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-indigo-600" />
+            <span className="font-bold text-slate-800">Representación Impresa del Comprobante</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 border-slate-300">
+              <Printer className="h-4 w-4 text-slate-600" /> Imprimir
+            </Button>
+            {invoice.pdf_url || invoice.enlace_pdf || invoice.enlace_del_pdf ? (
+              <a 
+                href={invoice.pdf_url || invoice.enlace_pdf || invoice.enlace_del_pdf} 
+                target="_blank" 
+                rel="noreferrer"
+              >
+                <Button variant="outline" size="sm" className="gap-2 border-slate-300">
+                  <Download className="h-4 w-4 text-slate-600" /> Descargar PDF
+                </Button>
+              </a>
+            ) : null}
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-slate-200">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 bg-slate-100 print:bg-white print:overflow-visible print:p-0">
+          <div className="print-area bg-white border border-slate-300 shadow-lg mx-auto p-12 max-w-[21cm] min-h-[29.7cm] text-black font-sans text-xs print:shadow-none print:border-none print:p-0">
+            
+            <div className="grid grid-cols-12 gap-4 mb-6">
+              <div className="col-span-7 space-y-1">
+                <div className="text-sm font-extrabold tracking-wider text-slate-900 uppercase">
+                  {invoice.empresa?.nombre_comercial || invoice.empresa?.razon_social || 'EMPRESA EMISORA'}
+                </div>
+                <div className="font-bold text-[10px] text-slate-700 leading-tight uppercase">
+                  {invoice.empresa?.razon_social || 'RAZON SOCIAL S.A.C.'}
+                </div>
+                <div className="text-[9px] text-slate-600 leading-tight">
+                  {invoice.empresa?.direccion || 'DIRECCION FISCAL EMISOR'}<br />
+                  {invoice.empresa?.ubigeo_departamento || 'LIMA'} - {invoice.empresa?.ubigeo_provincia || 'LIMA'} - {invoice.empresa?.ubigeo_distrito || 'LIMA'}
+                </div>
+              </div>
+
+              <div className="col-span-5 border-2 border-black p-4 text-center space-y-2 flex flex-col justify-center">
+                <div className="text-xs font-black tracking-widest text-black">
+                  {getTipoDocNombre(invoice.tipo_doc)}
+                </div>
+                <div className="text-sm font-black text-black">
+                  RUC: {invoice.empresa?.ruc || '00000000000'}
+                </div>
+                <div className="text-sm font-black text-black">
+                  {invoice.serie || 'F001'}-{invoice.correlativo || '0000'}
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-black p-4 space-y-1.5 mb-6">
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">Fecha de Vencimiento</div>
+                <div className="col-span-9">: {invoice.fecha_vencimiento || invoice.fecha_emision}</div>
+              </div>
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">Fecha de Emisión</div>
+                <div className="col-span-9">: {invoice.fecha_emision}</div>
+              </div>
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">Señor(es)</div>
+                <div className="col-span-9 uppercase font-bold">: {invoice.cliente_razon_social}</div>
+              </div>
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">{formatDocumento(invoice.cliente_tipo_doc)}</div>
+                <div className="col-span-9 font-bold">: {invoice.cliente_num_doc}</div>
+              </div>
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">Dirección del Cliente</div>
+                <div className="col-span-9 uppercase">: {invoice.cliente_direccion || 'SIN DIRECCION'}</div>
+              </div>
+              <div className="grid grid-cols-12 gap-x-2">
+                <div className="col-span-3 font-bold">Tipo de Moneda</div>
+                <div className="col-span-9 uppercase">: {getMonedaNombre(invoice.codigo_tipo_moneda)}</div>
+              </div>
+              {invoice.observaciones && (
+                <div className="grid grid-cols-12 gap-x-2">
+                  <div className="col-span-3 font-bold">Observación</div>
+                  <div className="col-span-9">: {invoice.observaciones}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="border border-black min-h-[250px] flex flex-col mb-6">
+              <table className="w-full text-[10px] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-black bg-slate-50 font-bold">
+                    <th className="p-2 border-r border-black text-center w-16">Cantidad</th>
+                    <th className="p-2 border-r border-black text-center w-24">Unidad Medida</th>
+                    <th className="p-2 border-r border-black w-28">Código</th>
+                    <th className="p-2 border-r border-black">Descripción</th>
+                    <th className="p-2 text-right w-32">Valor Unitario</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.items && invoice.items.map((item: any, idx: number) => (
+                    <tr key={idx} className="border-b border-slate-200 last:border-b-0">
+                      <td className="p-2 border-r border-black text-center font-bold">
+                        {parseFloat(item.cantidad).toFixed(2)}
+                      </td>
+                      <td className="p-2 border-r border-black text-center uppercase">
+                        {item.unidad === 'NIU' || item.unidad === 'NIU ' ? 'UNIDAD' : (item.unidad || 'UNIDAD')}
+                      </td>
+                      <td className="p-2 border-r border-black uppercase font-mono text-[9px]">
+                        {item.codigo_producto || '-'}
+                      </td>
+                      <td className="p-2 border-r border-black uppercase font-semibold">
+                        {item.descripcion}
+                      </td>
+                      <td className="p-2 text-right font-bold">
+                        S/. {parseFloat(item.mto_precio_unitario || item.mto_valor_unitario || 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!invoice.items || invoice.items.length < 5) && (
+                    <tr className="h-24">
+                      <td className="border-r border-black"></td>
+                      <td className="border-r border-black"></td>
+                      <td className="border-r border-black"></td>
+                      <td className="border-r border-black"></td>
+                      <td></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-7 space-y-4">
+                <div className="border border-black p-2 text-[10px]">
+                  Valor de Venta de Operaciones Gratuitas : S/. {parseFloat(invoice.mto_oper_gratuitas || 0).toFixed(2)}
+                </div>
+                <div className="font-extrabold text-[10px] uppercase text-black">
+                  SON: {numeroALetras(parseFloat(invoice.mto_imp_venta))} {getMonedaNombre(invoice.codigo_tipo_moneda)}
+                </div>
+              </div>
+
+              <div className="col-span-5 border border-black overflow-hidden">
+                <table className="w-full text-[10px] border-collapse">
+                  <tbody className="divide-y divide-slate-200">
+                    <tr className="flex justify-between p-1">
+                      <td className="font-bold">Sub Total Ventas</td>
+                      <td className="font-bold">S/. {parseFloat(invoice.mto_oper_gravadas || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>Anticipos</td>
+                      <td>S/. 0.00</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>Descuentos</td>
+                      <td>S/. {parseFloat(invoice.total_descuentos || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>Valor Venta</td>
+                      <td>S/. {parseFloat(invoice.mto_oper_gravadas || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>ISC</td>
+                      <td>S/. 0.00</td>
+                    </tr>
+                    <tr className="flex justify-between p-1 bg-slate-50">
+                      <td className="font-bold">IGV (18%)</td>
+                      <td className="font-bold">S/. {parseFloat(invoice.mto_igv || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>Otros Cargos</td>
+                      <td>S/. {parseFloat(invoice.mto_otros_cargos || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr className="flex justify-between p-1">
+                      <td>Otros Tributos</td>
+                      <td>S/. 0.00</td>
+                    </tr>
+                    <tr className="flex justify-between p-1.5 bg-slate-100 border-t border-black">
+                      <td className="font-black text-black">Importe Total</td>
+                      <td className="font-black text-black">S/. {parseFloat(invoice.mto_imp_venta || 0).toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="border border-black p-3 text-center text-[9px] mt-6 leading-tight text-slate-800 uppercase font-medium">
+              Esta es una representación impresa de la factura electrónica, generada en el Sistema de SUNAT. Puede verificarla utilizando su clave SOL.
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function VoiceIA() {
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -56,12 +420,112 @@ export default function VoiceIA() {
   const [isEmitting, setIsEmitting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [session, setSession] = useState<ProcessResponse | null>(null);
+  const [editableIntencion, setEditableIntencion] = useState<Intencion | null>(null);
+  const [emittedInvoice, setEmittedInvoice] = useState<any>(null);
+
+  const fetchComprobanteEmitido = async (id: number) => {
+    try {
+      const response = await api.get(`/facturacion/comprobantes/${id}`);
+      if (response.data && response.data.comprobante) {
+        setEmittedInvoice(response.data.comprobante);
+      }
+    } catch (err) {
+      console.error('Error al obtener comprobante emitido:', err);
+      toast.error('Comprobante emitido pero no se pudo cargar la vista de impresión.');
+    }
+  };
   const [chatLogs, setChatLogs] = useState<ChatLog[]>([
     {
       role: 'assistant',
       text: '¡Hola! Soy tu Asistente de Facturación por Voz. Presiona el micrófono y dictame: "Emitir factura para Fibertel por 2 Routers Mikrotik a 150 soles".',
     },
   ]);
+
+  useEffect(() => {
+    if (session && session.intencion) {
+      setEditableIntencion(JSON.parse(JSON.stringify(session.intencion)));
+    } else {
+      setEditableIntencion(null);
+    }
+  }, [session]);
+
+  const handleRucSearch = async (cleanVal: string) => {
+    if (!cleanVal) {
+      toast.warning('Ingresa un número de documento.');
+      return;
+    }
+    try {
+      const res = await api.get(`/v1/entidades?search=${cleanVal}`);
+      if (res.data && res.data.length > 0) {
+        const matched = res.data[0];
+        setEditableIntencion(prev => {
+          if (!prev) return null;
+          const updatedCliente = {
+            ...prev.cliente,
+            id: matched.id,
+            tipo_doc: matched.tipo_doc,
+            num_doc: matched.num_doc,
+            razon_social: matched.denominacion,
+            direccion: matched.direccion,
+            email: matched.email,
+          };
+          return {
+            ...prev,
+            cliente_denominacion: matched.denominacion,
+            cliente_numero_de_documento: matched.num_doc,
+            cliente: updatedCliente
+          };
+        });
+        toast.success('Empresa encontrada en la BD.');
+      } else {
+        toast.warning('Documento no registrado localmente. Puedes ingresarlo manualmente.');
+      }
+    } catch (error) {
+      console.error('Error buscando RUC:', error);
+      toast.error('Error al consultar el documento.');
+    }
+  };
+
+  const handleRucChange = async (val: string) => {
+    if (!editableIntencion) return;
+    const cleanVal = val.replace(/[^A-Za-z0-9]/g, '');
+    
+    setEditableIntencion(prev => prev ? { ...prev, cliente_numero_de_documento: cleanVal } : null);
+
+    if (cleanVal.length === 11 || cleanVal.length === 8) {
+      handleRucSearch(cleanVal);
+    }
+  };
+
+  const handleItemChange = (idx: number, field: string, value: any) => {
+    if (!editableIntencion) return;
+    const updatedItems = [...editableIntencion.items];
+    
+    if (field === 'cantidad') {
+      updatedItems[idx].cantidad = Math.max(1, parseInt(value) || 1);
+    } else if (field === 'precio_unitario') {
+      updatedItems[idx].precio_unitario = Math.max(0, parseFloat(value) || 0);
+    } else if (field === 'descripcion') {
+      updatedItems[idx].descripcion = value;
+    }
+
+    const item = updatedItems[idx];
+    item.total = item.cantidad * item.precio_unitario;
+    item.subtotal = item.total / 1.18;
+    item.igv = item.total - item.subtotal;
+
+    const total = updatedItems.reduce((acc, curr) => acc + curr.total, 0);
+    const total_gravada = total / 1.18;
+    const total_igv = total - total_gravada;
+
+    setEditableIntencion(prev => prev ? {
+      ...prev,
+      items: updatedItems,
+      total: total,
+      total_gravada: total_gravada,
+      total_igv: total_igv
+    } : null);
+  };
 
   const recognitionRef = useRef<any>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
@@ -234,6 +698,11 @@ export default function VoiceIA() {
           setChatLogs((prev) => [...prev, { role: 'assistant', text: `✅ ${data.asistente_respuesta}` }]);
           reproducirVozAsistente(data.asistente_respuesta, data.tts?.audio_base64);
           toast.success('Comprobante emitido exitosamente.');
+          
+          const compId = data.intencion?.comprobante_id || (data as any).comprobante_id || (data as any).data?.comprobante_id;
+          if (compId) {
+            fetchComprobanteEmitido(compId);
+          }
           setSession(null);
         } else {
           setSession(data);
@@ -254,12 +723,13 @@ export default function VoiceIA() {
   };
 
   const confirmarEmision = async () => {
-    if (!session) return;
+    if (!session || !editableIntencion) return;
     detenerVoz();
     setIsEmitting(true);
     try {
       const res = await api.post('/v1/voice/confirmar-emision', {
         conversacion_id: session.conversacion_id,
+        override_data: editableIntencion,
       });
 
       if (!isMountedRef.current) return;
@@ -269,6 +739,11 @@ export default function VoiceIA() {
         setChatLogs((prev) => [...prev, { role: 'assistant', text: `✅ ${msg}` }]);
         reproducirVozAsistente('Operación completada exitosamente. El comprobante ha sido emitido.');
         toast.success(msg);
+        
+        const compId = res.data.data?.comprobante_id || res.data.data?.data?.comprobante_id;
+        if (compId) {
+          fetchComprobanteEmitido(compId);
+        }
         setSession(null);
       }
     } catch (error: any) {
@@ -435,31 +910,85 @@ export default function VoiceIA() {
               </CardHeader>
 
               <CardContent className="p-4 space-y-4 text-sm">
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente Reconocido</div>
-                  <div className="font-bold text-slate-900">{session.intencion.cliente_denominacion}</div>
-                  <div className="text-xs text-slate-600">Doc: {session.intencion.cliente_numero_de_documento}</div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente / Empresa</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">RUC / DNI</label>
+                      <div className="flex gap-2 mt-0.5">
+                        <Input
+                          value={editableIntencion ? editableIntencion.cliente_numero_de_documento : ''}
+                          onChange={(e) => handleRucChange(e.target.value)}
+                          placeholder="RUC o DNI"
+                          className="bg-white border-slate-200 h-9"
+                        />
+                        <Button
+                          onClick={() => handleRucSearch(editableIntencion?.cliente_numero_de_documento || '')}
+                          size="sm"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 h-9 px-3"
+                        >
+                          Buscar
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Razón Social</label>
+                      <Input
+                        value={editableIntencion ? editableIntencion.cliente_denominacion : ''}
+                        onChange={(e) => setEditableIntencion(prev => prev ? { ...prev, cliente_denominacion: e.target.value } : null)}
+                        placeholder="Razón Social"
+                        className="bg-white border-slate-200 mt-0.5"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle de Productos</div>
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle de Productos (Editable)</div>
+                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs bg-white">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-100 text-slate-700 font-semibold border-b">
+                      <thead className="bg-slate-50 text-slate-700 font-semibold border-b">
                         <tr>
-                          <th className="p-2">Cant</th>
-                          <th className="p-2">Descripción</th>
-                          <th className="p-2 text-right">P. Unit</th>
-                          <th className="p-2 text-right">Total</th>
+                          <th className="p-3 w-16">Cant</th>
+                          <th className="p-3">Descripción / Producto</th>
+                          <th className="p-3 w-28 text-right">P. Unit</th>
+                          <th className="p-3 w-24 text-right">Total</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {session.intencion.items.map((item, idx) => (
+                        {editableIntencion && editableIntencion.items.map((item, idx) => (
                           <tr key={idx}>
-                            <td className="p-2 font-bold">{item.cantidad}</td>
-                            <td className="p-2">{item.descripcion}</td>
-                            <td className="p-2 text-right">S/ {item.precio_unitario.toFixed(2)}</td>
-                            <td className="p-2 text-right font-semibold">S/ {item.total.toFixed(2)}</td>
+                            <td className="p-2">
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.cantidad}
+                                onChange={(e) => handleItemChange(idx, 'cantidad', e.target.value)}
+                                className="w-12 text-center h-8 px-1 py-0 border-slate-200 bg-slate-50/50 font-bold"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                value={item.descripcion}
+                                onChange={(e) => handleItemChange(idx, 'descripcion', e.target.value)}
+                                className="h-8 px-2 py-0 border-slate-200 bg-slate-50/50"
+                              />
+                            </td>
+                            <td className="p-2 text-right">
+                              <div className="relative flex items-center justify-end">
+                                <span className="absolute left-2 text-[10px] text-slate-400">S/</span>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.precio_unitario}
+                                  onChange={(e) => handleItemChange(idx, 'precio_unitario', e.target.value)}
+                                  className="w-20 text-right h-8 pl-6 pr-2 py-0 border-slate-200 bg-slate-50/50"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-3 text-right font-bold text-slate-800">
+                              S/ {item.total.toFixed(2)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -467,11 +996,15 @@ export default function VoiceIA() {
                   </div>
                 </div>
 
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100 space-y-1 text-right">
-                  <div className="text-xs text-slate-600">Op. Gravada: S/ {session.intencion.total_gravada.toFixed(2)}</div>
-                  <div className="text-xs text-slate-600">IGV (18%): S/ {session.intencion.total_igv.toFixed(2)}</div>
-                  <div className="text-base font-extrabold text-indigo-900">
-                    TOTAL: S/ {session.intencion.total.toFixed(2)}
+                <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100/80 space-y-1.5 text-right shadow-2xs">
+                  <div className="text-xs text-slate-600">
+                    Op. Gravada: <span className="font-semibold text-slate-800">S/ {editableIntencion ? editableIntencion.total_gravada.toFixed(2) : '0.00'}</span>
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    IGV (18%): <span className="font-semibold text-slate-800">S/ {editableIntencion ? editableIntencion.total_igv.toFixed(2) : '0.00'}</span>
+                  </div>
+                  <div className="text-base font-extrabold text-indigo-900 border-t border-indigo-100/50 pt-1.5 mt-1.5">
+                    TOTAL: S/ {editableIntencion ? editableIntencion.total.toFixed(2) : '0.00'}
                   </div>
                 </div>
               </CardContent>
@@ -507,6 +1040,13 @@ export default function VoiceIA() {
           )}
         </div>
       </div>
+
+      {emittedInvoice && (
+        <InvoicePrintModal 
+          invoice={emittedInvoice} 
+          onClose={() => setEmittedInvoice(null)} 
+        />
+      )}
     </div>
   );
 }
