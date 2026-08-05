@@ -422,6 +422,11 @@ export default function VoiceIA() {
   const [session, setSession] = useState<ProcessResponse | null>(null);
   const [editableIntencion, setEditableIntencion] = useState<Intencion | null>(null);
   const [emittedInvoice, setEmittedInvoice] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'asistente' | 'historial'>('asistente');
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [historialLoading, setHistorialLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchComprobanteEmitido = async (id: number) => {
     try {
@@ -434,6 +439,33 @@ export default function VoiceIA() {
       toast.error('Comprobante emitido pero no se pudo cargar la vista de impresión.');
     }
   };
+
+  const fetchHistorial = async (page = 1) => {
+    setHistorialLoading(true);
+    try {
+      const response = await api.get(`/facturacion/comprobantes?page=${page}&per_page=10`);
+      if (response.data && response.data.data) {
+        setHistorial(response.data.data);
+        setCurrentPage(response.data.current_page);
+        setTotalPages(response.data.last_page);
+      }
+    } catch (err) {
+      console.error('Error al cargar historial:', err);
+      toast.error('No se pudo cargar el historial de comprobantes.');
+    } finally {
+      setHistorialLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistorial(1);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'historial') {
+      fetchHistorial(1);
+    }
+  }, [activeTab]);
   const [chatLogs, setChatLogs] = useState<ChatLog[]>([
     {
       role: 'assistant',
@@ -702,6 +734,7 @@ export default function VoiceIA() {
           const compId = data.intencion?.comprobante_id || (data as any).comprobante_id || (data as any).data?.comprobante_id;
           if (compId) {
             fetchComprobanteEmitido(compId);
+            fetchHistorial(1);
           }
           setSession(null);
         } else {
@@ -743,6 +776,7 @@ export default function VoiceIA() {
         const compId = res.data.data?.comprobante_id || res.data.data?.data?.comprobante_id;
         if (compId) {
           fetchComprobanteEmitido(compId);
+          fetchHistorial(1);
         }
         setSession(null);
       }
@@ -805,7 +839,32 @@ export default function VoiceIA() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Selector de Pestañas */}
+      <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('asistente')}
+          className={`px-5 py-2.5 text-sm font-bold border-b-2 transition-all duration-200 ${
+            activeTab === 'asistente'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
+        >
+          Asistente de Voz
+        </button>
+        <button
+          onClick={() => setActiveTab('historial')}
+          className={`px-5 py-2.5 text-sm font-bold border-b-2 transition-all duration-200 ${
+            activeTab === 'historial'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+          }`}
+        >
+          Historial de Facturas
+        </button>
+      </div>
+
+      {activeTab === 'asistente' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chat / Comandos de Voz */}
         <div className="lg:col-span-6 space-y-4">
           <Card className="h-[480px] flex flex-col shadow-sm border-slate-200">
@@ -1039,7 +1098,133 @@ export default function VoiceIA() {
             </Card>
           )}
         </div>
-      </div>
+      ) : (
+        /* Card de Historial */
+        <Card className="shadow-sm border-slate-200 bg-white">
+          <CardHeader className="pb-3 border-b bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4 text-indigo-600" /> Historial de Comprobantes Emitidos
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Listado y detalles de todas las facturas y boletas electrónicas creadas en el sistema.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => fetchHistorial(currentPage)} disabled={historialLoading}>
+              {historialLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Actualizar'}
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {historial.length === 0 ? (
+              <div className="p-8 text-center text-slate-500">
+                {historialLoading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                    <span>Cargando comprobantes...</span>
+                  </div>
+                ) : (
+                  <span>No hay comprobantes emitidos.</span>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-700">
+                    <tr>
+                      <th className="p-4">Comprobante</th>
+                      <th className="p-4">Fecha Emisión</th>
+                      <th className="p-4">Cliente / RUC</th>
+                      <th className="p-4 text-right">Monto Total</th>
+                      <th className="p-4 text-center">Estado</th>
+                      <th className="p-4 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {historial.map((comp: any) => (
+                      <tr key={comp.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">
+                          {comp.tipo_doc === '01' ? 'Factura' : 'Boleta'} {comp.serie}-{comp.correlativo}
+                        </td>
+                        <td className="p-4 text-slate-600">
+                          {comp.fecha_emision}
+                        </td>
+                        <td className="p-4">
+                          <div className="font-semibold text-slate-800">{comp.cliente_razon_social}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">{comp.cliente_num_doc}</div>
+                        </td>
+                        <td className="p-4 text-right font-extrabold text-slate-900">
+                          S/ {parseFloat(comp.mto_imp_venta).toFixed(2)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <Badge 
+                            className={
+                              comp.estado_sunat === 'ACEPTADO' 
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100 font-bold' 
+                                : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 font-bold'
+                            }
+                          >
+                            {comp.estado_sunat || 'PENDIENTE'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => fetchComprobanteEmitido(comp.id)}
+                              className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 font-bold h-7 px-2 text-[10px]"
+                            >
+                              Ver Detalle
+                            </Button>
+                            {comp.pdf_path || comp.nubefact_enlace ? (
+                              <a 
+                                href={comp.pdf_path ? `/storage/${comp.pdf_path}` : comp.nubefact_enlace} 
+                                target="_blank" 
+                                rel="noreferrer"
+                              >
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 h-7 px-2 text-[10px]"
+                                >
+                                  PDF
+                                </Button>
+                              </a>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+          {totalPages > 1 && (
+            <CardFooter className="px-6 py-4 border-t bg-slate-50/50 flex justify-between items-center text-xs">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => fetchHistorial(currentPage - 1)} 
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <span className="font-semibold text-slate-600">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => fetchHistorial(currentPage + 1)} 
+                disabled={currentPage === totalPages}
+              >
+                Siguiente
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
+      )}
 
       {emittedInvoice && (
         <InvoicePrintModal 
