@@ -1098,6 +1098,7 @@ export default function VoiceIA() {
             </Card>
           )}
         </div>
+      </div>
       ) : (
         /* Card de Historial */
         <Card className="shadow-sm border-slate-200 bg-white">
