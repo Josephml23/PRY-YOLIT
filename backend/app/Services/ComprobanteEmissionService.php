@@ -153,6 +153,18 @@ class ComprobanteEmissionService
 
             NubefactMapper::updateComprobanteFromNubefact($comprobante, $response);
 
+            // Actualizar correlativo en la tabla series
+            $serieObj = \App\Models\Serie::where('empresa_id', $comprobante->empresa_id)
+                ->where('tipo_comprobante', $comprobante->tipo_doc)
+                ->where('serie', $comprobante->serie)
+                ->first();
+            if ($serieObj) {
+                if ($comprobante->correlativo >= $serieObj->correlativo_actual) {
+                    $serieObj->correlativo_actual = $comprobante->correlativo;
+                    $serieObj->save();
+                }
+            }
+
             // Email automático
             $aceptadoPorSunat = $response['aceptada_por_sunat'] ?? false;
             if ($aceptadoPorSunat && !empty($comprobante->cliente_email)) {
