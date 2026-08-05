@@ -92,7 +92,6 @@ const inventarioItems: DropdownItem[] = [
 const cpeItems: DropdownItem[] = [
   { label: 'VOICE IA (FACTURACIÓN POR VOZ)', path: '', icon: Mic, isSectionTitle: true },
   { label: 'Facturar por Voz', path: '/voice-ia', icon: Mic },
-  { label: 'Historial Voice IA', path: '/voice-ia/historial', icon: History },
   { label: 'COMPROBANTES ELECTRÓNICOS', path: '', icon: FileText, isSectionTitle: true },
   { label: 'Boletas y Facturas', path: '/cpes/boletas-facturas', icon: Receipt },
   { label: 'Nota de Venta', path: '/cpes/nota-venta', icon: ShoppingBag },
@@ -108,10 +107,7 @@ const cpeItems: DropdownItem[] = [
 ];
 
 const navItems: NavItem[] = [
-  { label: 'Voice IA', icon: Mic, path: '/voice-ia', hasDropdown: true, dropdownItems: [
-    { label: 'Facturar por Voz', path: '/voice-ia', icon: Mic },
-    { label: 'Historial Voice IA', path: '/voice-ia/historial', icon: History },
-  ]},
+  { label: 'Voice IA', icon: Mic, path: '/voice-ia', hasDropdown: false },
   { label: 'Mantenimiento', icon: Settings, path: '/mantenimiento', hasDropdown: true, dropdownItems: mantenimientoItems },
   { label: 'Compras', icon: ShoppingCart, path: '/compras', hasDropdown: true, dropdownItems: comprasItems },
   { label: 'Inventario', icon: Package, path: '/inventario', hasDropdown: true, dropdownItems: inventarioItems },

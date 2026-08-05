@@ -1180,9 +1180,9 @@ export default function VoiceIA() {
                             >
                               Ver Detalle
                             </Button>
-                            {comp.pdf_path || comp.nubefact_enlace ? (
+                            {comp.nubefact_pdf_url || comp.pdf_path || comp.nubefact_enlace ? (
                               <a 
-                                href={comp.pdf_path ? `/storage/${comp.pdf_path}` : comp.nubefact_enlace} 
+                                href={comp.nubefact_pdf_url || (comp.pdf_path ? `/storage/${comp.pdf_path}` : comp.nubefact_enlace)} 
                                 target="_blank" 
                                 rel="noreferrer"
                               >
