@@ -1188,7 +1188,7 @@ export default function VoiceIA() {
                           </Badge>
                         </td>
                         <td className="p-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center">
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -1198,18 +1198,8 @@ export default function VoiceIA() {
                               }}
                               className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 font-bold h-7 px-2 text-[10px]"
                             >
-                              Ver Detalle
+                              PDF
                             </Button>
-                            {comp.nubefact_pdf_url || comp.pdf_path || comp.nubefact_enlace ? (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handlePdfClick(comp.id)}
-                                className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 h-7 px-2 text-[10px]"
-                              >
-                                PDF
-                              </Button>
-                            ) : null}
                           </div>
                         </td>
                       </tr>
