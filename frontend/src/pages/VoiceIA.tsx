@@ -166,10 +166,21 @@ const numeroALetras = (num: number): string => {
 interface InvoicePrintModalProps {
   invoice: any;
   onClose: () => void;
+  shouldAutoPrint?: boolean;
 }
 
-function InvoicePrintModal({ invoice, onClose }: InvoicePrintModalProps) {
+function InvoicePrintModal({ invoice, onClose, shouldAutoPrint }: InvoicePrintModalProps) {
   if (!invoice) return null;
+
+  useEffect(() => {
+    if (shouldAutoPrint) {
+      const timer = setTimeout(() => {
+        window.print();
+        onClose();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoPrint, invoice]);
 
   const handlePrint = () => {
     window.print();
@@ -428,6 +439,12 @@ export default function VoiceIA() {
   const [historialLoading, setHistorialLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [shouldAutoPrint, setShouldAutoPrint] = useState(false);
+
+  const handlePdfClick = (id: number) => {
+    setShouldAutoPrint(true);
+    fetchComprobanteEmitido(id);
+  };
 
   const fetchComprobanteEmitido = async (id: number) => {
     try {
@@ -1175,25 +1192,23 @@ export default function VoiceIA() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => fetchComprobanteEmitido(comp.id)}
+                              onClick={() => {
+                                setShouldAutoPrint(false);
+                                fetchComprobanteEmitido(comp.id);
+                              }}
                               className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 font-bold h-7 px-2 text-[10px]"
                             >
                               Ver Detalle
                             </Button>
                             {comp.nubefact_pdf_url || comp.pdf_path || comp.nubefact_enlace ? (
-                              <a 
-                                href={comp.nubefact_pdf_url || (comp.pdf_path ? `/storage/${comp.pdf_path}` : comp.nubefact_enlace)} 
-                                target="_blank" 
-                                rel="noreferrer"
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handlePdfClick(comp.id)}
+                                className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 h-7 px-2 text-[10px]"
                               >
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 h-7 px-2 text-[10px]"
-                                >
-                                  PDF
-                                </Button>
-                              </a>
+                                PDF
+                              </Button>
                             ) : null}
                           </div>
                         </td>
@@ -1233,7 +1248,11 @@ export default function VoiceIA() {
       {emittedInvoice && (
         <InvoicePrintModal 
           invoice={emittedInvoice} 
-          onClose={() => setEmittedInvoice(null)} 
+          onClose={() => {
+            setEmittedInvoice(null);
+            setShouldAutoPrint(false);
+          }} 
+          shouldAutoPrint={shouldAutoPrint}
         />
       )}
       </div>
