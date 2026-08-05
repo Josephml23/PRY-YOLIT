@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Mic, MicOff, Send, Volume2, Sparkles, CheckCircle2, XCircle, FileText, Loader2, VolumeX, Printer, Download, X } from 'lucide-react';
 import api from '@/services/api';
+import { NubofactHeader } from '@/components/layout/NubofactHeader';
 
 interface Item {
   codigo: string;
@@ -810,7 +811,9 @@ export default function VoiceIA() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
+    <div className="min-h-screen bg-slate-50">
+      <NubofactHeader />
+      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 p-6 rounded-2xl text-white shadow-lg">
         <div>
@@ -1233,6 +1236,7 @@ export default function VoiceIA() {
           onClose={() => setEmittedInvoice(null)} 
         />
       )}
+      </div>
     </div>
   );
 }
