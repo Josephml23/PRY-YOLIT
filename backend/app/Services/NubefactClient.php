@@ -176,9 +176,9 @@ class NubefactClient
             $numero = $data['numero'] ?? 1;
             
             return [
-                'enlace' => 'https://demo.nubefact.com/representacion-impresa/pdf/example',
+                'enlace' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
                 'aceptada_por_sunat' => true,
-                'enlace_del_pdf' => 'https://demo.nubefact.com/representacion-impresa/pdf/example.pdf',
+                'enlace_del_pdf' => 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
                 'enlace_del_xml' => 'https://demo.nubefact.com/representacion-impresa/xml/example.xml',
                 'enlace_del_cdr' => 'https://demo.nubefact.com/representacion-impresa/cdr/example.xml',
                 'cadena_para_codigo_qr' => 'example-qr-string',
