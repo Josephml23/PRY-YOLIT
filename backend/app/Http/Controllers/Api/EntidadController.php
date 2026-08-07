@@ -13,6 +13,53 @@ class EntidadController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $search = $request->get('search') ?? $request->get('buscar');
+        if ($search && preg_match('/^[0-9]{11}$/', $search)) {
+            // 1. Buscar localmente
+            $local = Entidad::where('num_doc', $search)->first();
+            if ($local) {
+                return response()->json([$local]);
+            }
+
+            // 2. Si no está local, buscar en la API de SUNAT (OpenRUC)
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->get("https://openruc.com/api/ruc/{$search}");
+                
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if (!empty($data['razon_social'])) {
+                        // Obtener empresa_id
+                        $empresaId = $request->empresa_id ?? (Auth::check() ? Auth::user()->empresa_id : null);
+                        if (!$empresaId) {
+                            $primeraEmpresa = \App\Models\Empresa::first();
+                            $empresaId = $primeraEmpresa ? $primeraEmpresa->id : 1;
+                        }
+
+                        $cols = \Illuminate\Support\Facades\Schema::getColumnListing('entidades');
+                        $newEntidadData = [
+                            'empresa_id' => $empresaId,
+                            'tipo_doc' => '6', // RUC
+                            'num_doc' => $search,
+                            'denominacion' => $data['razon_social'],
+                            'razon_comercial' => $data['razon_social'],
+                            'direccion' => $data['direccion'] ?? 'SIN DIRECCION FISCAL',
+                            'es_cliente' => true,
+                            'es_proveedor' => false,
+                            'activo' => true,
+                        ];
+                        // Filtrar por columnas reales de la migración
+                        $filteredData = array_filter($newEntidadData, fn($k) => in_array($k, $cols, true), ARRAY_FILTER_USE_KEY);
+
+                        $newEntidad = Entidad::create($filteredData);
+                        return response()->json([$newEntidad]);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Error consultando API externa de RUC: " . $e->getMessage());
+            }
+        }
+
         $query = Entidad::query();
 
         // Por defecto solo mostrar entidades activas (a menos que se especifique lo contrario)
