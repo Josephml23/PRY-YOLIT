@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { type UseFormReturn } from 'react-hook-form';
 import { Mail, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type Entidad } from '@/lib/api';
+import api, { type Entidad } from '@/lib/api';
 import { TIPOS_DOCUMENTO } from '@/services/nubefact';
+import { toast } from 'sonner';
 
 type ComprobanteFormValues = {
   cliente_tipo_de_documento: string;
@@ -43,6 +44,39 @@ export function ClienteCard({
   total,
   requiereDocumento,
 }: ClienteCardProps) {
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleApiSearch = async () => {
+    const docNumber = form.getValues('cliente_numero_de_documento');
+    if (!docNumber) {
+      toast.warning('Ingresa un número de documento.');
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await api.get(`/v1/entidades?search=${docNumber}`);
+      if (res.data && res.data.length > 0) {
+        const matched = res.data[0];
+        form.setValue('cliente_denominacion', matched.denominacion || matched.razon_social || '');
+        if (matched.direccion) {
+          form.setValue('cliente_direccion', matched.direccion);
+        }
+        if (matched.email) {
+          form.setValue('cliente_email', matched.email);
+        }
+        toast.success('Cliente encontrado y autocompletado.');
+      } else {
+        toast.warning('Documento no registrado localmente ni en la API de SUNAT.');
+      }
+    } catch (error) {
+      console.error('Error buscando RUC/DNI:', error);
+      toast.error('Error al consultar el documento.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -81,17 +115,29 @@ export function ClienteCard({
                 <span className="text-destructive">*</span>
               )}
             </label>
-            <Input
-              {...form.register('cliente_numero_de_documento')}
-              placeholder={
-                form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO
-                  ? 'No requerido'
-                  : form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.RUC
-                  ? '20123456789'
-                  : '12345678'
-              }
-              disabled={form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO}
-            />
+            <div className="flex gap-2">
+              <Input
+                {...form.register('cliente_numero_de_documento')}
+                placeholder={
+                  form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO
+                    ? 'No requerido'
+                    : form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.RUC
+                    ? '20123456789'
+                    : '12345678'
+                }
+                disabled={form.watch('cliente_tipo_de_documento') === TIPOS_DOCUMENTO.SIN_DOCUMENTO}
+              />
+              {form.watch('cliente_tipo_de_documento') !== TIPOS_DOCUMENTO.SIN_DOCUMENTO && (
+                <Button
+                  type="button"
+                  onClick={handleApiSearch}
+                  disabled={isSearching}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-9 px-4 shrink-0"
+                >
+                  {isSearching ? '...' : 'Buscar'}
+                </Button>
+              )}
+            </div>
             {form.formState.errors.cliente_numero_de_documento && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.cliente_numero_de_documento.message}
