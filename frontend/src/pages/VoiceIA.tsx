@@ -25,6 +25,7 @@ interface Intencion {
   numero: number;
   cliente_denominacion: string;
   cliente_numero_de_documento: string;
+  cliente_direccion?: string;
   total_gravada: number;
   total_igv: number;
   total: number;
@@ -523,6 +524,7 @@ export default function VoiceIA() {
             ...prev,
             cliente_denominacion: matched.denominacion,
             cliente_numero_de_documento: matched.num_doc,
+            cliente_direccion: matched.direccion,
             cliente: updatedCliente
           };
         });
@@ -1019,6 +1021,15 @@ export default function VoiceIA() {
                         className="bg-white border-slate-200 mt-0.5"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Dirección</label>
+                    <Input
+                      value={editableIntencion && editableIntencion.cliente_direccion ? editableIntencion.cliente_direccion : ''}
+                      onChange={(e) => setEditableIntencion(prev => prev ? { ...prev, cliente_direccion: e.target.value } : null)}
+                      placeholder="Dirección Fiscal"
+                      className="bg-white border-slate-200 mt-0.5 h-9"
+                    />
                   </div>
                 </div>
 
