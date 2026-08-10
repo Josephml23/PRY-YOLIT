@@ -832,17 +832,14 @@ export default function VoiceIA() {
   return (
     <div className="min-h-screen bg-slate-50">
       <NubofactHeader />
-      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
+      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 p-6 rounded-2xl text-white shadow-lg">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-yellow-300 animate-pulse" />
-            <h1 className="text-2xl font-bold">Voice IA — Facturación por Voz</h1>
+            <Sparkles className="h-5 w-5 text-indigo-600 animate-pulse" />
+            <h1 className="text-lg font-bold text-slate-800">Voice IA — Asistente de Voz</h1>
           </div>
-          <p className="text-blue-100 text-sm mt-1">
-            Transcripción automática en tiempo real integrada.
-          </p>
         </div>
         <div className="flex items-center gap-2">
           {isSpeaking && (
@@ -850,12 +847,12 @@ export default function VoiceIA() {
               variant="secondary"
               size="sm"
               onClick={detenerVoz}
-              className="bg-rose-500 hover:bg-rose-600 text-white gap-1 text-xs"
+              className="bg-rose-500 hover:bg-rose-600 text-white gap-1 text-xs h-8"
             >
-              <VolumeX className="h-4 w-4" /> Detener Voz
+              <VolumeX className="h-3.5 w-3.5" /> Detener Voz
             </Button>
           )}
-          <Badge variant="secondary" className="px-3 py-1.5 bg-white/20 text-white border-none font-medium">
+          <Badge variant="secondary" className="px-2.5 py-1 bg-slate-100 text-slate-600 border-none font-medium text-[11px]">
             Transcripción Directa Activa
           </Badge>
         </div>
@@ -888,7 +885,7 @@ export default function VoiceIA() {
       {activeTab === 'asistente' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chat / Comandos de Voz */}
-        <div className="lg:col-span-6 space-y-4">
+        <div className="lg:col-span-12 space-y-4">
           <Card className="h-[480px] flex flex-col shadow-sm border-slate-200">
             <CardHeader className="pb-3 border-b bg-slate-50/50 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -970,7 +967,7 @@ export default function VoiceIA() {
         </div>
 
         {/* Card de Confirmación Visual */}
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-12">
           {session && session.intencion ? (
             <Card className="border-2 border-indigo-500 shadow-md bg-white">
               <CardHeader className="bg-indigo-50/80 pb-3 border-b border-indigo-100">
