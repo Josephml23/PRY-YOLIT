@@ -601,7 +601,7 @@ export default function VoiceIA() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Se detiene al terminar la frase
+      recognition.continuous = true; // Se mantiene abierto hasta que se detenga manualmente
       recognition.interimResults = true; // Transcripción en tiempo real mientras hablas
       recognition.lang = 'es-PE'; // Idioma
 
@@ -610,12 +610,12 @@ export default function VoiceIA() {
       };
 
       recognition.onresult = (event: any) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript;
         }
         if (isMountedRef.current) {
-          setInputText(currentTranscript);
+          setInputText(fullTranscript);
         }
       };
 
