@@ -885,7 +885,7 @@ export default function VoiceIA() {
       {activeTab === 'asistente' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chat / Comandos de Voz */}
-        <div className="lg:col-span-12 space-y-4">
+        <div className="lg:col-span-5 space-y-4">
           <Card className="h-[480px] flex flex-col shadow-sm border-slate-200">
             <CardHeader className="pb-3 border-b bg-slate-50/50 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
@@ -967,7 +967,7 @@ export default function VoiceIA() {
         </div>
 
         {/* Card de Confirmación Visual */}
-        <div className="lg:col-span-12">
+        <div className="lg:col-span-7">
           {session && session.intencion ? (
             <Card className="border-2 border-indigo-500 shadow-md bg-white">
               <CardHeader className="bg-indigo-50/80 pb-3 border-b border-indigo-100">
