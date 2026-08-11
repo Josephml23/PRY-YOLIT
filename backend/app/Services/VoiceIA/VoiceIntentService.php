@@ -115,8 +115,8 @@ class VoiceIntentService
         } else {
             foreach ($intencion['items'] as $item) {
                 if (($item['estado'] ?? '') === 'no_encontrado') {
-                    $estadoIa = 'error_registro_no_encontrado';
-                    $detalleError = "El producto '" . $item['descripcion'] . "' no se encuentra registrado en el inventario.";
+                    $estadoIa = 'requiere_registro_producto';
+                    $detalleError = "El producto '" . $item['descripcion'] . "' no está registrado en el inventario. ¿Deseas registrarlo? Por favor, indícame su precio y stock inicial (por ejemplo: 'registrar con precio 150 y stock 50').";
                     break;
                 }
             }

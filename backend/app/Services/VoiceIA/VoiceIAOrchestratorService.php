@@ -194,6 +194,45 @@ class VoiceIAOrchestratorService
             ];
         }
 
+        if ($estadoIa === 'requiere_registro_producto') {
+            $conversacion = VoiceConversacion::create([
+                'usuario_id' => $usuarioId ?? auth()->id() ?? 1,
+                'entidad_id' => $intencion['cliente']['id'] ?? null,
+                'estado' => 'necesita_aclaracion',
+                'tipo_comprobante_sugerido' => $intencion['tipo_comprobante_sunat'] ?? '01',
+                'payload_intencion' => $intencion,
+                'tiempo_transcripcion_ms' => $tiempoSTT,
+                'tiempo_procesamiento_ms' => $tiempoProcesamiento,
+                'error_mensaje' => $intencion['detalle_error'],
+            ]);
+
+            VoiceMensaje::create([
+                'conversacion_id' => $conversacion->id,
+                'rol' => 'user',
+                'tipo' => $inputOriginal instanceof UploadedFile ? 'audio' : 'text',
+                'texto' => $textoComando,
+                'payload_intencion' => $intencion,
+            ]);
+
+            $asistenteRespuesta = $intencion['detalle_error'];
+            VoiceMensaje::create([
+                'conversacion_id' => $conversacion->id,
+                'rol' => 'assistant',
+                'tipo' => 'text',
+                'texto' => $asistenteRespuesta,
+            ]);
+
+            return [
+                'conversacion_id' => $conversacion->id,
+                'estado' => 'requiere_registro_producto',
+                'transcripcion' => $textoComando,
+                'asistente_respuesta' => $asistenteRespuesta,
+                'tts' => $this->ttsService->sintetizarVoz($asistenteRespuesta),
+                'intencion' => $intencion,
+                'tiempo_procesamiento_ms' => $tiempoProcesamiento,
+            ];
+        }
+
         if ($estadoIa === 'requiere_confirmacion_producto') {
             $conversacion = VoiceConversacion::create([
                 'usuario_id' => $usuarioId ?? auth()->id() ?? 1,
@@ -393,11 +432,59 @@ class VoiceIAOrchestratorService
                     $item['estado'] = 'exacto';
                 }
             } elseif ($estado === 'no_encontrado') {
-                $confirmaIgual = in_array($respuestaLower, ['si', 'sí', 'confirmar', 'confirmo', 'proceder', 'aceptar'], true)
-                    || str_contains($respuestaLower, 'igual') || str_contains($respuestaLower, 'de todas formas');
+                if (preg_match('/precio\s*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchPrecio) &&
+                    preg_match('/stock\s*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchStock)) {
+                    
+                    $precio = (float) $matchPrecio[1];
+                    $stock = (float) $matchStock[1];
+                    
+                    // Create the product in the database
+                    $nuevoProducto = \App\Models\Producto::create([
+                        'empresa_id' => $intencion['empresa_id'] ?? 1,
+                        'codigo' => 'PROD-' . strtoupper(substr(uniqid(), -6)),
+                        'descripcion' => $item['descripcion'],
+                        'categoria' => 'General',
+                        'unidad_medida' => 'NIU',
+                        'moneda' => 'PEN',
+                        'precio_venta_unitario' => $precio,
+                        'valor_venta_unitario' => round($precio / 1.18, 6),
+                        'costo_compra_unitario' => 0.0,
+                        'precio_compra_unitario' => 0.0,
+                        'tipo_afectacion_igv' => '10', // Gravado
+                        'destacado' => false,
+                        'activo' => true,
+                        'stock_actual' => $stock,
+                        'stock_minimo' => 1,
+                        'stock_maximo' => 1000,
+                    ]);
 
-                if ($confirmaIgual) {
+                    $item['id'] = $nuevoProducto->id;
+                    $item['producto_id'] = $nuevoProducto->id;
+                    $item['codigo'] = $nuevoProducto->codigo;
+                    $item['precio_unitario'] = $precio;
+                    $item['en_inventario'] = true;
                     $item['estado'] = 'exacto';
+                    
+                    $intencion['mensaje_aclaracion_exito'] = "He registrado el producto '" . $item['descripcion'] . "' en el inventario con precio S/ " . number_format($precio, 2) . " y stock inicial de " . $stock . " unidades.";
+                } else {
+                    $asistenteRespuesta = "Para registrar el producto '" . $item['descripcion'] . "', por favor dime su precio y stock inicial (por ejemplo: 'registrar con precio 150 y stock 50').";
+                    
+                    VoiceMensaje::create([
+                        'conversacion_id' => $conversacion->id,
+                        'rol' => 'assistant',
+                        'tipo' => 'text',
+                        'texto' => $asistenteRespuesta,
+                    ]);
+
+                    return [
+                        'conversacion_id' => $conversacion->id,
+                        'estado' => 'requiere_registro_producto',
+                        'transcripcion' => $respuestaTexto,
+                        'asistente_respuesta' => $asistenteRespuesta,
+                        'tts' => $this->ttsService->sintetizarVoz($asistenteRespuesta),
+                        'intencion' => $intencion,
+                        'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
+                    ];
                 }
             }
         }
@@ -423,8 +510,8 @@ class VoiceIAOrchestratorService
         } else {
             foreach ($intencion['items'] as $item) {
                 if (($item['estado'] ?? '') === 'no_encontrado') {
-                    $estadoIa = 'error_registro_no_encontrado';
-                    $detalleError = "El producto '" . $item['descripcion'] . "' no se encuentra registrado en el inventario.";
+                    $estadoIa = 'requiere_registro_producto';
+                    $detalleError = "El producto '" . $item['descripcion'] . "' no está registrado en el inventario. ¿Deseas registrarlo? Por favor, indícame su precio y stock inicial (por ejemplo: 'registrar con precio 150 y stock 50').";
                     break;
                 }
             }
@@ -490,6 +577,26 @@ class VoiceIAOrchestratorService
             ];
         }
 
+        if ($estadoIa === 'requiere_registro_producto') {
+            $asistenteRespuesta = $intencion['detalle_error'];
+            VoiceMensaje::create([
+                'conversacion_id' => $conversacion->id,
+                'rol' => 'assistant',
+                'tipo' => 'text',
+                'texto' => $asistenteRespuesta,
+            ]);
+
+            return [
+                'conversacion_id' => $conversacion->id,
+                'estado' => 'requiere_registro_producto',
+                'transcripcion' => $respuestaTexto,
+                'asistente_respuesta' => $asistenteRespuesta,
+                'tts' => $this->ttsService->sintetizarVoz($asistenteRespuesta),
+                'intencion' => $intencion,
+                'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
+            ];
+        }
+
         if ($estadoIa === 'requiere_confirmacion_producto') {
             $opcionesNombres = collect($intencion['opciones_producto'])->pluck('descripcion')->implode(', ');
             $asistenteRespuesta = "Encontré varios productos parecidos: {$opcionesNombres}. ¿Cuál de ellos deseas usar?";
@@ -543,6 +650,10 @@ class VoiceIAOrchestratorService
         $respuestaAsistente = $necesitaConfirmacion
             ? $this->construirMensajeAclaracion($intencion)
             : $this->construirResumenConfirmacion($intencion);
+
+        if (!empty($intencion['mensaje_aclaracion_exito'])) {
+            $respuestaAsistente = $intencion['mensaje_aclaracion_exito'] . " " . $respuestaAsistente;
+        }
 
         $ttsData = $this->ttsService->sintetizarVoz($respuestaAsistente);
 
