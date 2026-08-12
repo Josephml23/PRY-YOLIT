@@ -172,7 +172,7 @@ class VoiceIAOrchestratorService
             $conversacion = VoiceConversacion::create([
                 'usuario_id' => $usuarioId ?? auth()->id() ?? 1,
                 'entidad_id' => null,
-                'estado' => 'error',
+                'estado' => 'necesita_aclaracion',
                 'tipo_comprobante_sugerido' => $intencion['tipo_comprobante_sunat'] ?? '01',
                 'payload_intencion' => $intencion,
                 'tiempo_transcripcion_ms' => $tiempoSTT,
@@ -561,7 +561,7 @@ class VoiceIAOrchestratorService
         $intencion['advertencia_precio'] = $advertenciaPrecio;
         $intencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion || ($estadoIa !== 'ok');
 
-        $nuevoEstado = $estadoIa === 'error_registro_no_encontrado' ? 'error' : ($estadoIa !== 'ok' ? 'necesita_aclaracion' : 'esperando_confirmacion');
+        $nuevoEstado = $estadoIa === 'error_registro_no_encontrado' ? 'necesita_aclaracion' : ($estadoIa !== 'ok' ? 'necesita_aclaracion' : 'esperando_confirmacion');
 
         $conversacion->update([
             'entidad_id' => $intencion['cliente']['id'] ?? $conversacion->entidad_id,
@@ -704,7 +704,11 @@ class VoiceIAOrchestratorService
         $clienteNombreBusqueda = $modificacion['cliente'] ?? '';
 
         // Re-resolver cliente
-        $cliente = $this->intentService->buscarClientePorTexto($clienteNombreBusqueda);
+        $cliente = null;
+        if (!empty($clienteNombreBusqueda) && strtolower($clienteNombreBusqueda) !== 'desconocido') {
+            $cliente = $this->intentService->buscarClientePorTexto($clienteNombreBusqueda);
+        }
+
         if (!$cliente && !empty($intencionActual['cliente'])) {
             $cliente = $intencionActual['cliente'];
         }
@@ -738,11 +742,11 @@ class VoiceIAOrchestratorService
             'moneda' => 1,
             'cliente' => $cliente,
             'cliente_encontrado' => $clienteEncontrado,
-            'cliente_tipo_de_documento' => $cliente['tipo_doc'] ?? null,
-            'cliente_numero_de_documento' => $cliente['num_doc'] ?? null,
-            'cliente_denominacion' => $cliente['razon_social'] ?? null,
-            'cliente_direccion' => $cliente['direccion'] ?? null,
-            'cliente_email' => $cliente['email'] ?? null,
+            'cliente_tipo_de_documento' => $cliente['tipo_doc'] ?? $cliente['cliente_tipo_de_documento'] ?? null,
+            'cliente_numero_de_documento' => $cliente['num_doc'] ?? $cliente['cliente_numero_de_documento'] ?? null,
+            'cliente_denominacion' => $cliente['razon_social'] ?? $cliente['cliente_denominacion'] ?? null,
+            'cliente_direccion' => $cliente['direccion'] ?? $cliente['cliente_direccion'] ?? null,
+            'cliente_email' => $cliente['email'] ?? $cliente['cliente_email'] ?? null,
             'items' => $items,
             'texto_original' => $textoComando,
         ];
@@ -802,7 +806,7 @@ class VoiceIAOrchestratorService
         $nuevaIntencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion || ($estadoIa !== 'ok');
         $nuevaIntencion['motivos_confirmacion'] = $motivos;
 
-        $nuevoEstado = $estadoIa === 'error_registro_no_encontrado' ? 'error' : ($estadoIa !== 'ok' ? 'necesita_aclaracion' : 'esperando_confirmacion');
+        $nuevoEstado = $estadoIa === 'error_registro_no_encontrado' ? 'necesita_aclaracion' : ($estadoIa !== 'ok' ? 'necesita_aclaracion' : 'esperando_confirmacion');
 
         $conversacion->update([
             'entidad_id' => $nuevaIntencion['cliente']['id'] ?? $conversacion->entidad_id,
