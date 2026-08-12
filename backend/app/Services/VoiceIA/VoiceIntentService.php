@@ -315,7 +315,7 @@ class VoiceIntentService
                 "  ]\n".
                 "}";
 
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='.$geminiKey;
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='.$geminiKey;
 
             $response = Http::timeout(15)->post($url, [
                 'contents' => [
@@ -360,7 +360,7 @@ class VoiceIntentService
                 "  ]\n".
                 '}';
 
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='.$geminiKey;
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='.$geminiKey;
 
             // Timeout ampliado a 15s: con 5s el free tier de Gemini a veces no
             // alcanza a responder y el servicio caía silenciosamente al heurístico.
