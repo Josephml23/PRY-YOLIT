@@ -315,7 +315,7 @@ class VoiceIntentService
                 "  ]\n".
                 "}";
 
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='.$geminiKey;
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='.$geminiKey;
 
             $response = Http::timeout(15)->post($url, [
                 'contents' => [
@@ -360,7 +360,7 @@ class VoiceIntentService
                 "  ]\n".
                 '}';
 
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='.$geminiKey;
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='.$geminiKey;
 
             // Timeout ampliado a 15s: con 5s el free tier de Gemini a veces no
             // alcanza a responder y el servicio caía silenciosamente al heurístico.
@@ -412,9 +412,9 @@ class VoiceIntentService
 
         // Extraer Cliente
         $clienteNombre = null;
-        if (preg_match('/(?:para|a favor de|al cliente|a)\s+([a-z0-9áéíóúñü\s.-]+?)\s+(?:por|con|de|\b\d+\b)/ui', $texto, $matches)) {
+        if (preg_match('/(?:para|a favor de|al cliente|\ba\b)\s+([a-z0-9áéíóúñü\s.-]+?)\s+(?:por|con|de|\b\d+\b)/ui', $texto, $matches)) {
             $clienteNombre = trim($matches[1]);
-        } elseif (preg_match('/(?:para|a favor de|al cliente|a)\s+([a-z0-9áéíóúñü\s.-]+)$/ui', $texto, $matches)) {
+        } elseif (preg_match('/(?:para|a favor de|al cliente|\ba\b)\s+([a-z0-9áéíóúñü\s.-]+)$/ui', $texto, $matches)) {
             $clienteNombre = trim($matches[1]);
         }
 

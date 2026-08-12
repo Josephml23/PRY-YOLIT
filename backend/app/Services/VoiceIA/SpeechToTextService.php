@@ -108,7 +108,7 @@ class SpeechToTextService
             if (!empty($geminiKey)) {
                 $audioBase64 = base64_encode($audioContent);
 
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$geminiKey}";
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$geminiKey}";
 
                 $response = Http::timeout(15)->post($url, [
                     'contents' => [
