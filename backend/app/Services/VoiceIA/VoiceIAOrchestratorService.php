@@ -111,6 +111,13 @@ class VoiceIAOrchestratorService
                 // La conversación está esperando que el usuario aclare algo
                 // (cliente, producto ambiguo o precio) — esta respuesta es esa aclaración.
                 if ($conversacionPendiente->estado === 'necesita_aclaracion') {
+                    $esModificacionKeyword = preg_match('/\b(agrega|añade|aumenta|quita|elimina|cambia|modifica|pon|saca|sumale|restale|precio|cantidad)\b/ui', $textoLower);
+                    if ($esModificacionKeyword) {
+                        $resultadoModif = $this->intentarModificacion($conversacionPendiente, $textoComando, $startTime, $usuarioId);
+                        if ($resultadoModif) {
+                            return $resultadoModif;
+                        }
+                    }
                     return $this->resolverAclaracion($conversacionIdPendiente, $textoComando, $startTime);
                 }
 
@@ -120,6 +127,12 @@ class VoiceIAOrchestratorService
 
                 if ($esComandoConfirmacion) {
                     return $this->confirmarEmision($conversacionIdPendiente, null, $usuarioId);
+                }
+
+                // Si está en esperando_confirmacion y no es confirmación, es una modificación!
+                $resultadoModif = $this->intentarModificacion($conversacionPendiente, $textoComando, $startTime, $usuarioId);
+                if ($resultadoModif) {
+                    return $resultadoModif;
                 }
             }
         }
@@ -671,6 +684,169 @@ class VoiceIAOrchestratorService
             'asistente_respuesta' => $respuestaAsistente,
             'tts' => $ttsData,
             'intencion' => $intencion,
+            'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
+        ];
+    }
+
+    /**
+     * Intenta aplicar una modificación dictada por el usuario a la intención actual.
+     */
+    protected function intentarModificacion(VoiceConversacion $conversacion, string $textoComando, float $startTime, ?int $usuarioId): ?array
+    {
+        $intencionActual = $conversacion->payload_intencion;
+        $modificacion = $this->intentService->modificarIntencionConLLM($intencionActual, $textoComando);
+
+        if (!$modificacion || empty($modificacion['items'])) {
+            return null;
+        }
+
+        $tipoComprobante = $modificacion['tipo_comprobante'] ?? $intencionActual['tipo_comprobante_sunat'] ?? '01';
+        $clienteNombreBusqueda = $modificacion['cliente'] ?? '';
+
+        // Re-resolver cliente
+        $cliente = $this->intentService->buscarClientePorTexto($clienteNombreBusqueda);
+        if (!$cliente && !empty($intencionActual['cliente'])) {
+            $cliente = $intencionActual['cliente'];
+        }
+        $clienteEncontrado = $cliente !== null;
+
+        // Re-resolver productos
+        $items = $this->intentService->resolverProductos($modificacion['items'], mb_strtolower($textoComando), $intencionActual['empresa_id'] ?? 1);
+
+        // Re-obtener serie y correlativo
+        $serieObj = \App\Models\Serie::where('tipo_comprobante', $tipoComprobante)
+            ->where('activo', true)
+            ->first();
+        $serie = $serieObj ? $serieObj->serie : ($tipoComprobante === '01' ? 'F001' : 'B001');
+        $correlativoSugerido = $serieObj ? ($serieObj->correlativo_actual + 1) : 1;
+
+        $mapaNombres = [
+            '01' => ['nombre' => 'Factura', 'codigo_nubefact' => 1],
+            '03' => ['nombre' => 'Boleta de Venta', 'codigo_nubefact' => 2],
+        ];
+        $infoTipo = $mapaNombres[$tipoComprobante] ?? $mapaNombres['01'];
+
+        $nuevaIntencion = [
+            'empresa_id' => $intencionActual['empresa_id'] ?? 1,
+            'tipo_de_comprobante' => $infoTipo['codigo_nubefact'],
+            'tipo_comprobante_sunat' => $tipoComprobante,
+            'tipo_comprobante_nombre' => $infoTipo['nombre'],
+            'serie' => $serie,
+            'numero' => $correlativoSugerido,
+            'fecha_de_emision' => now()->format('Y-m-d'),
+            'fecha_de_vencimiento' => now()->format('Y-m-d'),
+            'moneda' => 1,
+            'cliente' => $cliente,
+            'cliente_encontrado' => $clienteEncontrado,
+            'cliente_tipo_de_documento' => $cliente['tipo_doc'] ?? null,
+            'cliente_numero_de_documento' => $cliente['num_doc'] ?? null,
+            'cliente_denominacion' => $cliente['razon_social'] ?? null,
+            'cliente_direccion' => $cliente['direccion'] ?? null,
+            'cliente_email' => $cliente['email'] ?? null,
+            'items' => $items,
+            'texto_original' => $textoComando,
+        ];
+
+        $nuevaIntencion = $this->intentService->recalcularTotales($nuevaIntencion);
+
+        // Evaluar estado IA
+        $estadoIa = 'ok';
+        $detalleError = null;
+        $opcionesProducto = null;
+        $advertenciaPrecio = null;
+
+        if (!$clienteEncontrado) {
+            $estadoIa = 'error_registro_no_encontrado';
+            $detalleError = "El cliente '" . ($clienteNombreBusqueda ?: 'desconocido') . "' no se encuentra registrado en la base de datos.";
+        } else {
+            foreach ($nuevaIntencion['items'] as $item) {
+                if (($item['estado'] ?? '') === 'no_encontrado') {
+                    $estadoIa = 'requiere_registro_producto';
+                    $detalleError = "El producto '" . $item['descripcion'] . "' no está registrado en el inventario. ¿Deseas registrarlo? Por favor, indícame su precio y stock inicial (por ejemplo: 'registrar con precio 150 y stock 50').";
+                    break;
+                }
+            }
+
+            if ($estadoIa === 'ok') {
+                foreach ($nuevaIntencion['items'] as $item) {
+                    if (($item['estado'] ?? '') === 'requiere_confirmacion') {
+                        $estadoIa = 'requiere_confirmacion_producto';
+                        $opcionesProducto = $item['opciones'] ?? [];
+                        break;
+                    }
+                }
+            }
+
+            if ($estadoIa === 'ok') {
+                foreach ($nuevaIntencion['items'] as $item) {
+                    if (($item['estado'] ?? '') === 'requiere_confirmacion_precio') {
+                        $estadoIa = 'advertencia_precio';
+                        $advertenciaPrecio = [
+                            'precio_oficial' => $item['precio_inventario'],
+                            'precio_dictado' => $item['precio_dictado'],
+                            'producto_descripcion' => $item['descripcion'],
+                            'producto_id' => $item['id']
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        $nuevaIntencion['estado_ia'] = $estadoIa;
+        $nuevaIntencion['detalle_error'] = $detalleError;
+        $nuevaIntencion['opciones_producto'] = $opcionesProducto;
+        $nuevaIntencion['advertencia_precio'] = $advertenciaPrecio;
+
+        [$necesitaConfirmacion, $motivos] = $this->intentService->evaluarNecesidadDeConfirmacion($clienteEncontrado, $nuevaIntencion['items']);
+        $nuevaIntencion['necesita_confirmacion_usuario'] = $necesitaConfirmacion || ($estadoIa !== 'ok');
+        $nuevaIntencion['motivos_confirmacion'] = $motivos;
+
+        $nuevoEstado = $estadoIa === 'error_registro_no_encontrado' ? 'error' : ($estadoIa !== 'ok' ? 'necesita_aclaracion' : 'esperando_confirmacion');
+
+        $conversacion->update([
+            'entidad_id' => $nuevaIntencion['cliente']['id'] ?? $conversacion->entidad_id,
+            'estado' => $nuevoEstado,
+            'payload_intencion' => $nuevaIntencion,
+            'error_mensaje' => $detalleError ?? $conversacion->error_mensaje,
+        ]);
+
+        VoiceMensaje::create([
+            'conversacion_id' => $conversacion->id,
+            'rol' => 'user',
+            'tipo' => 'text',
+            'texto' => $textoComando,
+            'payload_intencion' => $nuevaIntencion,
+        ]);
+
+        if ($estadoIa === 'requiere_registro_producto') {
+            $asistenteRespuesta = "Modificación aplicada. " . $nuevaIntencion['detalle_error'];
+        } elseif ($estadoIa === 'requiere_confirmacion_producto') {
+            $opcionesNombres = collect($nuevaIntencion['opciones_producto'])->pluck('descripcion')->implode(', ');
+            $asistenteRespuesta = "Modificación aplicada, pero encontré varios productos parecidos: {$opcionesNombres}. ¿Cuál deseas usar?";
+        } elseif ($estadoIa === 'advertencia_precio') {
+            $pDesc = $nuevaIntencion['advertencia_precio']['producto_descripcion'];
+            $pOficial = number_format($nuevaIntencion['advertencia_precio']['precio_oficial'], 2);
+            $pDictado = number_format($nuevaIntencion['advertencia_precio']['precio_dictado'], 2);
+            $asistenteRespuesta = "Modificación aplicada. Para el producto '{$pDesc}', el precio oficial es S/ {$pOficial}, pero dictaste S/ {$pDictado}. ¿Mantenemos el dictado o el oficial?";
+        } else {
+            $asistenteRespuesta = "Entendido, apliqué los cambios. " . $this->construirResumenConfirmacion($nuevaIntencion);
+        }
+
+        VoiceMensaje::create([
+            'conversacion_id' => $conversacion->id,
+            'rol' => 'assistant',
+            'tipo' => 'text',
+            'texto' => $asistenteRespuesta,
+        ]);
+
+        return [
+            'conversacion_id' => $conversacion->id,
+            'estado' => $nuevoEstado,
+            'transcripcion' => $textoComando,
+            'asistente_respuesta' => $asistenteRespuesta,
+            'tts' => $this->ttsService->sintetizarVoz($asistenteRespuesta),
+            'intencion' => $nuevaIntencion,
             'tiempo_procesamiento_ms' => round((microtime(true) - $startTime) * 1000),
         ];
     }

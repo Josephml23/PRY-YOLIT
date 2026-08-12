@@ -274,6 +274,71 @@ class VoiceIntentService
     }
 
     /**
+     * Modificar la intención actual con ayuda de LLM.
+     */
+    public function modificarIntencionConLLM(array $intencionActual, string $textoModificacion): ?array
+    {
+        $geminiKey = config('services.gemini.key') ?? env('GEMINI_API_KEY');
+        if (! $geminiKey) {
+            return null;
+        }
+
+        $itemsSimplificados = [];
+        $items = $intencionActual['items'] ?? [];
+        foreach ($items as $item) {
+            $itemsSimplificados[] = [
+                'producto' => $item['descripcion'] ?? '',
+                'cantidad' => $item['cantidad'] ?? 1,
+                'precio' => $item['precio_unitario'] ?? $item['precio_dictado'] ?? 0.0,
+            ];
+        }
+
+        $clienteActual = $intencionActual['cliente']['razon_social'] ?? $intencionActual['cliente_denominacion'] ?? null;
+
+        $datosActuales = [
+            'tipo_comprobante' => $intencionActual['tipo_comprobante_sunat'] ?? '01',
+            'cliente' => $clienteActual,
+            'items' => $itemsSimplificados,
+        ];
+
+        try {
+            $prompt = "Eres un asistente de facturación electrónica. Tienes una factura/boleta actual con los siguientes datos:\n".
+                json_encode($datosActuales, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n".
+                "El usuario ha solicitado la siguiente modificación mediante voz/texto:\n".
+                "\"{$textoModificacion}\"\n\n".
+                "Aplica los cambios solicitados (agregar productos, eliminar productos, cambiar cantidades, precios o el cliente) y responde ÚNICAMENTE con la nueva estructura en formato JSON. No incluyas explicaciones ni markdown:\n".
+                "{\n".
+                "  \"tipo_comprobante\": \"01\" (factura) o \"03\" (boleta),\n".
+                "  \"cliente\": \"nombre del cliente o null\",\n".
+                "  \"items\": [\n".
+                "    { \"producto\": \"nombre del producto\", \"cantidad\": 1, \"precio\": 0.00 }\n".
+                "  ]\n".
+                "}";
+
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='.$geminiKey;
+
+            $response = Http::timeout(15)->post($url, [
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]],
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $rawText = $response->json('candidates.0.content.parts.0.text') ?? '';
+                $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($rawText)));
+                $data = json_decode($cleanJson, true);
+                if (is_array($data)) {
+                    return $data;
+                }
+            }
+        } catch (Exception $e) {
+            Log::warning('Error en modificarIntencionConLLM: '.$e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
      * Extracción estructurada vía Gemini / OpenAI.
      */
     protected function analizarConLLM(string $texto): ?array
