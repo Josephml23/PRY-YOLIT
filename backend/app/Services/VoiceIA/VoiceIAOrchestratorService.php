@@ -432,8 +432,8 @@ class VoiceIAOrchestratorService
                     $item['estado'] = 'exacto';
                 }
             } elseif ($estado === 'no_encontrado') {
-                if (preg_match('/precio\s*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchPrecio) &&
-                    preg_match('/stock\s*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchStock)) {
+                if (preg_match('/precio\s*(?:de\s+|del\s+|:\s*|=|\s+|s\/\.?|\$)*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchPrecio) &&
+                    preg_match('/stock\s*(?:de\s+|del\s+|:\s*|=|\s+|unidades\s*)*(\d+(?:\.\d+)?)/iu', $respuestaLower, $matchStock)) {
                     
                     $precio = (float) $matchPrecio[1];
                     $stock = (float) $matchStock[1];
